@@ -1,629 +1,97 @@
-# Productivity Tracker
-
-A modern, scalable productivity tracking web application built with **Next.js**, **Firebase**, and **TypeScript**.
-
-The project follows an **API-first architecture**, where all business logic executes on the server and Firestore is treated as the single source of truth.
-
----
-
-# Vision
-
-Create a productivity system that helps users improve every area of life through measurable daily actions.
-
-The application allows users to:
-
-- Track daily habits
-- Measure consistency
-- Build streaks
-- Monitor long-term trends
-- View meaningful analytics
-- Set personal goals
-- Receive AI-powered productivity insights (future)
-
-The architecture is designed to support multiple users without requiring major refactoring.
-
----
-
-# Tech Stack
-
-## Frontend
-
-- Next.js (App Router)
-- React
-- TypeScript
-- Tailwind CSS v4
-- shadcn/ui
-
-## Backend
-
-- Next.js API Routes
-- Firebase Authentication
-- Firebase Admin SDK
-- Firestore
-
-## Charts
-
-- Recharts
-
-## Validation
-
-- Zod
-
-## Deployment
-
-- Vercel
-
----
-
-# Architecture
-
-```
-                Client
-
-                   │
-
-        Firebase Authentication
-
-                   │
-
-          Firebase ID Token
-
-                   │
-
-        Next.js API Routes
-
-                   │
-
- Firebase Admin verifyIdToken()
-
-                   │
-
-          Business Logic
-
-                   │
-
-            Firestore
-```
-
----
-
-# Authentication Flow
-
-1. User signs in with Firebase Authentication.
-2. Client requests Firebase ID Token.
-3. Every API request includes
-
-```
-Authorization: Bearer <token>
-```
-
-4. API verifies token using Firebase Admin SDK.
-5. Business logic executes.
-6. Firestore is updated.
-7. Response is returned.
-
----
-
-# Folder Structure
-
-```
-app/
-
-    api/
-
-        config/
-
-        entries/
-
-        dashboard/
-
-components/
-
-contexts/
-
-lib/
-
-    firebase.ts
-
-    firebase-admin.ts
-
-    server-auth.ts
-
-    scoring/
-
-models/
-
-repositories/
-
-services/
-```
-
----
-
-# Firestore Structure
-
-```
-users/
-
-    uid/
-
-        profile/
-
-        config/
-
-            metrics
-
-        entries/
-
-            yyyy-mm-dd
-```
-
----
-
-# Current Progress
-
-## ✅ Authentication
-
-Completed
-
-- Firebase Authentication
-- Protected Routes
-- AuthContext
-- Firebase ID Tokens
-- Firebase Admin verification
-- Secure API authentication
-
----
-
-## ✅ API Layer
-
-Completed
-
-Implemented
-
-- GET /api/config
-- POST /api/config
-- GET /api/entries
-- POST /api/entries
-
-The client no longer communicates directly with Firestore.
-
----
-
-## ✅ Firestore Architecture
-
-Implemented
-
-Client SDK
-
-```
-lib/firebase.ts
-```
-
-Server SDK
-
-```
-lib/firebase-admin.ts
-```
-
-Authentication
-
-```
-lib/server-auth.ts
-```
-
-Repositories
-
-```
-config.server.repository.ts
-
-entry.server.repository.ts
-```
-
-Repositories only perform Firestore operations.
-
----
-
-## ✅ Dynamic Metric System
-
-The application is completely configuration-driven.
-
-Every metric defines
-
-- id
-- label
-- description
-- category
-- displayOrder
-- type
-- target
-- defaultValue
-- weight
-- bonusRate
-- scoring strategy
-
-Adding a new metric only requires updating the configuration.
-
----
-
-## ✅ Supported Metric Types
-
-- Boolean
-- Number
-- Time
-
----
-
-## ✅ Supported Scoring
-
-Implemented
-
-- Boolean
-- Target
-- Numeric Range
-- Time Range
-
-Lookup scoring is being replaced by proper range-based scoring.
-
-Future
-
-- Formula
-- Percentage
-- Weighted
-- AI
-
----
-
-## ✅ Scoring Engine
-
-Location
-
-```
-lib/scoring/
-```
-
-Responsibilities
-
-- Calculate metric score
-- Calculate XP
-- Generate breakdown
-- Calculate total score
-
-Client
-
-- Live Preview
-
-Server
-
-- Final calculation before save
-
-The server is always the source of truth.
-
----
-
-## ✅ Today's Entry
-
-Completed
-
-- Dynamic form generation
-- Category grouping
-- Live Score preview
-- Live XP preview
-- Date selection
-- Save through API
-- Loading state
-- Error handling
-- Authenticated requests
-
-Remaining
-
-- Load previous entry when date changes
-- Edit existing entry
-- Duplicate detection
-- Better success notification
-
----
-
-## ✅ Daily Logs
-
-Completed
-
-- API integration
-- Reverse chronological history
-- Expandable cards
-- Metric breakdown
-- Stored score
-- Stored XP
-
-Remaining
-
-- Pagination
-- Search
-- Filters
-- Calendar view
-
----
-
-## ✅ Settings
-
-Completed
-
-- Read metric configuration
-- Group metrics
-- Development reseed endpoint
-
-Remaining
-
-- Goal management
-- Theme
-- Notifications
-- Dashboard preferences
-
----
-
-## ⏳ Dashboard
-
-Next major milestone.
-
-Planned
-
-- KPI Cards
-- Weekly Trends
-- Monthly Trends
-- Streak Tracking
-- XP Charts
-- Category Analysis
-- Goal Completion
-- Habit Consistency
-
----
-
-# Models
-
-## MetricDefinition
-
-Contains
-
-- metadata
-- targets
-- weights
-- scoring strategy
-- bonus configuration
-
----
-
-## DailyEntry
-
-Contains
-
-- date
-- values
-- score
-- xp
-- breakdown
-- timestamps
-
-Client sends
-
-```
-date
-
-values
-```
-
-Server calculates
-
-```
-score
-
-xp
-
-breakdown
-```
-
----
-
-# Repository Pattern
-
-Repositories only perform database operations.
-
-Repositories never perform
-
-- validation
-- score calculation
-- xp calculation
-- business logic
-
-Business logic belongs in
-
-- API Routes
-- Shared libraries
-
----
-
-# Development Principles
-
-## API First
-
-The client never accesses Firestore directly.
-
-Everything goes through API Routes.
-
----
-
-## Server Owns Business Logic
-
-The server calculates
-
-- Score
-- XP
-- Breakdown
-
-The client only sends raw values.
-
----
-
-## Firestore is the Source of Truth
-
-Dashboard calculations should always use stored entries.
-
-Never trust client-generated values.
-
----
-
-## Dynamic Configuration
-
-The UI is driven by metric definitions.
-
-No UI changes should be required when adding new metrics.
-
----
-
-## Strong Typing
-
-Use shared TypeScript models.
-
-Avoid `any`.
-
----
-
-## Small Components
-
-Components should
-
-- be reusable
-- remain composable
-- avoid business logic
-
----
-
-# UI Theme
-
-Current stack
-
-- Tailwind CSS v4
-- shadcn/ui
-- CSS Variables
-
-Use semantic colors
-
-```
-bg-background
-
-bg-card
-
-bg-muted
-
-text-foreground
-
-text-muted-foreground
-
-border-border
-
-bg-primary
-
-bg-secondary
-
-bg-accent
-```
-
-Avoid
-
-```
-bg-zinc-*
-
-text-zinc-*
-
-border-zinc-*
-```
-
----
-
-# Known TODOs
-
-## Today's Entry
-
-- Fix numeric input backspace issue
-- Improve Switch styling
-- Load existing entry for selected date
-- Prevent accidental overwrite
-- Replace alerts with toast notifications
-
----
-
-## Theme
-
-- Complete semantic color migration
-- Remove all hardcoded zinc colors
-- Improve card elevation
-- Improve dark mode contrast
-
----
-
-## Dashboard
-
-- KPI Cards
-- Weekly Charts
-- Monthly Charts
-- Streaks
-- Category Breakdown
-- XP History
-- Completion %
-- Goal Progress
-
----
-
-# Future Roadmap
-
-## Analytics
-
-- Weekly Reports
-- Monthly Reports
-- Yearly Reports
-- Goal Analysis
-- Habit Trends
-
----
-
-## AI
-
-- Productivity Coach
-- Weekly Reviews
-- Monthly Reviews
-- Habit Suggestions
-- Goal Recommendations
-- Burnout Detection
-
----
-
-## Gamification
-
-- Levels
-- XP Progression
-- Achievements
-- Badges
-- Challenges
-
----
-
-## Mobile
-
-- PWA
-- Offline Support
-- Push Notifications
-- Calendar Integration
-
----
-
-# Guiding Principles
-
-- Firestore is never accessed directly from UI.
-- API Routes own all business logic.
-- Firebase Admin SDK is server-only.
-- Client only submits raw metric values.
-- Server calculates score and XP.
-- Metric configuration drives the application.
-- Repositories only perform persistence.
-- Pages should focus on UI and state.
-- Use semantic color tokens instead of hardcoded colors.
-- Keep the scoring engine centralized.
+# Implementation Guide
+
+## 📌 Overview
+This document serves as a comprehensive source of truth for the application, detailing its current state, functionality, and future direction.
+
+## 🧱 Technologies Used
+- **Frontend**: Next.js (with Tailwind CSS)
+- **Backend**: Firebase (Authentication, Database, Realtime Database)
+- **TypeScript**: Used for type safety and development
+- **UI Framework**: Tailwind CSS for styling and responsive design
+- **State Management**: Context API for authentication and state management
+
+## 📁 File Structure
+- `app/`: Contains the main application files, including pages and layout
+- `lib/`: Contains utility and helper functions, including Firebase integration
+- `models/`: Contains data models for users, metrics, and entries
+- `docs/`: Contains documentation for data models, Firebase schema, and scoring engine
+- `public/`: Contains static assets like SVG icons and logos
+- `.next/`: Generated by Next.js for static and server-side rendering
+- `package.json`: Contains project dependencies and scripts
+
+## ✅ Current Functionality
+
+### 1. User Authentication
+- **Functionality**: Uses Firebase for authentication, with a context to manage authentication state.
+- **Files**: `AuthContext.tsx`, `lib/auth.ts`, `lib/firebase.ts`, `lib/firebase-admin.ts`, `lib/firebaseSeeder.ts`
+
+### 2. Data Models
+- **Functionality**: Defines models for users, metrics, and entries.
+- **Files**: `models/user.ts`, `models/metric.ts`, `models/entry.ts`, `docs/user-model.md`, `docs/metric-model.md`, `docs/entry-model.md`
+
+### 3. Scoring Engine
+- **Functionality**: Calculates scores based on user data.
+- **Files**: `lib/scoring/scoring-types.ts`, `lib/scoring/scoring-engine.ts`, `docs/scoring-engine.md`
+
+### 4. Firebase Integration
+- **Functionality**: Uses Firebase for authentication, database operations, and data seeding.
+- **Files**: `lib/firebase.ts`, `lib/firebase-admin.ts`, `lib/firebaseSeeder.ts`, `docs/firebase-schema.md`
+
+### 5. UI Components
+- **Functionality**: Contains pages for the main dashboard, login, logs, and today's entries.
+- **Files**: `app/page.tsx`, `app/layout.tsx`, `app/login/page.tsx`, `app/logs/page.tsx`, `app/today/page.tsx`, `app/globals.css`
+
+### 6. Documentation
+- **Functionality**: Contains comprehensive documentation for data models, Firebase schema, and scoring engine.
+- **Files**: `docs/firebase-schema.md`, `docs/user-model.md`, `docs/metric-model.md`, `docs/entry-model.md`, `docs/scoring-engine.md`, `docs/goals-model.md`
+
+## 🛠️ Current Progress and Improvements
+
+### 1. Settings Page
+- **Status**: The settings page is complete.
+- **Improvement**: The ability to add a new goal is not yet implemented. This functionality will be added in the next sprint.
+
+### 2. Logs Page
+- **Status**: The logs page is not yet complete.
+- **Improvement**: The logs page will be developed after the today page is completed.
+
+### 3. Bottom Navigation
+- **Status**: The bottom navigation is already implemented.
+- **Improvement**: The bottom navigation is functional and provides easy access to key sections.
+
+### 4. Today Page
+- **Status**: The today page has inputs for existing goals.
+- **Improvement**: The UI for the today page needs improvement. A date picker and time picker are required for specific inputs. The UI should be more like Apple Fitness, with a clean and intuitive design.
+
+### 5. Date Picker and Time Picker
+- **Status**: The date picker and time picker are not yet implemented.
+- **Improvement**: The date picker and time picker should be implemented to allow users to select dates and times easily. The date picker should appear when the user clicks on the date input, not when they click the calendar icon. The time picker should follow the same pattern.
+
+### 6. Icons
+- **Status**: The icons in the date picker are currently black.
+- **Improvement**: The icons should be updated to look good on the dark theme. The date picker should appear when the user clicks on the date input, not when they click the calendar icon. The time picker should follow the same pattern.
+
+### 7. UI Design
+- **Status**: The UI is not yet fully optimized for the Apple Fitness look and feel.
+- **Improvement**: The UI should be redesigned to look like Apple Fitness, with a clean and intuitive design. The colors should be adjusted to fit the dark theme.
+
+### 8. Top Bar
+- **Status**: The top bar is not yet persistent on scroll.
+- **Improvement**: The top bar should be persistent on scroll, with the app name and avatar visible at all times. The UI for the top bar should be improved to match the Apple Fitness design.
+
+## 📝 Notes
+- This guide is a living document and will be updated as the application evolves.
+- It serves as a reference for new developers and contributors to understand the current state and future direction of the application.
+
+## 🧠 Next Steps
+1. Implement the ability to add a new goal in the settings page.
+2. Develop the logs page after the today page is completed.
+3. Improve the UI for the today page to include date and time pickers.
+4. Update the icons to look good on the dark theme.
+5. Redesign the UI to look like Apple Fitness, with a clean and intuitive design.
+6. Make the top bar persistent on scroll with a better UI.
+
+## 📌 Summary
+This application is a modern, mobile-friendly tool for tracking daily goals and progress. It uses Firebase for backend services and Next.js for frontend development, with TypeScript for type safety and development. The implementation guide provides a comprehensive overview of the current state, functionality, and future improvements for the application.
+
+If you'd like me to implement any of these changes or provide code snippets, just let me know!

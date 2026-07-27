@@ -1,63 +1,57 @@
-"use client";
+'use client';
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 
-import {
-  LayoutDashboard,
-  CalendarCheck,
-  ChartSpline,
-  Settings,
-} from "lucide-react";
-
-const ITEMS = [
-  {
-    href: "/dashboard",
-    label: "Dashboard",
-    icon: LayoutDashboard,
-  },
-  {
-    href: "/today",
-    label: "Today",
-    icon: CalendarCheck,
-  },
-  {
-    href: "/logs",
-    label: "Logs",
-    icon: ChartSpline,
-  },
-  {
-    href: "/settings",
-    label: "Settings",
-    icon: Settings,
-  },
-];
+import DashboardIcon from '@/SVGs/DashboardIcon';
+import TodayIcon from '@/SVGs/TodayIcon';
+import LogsIcon from '@/SVGs/LogsIcon';
+import SettingsIcon from '@/SVGs/SettingsIcon';
 
 export default function BottomNavigation() {
   const pathname = usePathname();
 
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-50 border-t border-zinc-800 bg-zinc-950/95 backdrop-blur-xl supports-[backdrop-filter]:bg-zinc-950/80">
-      <div className="mx-auto flex h-16 max-w-screen-sm items-center justify-around px-2 pb-[env(safe-area-inset-bottom)]">
-        {ITEMS.map((item) => {
-          const active = pathname === item.href;
-          const Icon = item.icon;
+    <div className="fixed bottom-0 left-0 right-0 bg-gray-900 border-t border-gray-800 flex justify-around p-2">
+      <Link
+        href="/dashboard"
+        className={`flex flex-col items-center ${
+          pathname === '/dashboard' ? 'text-blue-500' : 'text-gray-500'
+        }`}
+      >
+        <DashboardIcon />
+        <span className="text-xs mt-1">Dashboard</span>
+      </Link>
 
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={`flex min-w-[64px] flex-col items-center justify-center rounded-xl px-3 py-2 transition-colors ${
-                active ? "text-blue-500" : "text-primary hover:text-zinc-200"
-              }`}
-            >
-              <Icon size={22} strokeWidth={2} />
+      <Link
+        href="/today"
+        className={`flex flex-col items-center ${
+          pathname === '/today' ? 'text-blue-500' : 'text-gray-500'
+        }`}
+      >
+        <TodayIcon />
+        <span className="text-xs mt-1">Today</span>
+      </Link>
 
-              <span className="mt-1 text-[11px] font-medium">{item.label}</span>
-            </Link>
-          );
-        })}
-      </div>
-    </nav>
+      <Link
+        href="/logs"
+        className={`flex flex-col items-center ${
+          pathname === '/logs' ? 'text-blue-500' : 'text-gray-500'
+        }`}
+      >
+        <LogsIcon />
+        <span className="text-xs mt-1">Logs</span>
+      </Link>
+
+      <Link
+        href="/settings"
+        className={`flex flex-col items-center ${
+          pathname === '/settings' ? 'text-blue-500' : 'text-gray-500'
+        }`}
+      >
+        <SettingsIcon />
+        <span className="text-xs mt-1">Settings</span>
+      </Link>
+    </div>
   );
 }

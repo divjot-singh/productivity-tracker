@@ -36,7 +36,7 @@ export default function TopBar() {
       .toUpperCase() ?? "U";
 
   return (
-    <header className="flex h-16 items-center justify-between border-b border-zinc-800 px-8">
+    <header className="bg-background fixed top-0 right-0 left-0 z-50 flex h-16 items-center justify-between border-b border-zinc-800 px-8">
       <h1 className="text-xl font-semibold">Productivity Tracker</h1>
 
       <DropdownMenu>
