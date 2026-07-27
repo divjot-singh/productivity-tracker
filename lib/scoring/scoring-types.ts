@@ -1,0 +1,23 @@
+export interface MetricScoreResult {
+  metricId: string;
+
+  value: number | boolean | string;
+
+  score: number;
+
+  weight: number;
+
+  weightedScore: number;
+
+  bonus: number;
+
+  xp: number;
+}
+
+export interface ScoreResult {
+  totalScore: number;
+
+  totalXP: number;
+
+  metrics: MetricScoreResult[];
+}
