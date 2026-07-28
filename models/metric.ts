@@ -1,21 +1,24 @@
 // models/metric.ts
 
+import { Date } from "firebase/ai";
+
 export type MetricValue = number | boolean | string;
 
-export type MetricType = "number" | "boolean" | "time" | "time-range";
+export type MetricType = "number" | "boolean" | "time";
 
 export type MetricCategory =
-  "health" | "fitness" | "lifestyle" | "family" | "routine";
+  "health" | "fitness" | "lifestyle" | "family" | "routine" | "custom";
 
 // ---------------- SCORING TYPES ----------------
 
 export type ScoringType =
-  "boolean" | "target" | "lookup" | "range" | "time-range";
+  "boolean" | "goal" | "options" | "range" | "time-range" | "multiplier";
 
 // ---------------- SCORE DEFINITIONS ----------------
 
-export interface LookupScore {
-  value: string | number | boolean | "after";
+export interface OptionScore {
+  value: string | number | boolean;
+  label: string;
   score: number;
 }
 
@@ -34,23 +37,16 @@ export interface RangeScore {
 export interface ScoringDefinition {
   type: ScoringType;
 
-  /**
-   * Used for lookup scoring
-   * Example:
-   * Wake time:
-   * 07:30 -> 10
-   * 08:00 -> 8
-   */
-  values?: LookupScore[];
+  options?: OptionScore[];
+
+  ranges?: RangeScore[];
+
   time?: TimeRangeScore[];
 
-  /**
-   * Used for range scoring
-   * Example:
-   * Sleep:
-   * 8-8.9 hours -> 10
-   */
-  ranges?: RangeScore[];
+  multiplier?: number;
+
+  bonusRate?: number;
+  maxScore?: number;
 }
 
 // ---------------- METRIC ----------------
@@ -59,6 +55,7 @@ export interface MetricDefinition {
   id: string;
 
   label: string;
+  icon: string;
 
   description?: string;
 
@@ -70,25 +67,20 @@ export interface MetricDefinition {
 
   unit?: string;
 
-  /**
-   * Initial value when creating today's form
-   */
   defaultValue: MetricValue;
 
-  /**
-   * Goal target
-   */
   target: MetricValue;
 
-  /**
-   * Contribution weight
-   */
   weight: number;
 
-  /**
-   * Extra XP multiplier
-   */
-  bonusRate: number;
-
   scoring: ScoringDefinition;
+  createdAt?: unknown;
+  updatedAt?: unknown;
+}
+
+export interface Config {
+  metrics: MetricDefinition[];
+  version: number;
+  createdAt: Date;
+  updatedAt: Date;
 }

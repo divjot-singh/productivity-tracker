@@ -1,3 +1,4 @@
+import { apiRequest } from "@/lib/api/client";
 import { auth } from "@/lib/firebase";
 
 export class SeederService {
@@ -8,20 +9,13 @@ export class SeederService {
       throw new Error("User not authenticated");
     }
 
-    const token = await user.getIdToken();
-
-    const response = await fetch("/api/config", {
-      method: "POST",
-
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-
-    if (!response.ok) {
+    try {
+      return apiRequest(user, "/api/config", {
+        method: "POST",
+      });
+    } catch (e) {
+      console.error(e);
       throw new Error("Failed to seed config");
     }
-
-    return response.json();
   }
 }

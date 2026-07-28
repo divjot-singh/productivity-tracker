@@ -1,449 +1,119 @@
 import { MetricDefinition } from "@/models/metric";
 
 export const DEFAULT_METRICS: MetricDefinition[] = [
-  // ---------------- HEALTH ----------------
-
   {
-    id: "sleep",
-
-    label: "Sleep",
-
-    description: "Total hours slept",
-
-    category: "health",
-
-    displayOrder: 1,
-
-    type: "number",
-
-    unit: "hours",
-
-    defaultValue: 0,
-
-    target: 8,
-
-    weight: 10,
-
-    bonusRate: 0,
-
-    scoring: {
-      type: "range",
-
-      ranges: [
-        {
-          min: 5,
-          max: 5.9,
-          score: 4,
-        },
-
-        {
-          min: 6,
-          max: 6.9,
-          score: 7,
-        },
-
-        {
-          min: 7,
-          max: 7.9,
-          score: 9,
-        },
-
-        {
-          min: 8,
-          max: 8.9,
-          score: 10,
-        },
-
-        {
-          min: 9,
-          max: 9.9,
-          score: 9,
-        },
-
-        {
-          min: 10,
-          max: 10.9,
-          score: 7,
-        },
-      ],
-    },
-  },
-
-  {
-    id: "protein",
-
-    label: "Protein",
-
-    description: "Protein servings consumed",
-
-    category: "health",
-
-    displayOrder: 2,
-
-    type: "number",
-
-    unit: "servings",
-
-    defaultValue: 0,
-
-    target: 3,
-
-    weight: 8,
-
-    bonusRate: 0,
-
-    scoring: {
-      type: "target",
-    },
-  },
-
-  // ---------------- FITNESS ----------------
-
-  {
-    id: "weightTraining",
-
-    label: "Weight Training",
-
-    category: "fitness",
-
-    displayOrder: 3,
-
-    type: "boolean",
-
-    defaultValue: false,
-
-    target: true,
-
-    weight: 10,
-
-    bonusRate: 0,
-
-    scoring: {
-      type: "boolean",
-    },
-  },
-
-  {
-    id: "cardio",
-
-    label: "Cardio",
-
-    category: "fitness",
-
-    displayOrder: 4,
-
-    type: "number",
-
-    unit: "minutes",
-
-    defaultValue: 0,
-
-    target: 10,
-
-    weight: 5,
-
-    bonusRate: 0.1,
-
-    scoring: {
-      type: "target",
-    },
-  },
-
-  {
-    id: "steps",
-
+    id: "05132579-6950-49df-a5ac-fc9b0d130199",
     label: "Steps",
-
+    icon: "steps",
+    description: "Track daily movement through total steps walked",
     category: "fitness",
-
-    displayOrder: 5,
-
+    displayOrder: 999,
     type: "number",
-
     unit: "steps",
-
     defaultValue: 0,
-
     target: 10000,
-
-    weight: 5,
-
-    bonusRate: 0.0002,
-
-    scoring: {
-      type: "target",
-    },
-  },
-
-  {
-    id: "stretching",
-
-    label: "Stretching",
-
-    category: "fitness",
-
-    displayOrder: 6,
-
-    type: "boolean",
-
-    defaultValue: false,
-
-    target: true,
-
-    weight: 5,
-
-    bonusRate: 0,
-
-    scoring: {
-      type: "boolean",
-    },
-  },
-
-  // ---------------- LIFESTYLE ----------------
-
-  {
-    id: "healthyEating",
-
-    label: "Healthy Eating",
-
-    category: "lifestyle",
-
-    displayOrder: 7,
-
-    type: "boolean",
-
-    defaultValue: false,
-
-    target: true,
-
-    weight: 5,
-
-    bonusRate: 0,
-
-    scoring: {
-      type: "boolean",
-    },
-  },
-
-  {
-    id: "noAlcohol",
-
-    label: "No Alcohol",
-
-    category: "lifestyle",
-
-    displayOrder: 8,
-
-    type: "boolean",
-
-    defaultValue: false,
-
-    target: true,
-
-    weight: 5,
-
-    bonusRate: 0,
-
-    scoring: {
-      type: "boolean",
-    },
-  },
-
-  {
-    id: "primaryGoal",
-
-    label: "Primary Goal",
-
-    description: "Daily progress towards primary goal",
-
-    category: "lifestyle",
-
-    displayOrder: 9,
-
-    type: "number",
-
-    unit: "tasks",
-
-    defaultValue: 0,
-
-    target: 5,
-
-    weight: 20,
-
-    bonusRate: 0,
-
-    scoring: {
-      type: "target",
-    },
-  },
-
-  // ---------------- FAMILY ----------------
-
-  {
-    id: "helpedWifeExercise",
-
-    label: "Helped Wife Exercise",
-
-    category: "family",
-
-    displayOrder: 10,
-
-    type: "boolean",
-
-    defaultValue: false,
-
-    target: true,
-
     weight: 10,
-
-    bonusRate: 0,
-
     scoring: {
-      type: "boolean",
+      type: "multiplier",
+      multiplier: 0.001,
+    },
+    createdAt: {
+      _seconds: 1785236305,
+      _nanoseconds: 958000000,
+    },
+    updatedAt: {
+      _seconds: 1785236305,
+      _nanoseconds: 958000000,
     },
   },
-
   {
-    id: "householdHelp",
-
-    label: "Household Help",
-
-    category: "family",
-
-    displayOrder: 11,
-
+    id: "09129e89-1974-4843-b9c1-64e64988d562",
+    label: "Junk food",
+    icon: "healthyEating",
+    description: "Did I have junk food during the day",
+    category: "lifestyle",
+    displayOrder: 999,
     type: "boolean",
-
     defaultValue: false,
-
-    target: true,
-
-    weight: 8,
-
-    bonusRate: 0,
-
+    target: false,
+    weight: 4,
     scoring: {
       type: "boolean",
     },
-  },
-
-  // ---------------- ROUTINE ----------------
-
-  {
-    id: "wakeTime",
-
-    label: "Wake Time",
-
-    category: "routine",
-
-    displayOrder: 12,
-
-    type: "time-range",
-
-    defaultValue: "",
-
-    target: "07:30",
-
-    weight: 5,
-
-    bonusRate: 0,
-
-    scoring: {
-      type: "time-range",
-
-      time: [
-        {
-          from: "07:30",
-          to: "07:59",
-          score: 10,
-        },
-
-        {
-          from: "08:00",
-          to: "08:29",
-          score: 8,
-        },
-
-        {
-          from: "08:30",
-          to: "08:59",
-          score: 6,
-        },
-
-        {
-          from: "09:00",
-          to: "09:29",
-          score: 4,
-        },
-
-        {
-          from: "09:30",
-          to: "09:59",
-          score: 2,
-        },
-
-        {
-          from: "10:00",
-          to: "23:59",
-          score: 0,
-        },
-      ],
+    createdAt: {
+      _seconds: 1785237610,
+      _nanoseconds: 272000000,
+    },
+    updatedAt: {
+      _seconds: 1785237610,
+      _nanoseconds: 272000000,
     },
   },
-
   {
-    id: "bedTime",
-
-    label: "Bed Time",
-
+    id: "09ad9b09-76e4-4753-a6ee-560d87294bc3",
+    label: "Oral Hygeine",
+    icon: "oralHygiene",
+    description: "How many times do I brush?",
+    category: "lifestyle",
+    displayOrder: 999,
+    type: "number",
+    unit: "",
+    defaultValue: 0,
+    target: 2,
+    weight: 4,
+    scoring: {
+      type: "multiplier",
+      multiplier: 1,
+      maxScore: 4,
+    },
+    createdAt: {
+      _seconds: 1785240670,
+      _nanoseconds: 768000000,
+    },
+    updatedAt: {
+      _seconds: 1785240670,
+      _nanoseconds: 768000000,
+    },
+  },
+  {
+    id: "310778ba-26b7-486c-ace7-d10cf16edf8d",
+    label: "Bed time",
+    icon: "bedTime",
+    description: "What time did I sleep?",
     category: "routine",
-
-    displayOrder: 13,
-
-    type: "time-range",
-
-    defaultValue: "",
-
-    target: "23:30",
-
-    weight: 5,
-
-    bonusRate: 0,
-
+    displayOrder: 999,
+    type: "time",
+    defaultValue: "00:00",
+    target: "21:30",
+    weight: 4,
     scoring: {
       type: "time-range",
-
       time: [
         {
           from: "21:00",
           to: "21:59",
-          score: 10,
+          score: 4,
         },
-
         {
           from: "22:00",
           to: "22:59",
-          score: 8,
+          score: 3.5,
         },
-
         {
           from: "23:00",
-          to: "23:29",
-          score: 6,
+          to: "23:59",
+          score: 3,
         },
-
         {
           from: "00:00",
           to: "00:59",
-          score: 4,
+          score: 2,
         },
-
         {
           from: "01:00",
           to: "01:59",
-          score: 2,
+          score: 1,
         },
-
         {
           from: "02:00",
           to: "20:59",
@@ -451,31 +121,402 @@ export const DEFAULT_METRICS: MetricDefinition[] = [
         },
       ],
     },
+    createdAt: {
+      _seconds: 1785240487,
+      _nanoseconds: 638000000,
+    },
+    updatedAt: {
+      _seconds: 1785240487,
+      _nanoseconds: 638000000,
+    },
   },
-
   {
-    id: "oralHygiene",
-
-    label: "Oral Hygiene",
-
-    category: "routine",
-
-    displayOrder: 14,
-
-    type: "number",
-
-    unit: "times",
-
-    defaultValue: 0,
-
-    target: 2,
-
+    id: "49e5e0ac-f833-4b58-a0a4-be59e6daea58",
+    label: "Alcohol consumption",
+    icon: "noAlcohol",
+    description: "Did i consume alcohol today?",
+    category: "lifestyle",
+    displayOrder: 999,
+    type: "boolean",
+    defaultValue: false,
+    target: false,
     weight: 4,
-
-    bonusRate: 0,
-
     scoring: {
-      type: "target",
+      type: "boolean",
+    },
+    createdAt: {
+      _seconds: 1785237656,
+      _nanoseconds: 484000000,
+    },
+    updatedAt: {
+      _seconds: 1785237656,
+      _nanoseconds: 484000000,
+    },
+  },
+  {
+    id: "6068dfa1-44ca-4373-a95f-82a3b8ee048d",
+    label: "Protein intake",
+    icon: "protein",
+    description: "Track daily protein intake through servings consumed",
+    category: "health",
+    displayOrder: 999,
+    type: "number",
+    unit: "servings",
+    defaultValue: 0,
+    target: 3,
+    weight: 8,
+    scoring: {
+      type: "goal",
+      bonusRate: 1,
+    },
+    createdAt: {
+      _seconds: 1785236386,
+      _nanoseconds: 762000000,
+    },
+    updatedAt: {
+      _seconds: 1785236386,
+      _nanoseconds: 762000000,
+    },
+  },
+  {
+    id: "79147c1f-41d3-4ec1-92b2-d3a4f3bfd286",
+    label: "Stretching",
+    icon: "stretching",
+    description: "Track if I did stretching during a day",
+    category: "fitness",
+    displayOrder: 999,
+    type: "boolean",
+    defaultValue: false,
+    target: true,
+    weight: 4,
+    scoring: {
+      type: "boolean",
+    },
+    createdAt: {
+      _seconds: 1785237275,
+      _nanoseconds: 216000000,
+    },
+    updatedAt: {
+      _seconds: 1785237275,
+      _nanoseconds: 216000000,
+    },
+  },
+  {
+    id: "7b905d1a-3fcf-415e-9a92-7679049befcb",
+    label: "Water intake",
+    icon: "water",
+    description: "How much water did I drink today?",
+    category: "routine",
+    displayOrder: 999,
+    type: "number",
+    unit: "ltrs",
+    defaultValue: 0,
+    target: 4,
+    weight: 9,
+    scoring: {
+      type: "multiplier",
+      multiplier: 2.58,
+      maxScore: 10,
+    },
+    createdAt: {
+      _seconds: 1785240961,
+      _nanoseconds: 17000000,
+    },
+    updatedAt: {
+      _seconds: 1785240961,
+      _nanoseconds: 17000000,
+    },
+  },
+  {
+    id: "92884629-acc7-46c9-a86f-efb85634cf11",
+    label: "Helped wife exercise",
+    icon: "helpedWifeExercise",
+    description: "Did I help my wife with her exercise?",
+    category: "family",
+    displayOrder: 999,
+    type: "boolean",
+    defaultValue: false,
+    target: true,
+    weight: 9,
+    scoring: {
+      type: "boolean",
+    },
+    createdAt: {
+      _seconds: 1785238219,
+      _nanoseconds: 935000000,
+    },
+    updatedAt: {
+      _seconds: 1785238219,
+      _nanoseconds: 935000000,
+    },
+  },
+  {
+    id: "ae844f72-1bc4-4d3a-a7bf-b5a9bb077a8d",
+    label: "Work progress",
+    icon: "primaryGoal",
+    description: "Did I progress at work today?",
+    category: "lifestyle",
+    displayOrder: 999,
+    type: "number",
+    unit: "% progress",
+    defaultValue: 0,
+    target: 100,
+    weight: 8,
+    scoring: {
+      type: "options",
+      options: [
+        {
+          label: "Not started",
+          value: 0,
+          score: 0,
+        },
+        {
+          label: "Partially Worked",
+          value: 2,
+          score: 25,
+        },
+        {
+          label: "Mostly Completed",
+          value: 4.8,
+          score: 60,
+        },
+        {
+          label: "Completed",
+          value: 11,
+          score: 100,
+        },
+        {
+          label: "Exceeded plan",
+          value: 10,
+          score: 125,
+        },
+      ],
+    },
+    createdAt: {
+      _seconds: 1785238154,
+      _nanoseconds: 345000000,
+    },
+    updatedAt: {
+      _seconds: 1785238154,
+      _nanoseconds: 345000000,
+    },
+  },
+  {
+    id: "b31437dc-f6e5-4e54-8127-859617499623",
+    label: "Sleep",
+    icon: "sleep",
+    description: "Hours slept last night",
+    category: "health",
+    displayOrder: 999,
+    type: "number",
+    unit: "hours",
+    defaultValue: 0,
+    target: 8,
+    weight: 10,
+    scoring: {
+      type: "range",
+      ranges: [
+        {
+          min: 0,
+          max: 4.9,
+          score: 0,
+        },
+        {
+          min: 5,
+          max: 5.9,
+          score: 4,
+        },
+        {
+          min: 6,
+          max: 6.9,
+          score: 7,
+        },
+        {
+          min: 7,
+          max: 7.9,
+          score: 9,
+        },
+        {
+          min: 8,
+          max: 8.9,
+          score: 10,
+        },
+        {
+          min: 9,
+          max: 9.9,
+          score: 9,
+        },
+        {
+          min: 10,
+          max: 10.9,
+          score: 7,
+        },
+        {
+          min: 11,
+          max: 24,
+          score: 0,
+        },
+      ],
+    },
+    createdAt: {
+      _seconds: 1785235789,
+      _nanoseconds: 550000000,
+    },
+    updatedAt: {
+      _seconds: 1785235789,
+      _nanoseconds: 550000000,
+    },
+  },
+  {
+    id: "e12e0e05-c8a1-4ba9-bab4-79ad8a13cfc9",
+    label: "Wake time",
+    icon: "wakeTime",
+    description: "What time did I wake up?",
+    category: "routine",
+    displayOrder: 999,
+    type: "time",
+    defaultValue: "00:00",
+    target: "07:30",
+    weight: 5,
+    scoring: {
+      type: "time-range",
+      time: [
+        {
+          from: "07:30",
+          to: "07:59",
+          score: 10,
+        },
+        {
+          from: "08:00",
+          to: "08:29",
+          score: 8,
+        },
+        {
+          from: "08:30",
+          to: "08:59",
+          score: 6,
+        },
+        {
+          from: "09:00",
+          to: "09:29",
+          score: 4,
+        },
+        {
+          from: "09:30",
+          to: "09:59",
+          score: 2,
+        },
+        {
+          from: "10:00",
+          to: "23:59",
+          score: 0,
+        },
+      ],
+    },
+    createdAt: {
+      _seconds: 1785239806,
+      _nanoseconds: 705000000,
+    },
+    updatedAt: {
+      _seconds: 1785239806,
+      _nanoseconds: 705000000,
+    },
+  },
+  {
+    id: "e7f4ff7e-2332-4a2b-8b15-6a2415b4d801",
+    label: "Cardio",
+    icon: "cardio",
+    description: "Track the number of minutes to do cardio",
+    category: "fitness",
+    displayOrder: 999,
+    type: "number",
+    unit: "minutes",
+    defaultValue: 0,
+    target: 10,
+    weight: 6,
+    scoring: {
+      type: "multiplier",
+      multiplier: 0.6,
+    },
+    createdAt: {
+      _seconds: 1785237174,
+      _nanoseconds: 201000000,
+    },
+    updatedAt: {
+      _seconds: 1785237174,
+      _nanoseconds: 201000000,
+    },
+  },
+  {
+    id: "e8c737c6-ae55-42fa-81d1-e3667cbd2e8e",
+    label: "Weight training",
+    icon: "weightTraining",
+    description: "Track weight training done during the day",
+    category: "fitness",
+    displayOrder: 999,
+    type: "boolean",
+    defaultValue: false,
+    target: true,
+    weight: 8,
+    scoring: {
+      type: "boolean",
+    },
+    createdAt: {
+      _seconds: 1785237051,
+      _nanoseconds: 521000000,
+    },
+    updatedAt: {
+      _seconds: 1785237051,
+      _nanoseconds: 521000000,
+    },
+  },
+  {
+    id: "ea55a024-5389-44d1-86b1-9a318bcd2fdf",
+    label: "Supplement intake",
+    icon: "primaryGoal",
+    description: "How many suppliments did I take today?",
+    category: "fitness",
+    displayOrder: 999,
+    type: "number",
+    unit: "caps",
+    defaultValue: 0,
+    target: 5,
+    weight: 5,
+    scoring: {
+      type: "multiplier",
+      multiplier: 1,
+      maxScore: 5,
+    },
+    createdAt: {
+      _seconds: 1785241074,
+      _nanoseconds: 141000000,
+    },
+    updatedAt: {
+      _seconds: 1785241074,
+      _nanoseconds: 141000000,
+    },
+  },
+  {
+    id: "f53982da-6919-4523-9d49-3e64652bd8f3",
+    label: "Household help",
+    icon: "householdHelp",
+    description: "Did i help my wife with household work?",
+    category: "family",
+    displayOrder: 999,
+    type: "boolean",
+    defaultValue: false,
+    target: true,
+    weight: 6,
+    scoring: {
+      type: "boolean",
+    },
+    createdAt: {
+      _seconds: 1785239036,
+      _nanoseconds: 959000000,
+    },
+    updatedAt: {
+      _seconds: 1785239036,
+      _nanoseconds: 959000000,
     },
   },
 ];

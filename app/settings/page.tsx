@@ -6,7 +6,10 @@ import AppShell from "@/components/layout/AppShell";
 import Section from "@/components/ui/section";
 
 import { useAuth } from "@/contexts/AuthContext";
-import { MetricDefinition } from "@/models/metric";
+import { Config, MetricDefinition } from "@/models/metric";
+import QuickActions from "@/components/settings/QuickActions";
+import { toast } from "sonner";
+import { apiRequest } from "@/lib/api/client";
 
 export default function SettingsPage() {
   const { user } = useAuth();
@@ -22,21 +25,11 @@ export default function SettingsPage() {
       }
 
       try {
-        const token = await user.getIdToken();
-
-        const response = await fetch("/api/config", {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-
-        if (!response.ok) {
-          throw new Error("Failed to load config");
-        }
-
-        const config = await response.json();
-
-        setMetrics(config?.metrics ?? []);
+        const goals = await apiRequest<MetricDefinition[]>(user, "/api/goals");
+        setMetrics(goals ?? []);
+      } catch (e) {
+        toast.error("Fetching logs failed");
+        return;
       } finally {
         setLoading(false);
       }
@@ -80,7 +73,7 @@ export default function SettingsPage() {
             Current productivity configuration
           </p>
         </div>
-
+        <QuickActions />
         <div className="space-y-8">
           {Object.entries(grouped).map(([category, values]) => (
             <Section

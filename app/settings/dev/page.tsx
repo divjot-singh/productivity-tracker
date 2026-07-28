@@ -3,6 +3,7 @@
 import { useAuth } from "@/contexts/AuthContext";
 import { SeederService } from "@/services/SeederService";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 export default function DevSettings() {
   if (process.env.NODE_ENV !== "development") {
@@ -14,8 +15,7 @@ export default function DevSettings() {
     if (!user) return;
 
     await SeederService.seedDefaults();
-
-    alert("Config reseeded");
+    toast.success("Config reseeded");
   }
 
   return (

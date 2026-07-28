@@ -6,12 +6,14 @@ import AppShell from "@/components/layout/AppShell";
 import MetricInput from "@/components/today/MetricInput";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { toast } from "sonner";
 
 import { useAuth } from "@/contexts/AuthContext";
 
-import { MetricDefinition, MetricValue } from "@/models/metric";
+import { Config, MetricDefinition, MetricValue } from "@/models/metric";
 
 import { calculateScore } from "@/lib/scoring/scoring-engine";
+import { apiRequest } from "@/lib/api/client";
 
 type EntryValues = Record<string, MetricValue>;
 
@@ -42,21 +44,9 @@ export default function TodayPage() {
         setLoading(true);
 
         setError(null);
-        const token = await user.getIdToken();
+        const config = await apiRequest<Config>(user, "/api/config");
 
-        const response = await fetch("/api/config", {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-
-        if (!response.ok) {
-          throw new Error("Failed to load configuration");
-        }
-
-        const config = await response.json();
-
-        const loadedMetrics = (config?.metrics as MetricDefinition[]) ?? [];
+        const loadedMetrics = config.metrics ?? [];
 
         setMetrics(loadedMetrics);
 
@@ -120,34 +110,25 @@ export default function TodayPage() {
 
     try {
       setSaving(true);
-      const token = await user.getIdToken();
-
-      const response = await fetch("/api/entries", {
+      const data = await apiRequest<{
+        score: number;
+        xp: number;
+      }>(user, "/api/entries", {
         method: "POST",
 
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-
-        body: JSON.stringify({
+        body: {
           date: selectedDate,
-
           values,
-        }),
+        },
       });
 
-      if (!response.ok) {
-        throw new Error("Failed to save entry");
-      }
-
-      const data = await response.json();
-
-      alert(`Saved successfully.\nScore: ${data.score}\nXP: ${data.xp}`);
+      toast.success(
+        `Saved successfully.\nScore: ${data.score}\nXP: ${data.xp}`,
+      );
     } catch (err) {
       console.error(err);
 
-      alert("Failed to save entry");
+      toast.error("Failed to save entry");
     } finally {
       setSaving(false);
     }

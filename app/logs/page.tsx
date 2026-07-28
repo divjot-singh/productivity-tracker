@@ -5,8 +5,10 @@ import { useEffect, useState } from "react";
 import AppShell from "@/components/layout/AppShell";
 
 import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
 
 import { DailyEntry } from "@/models/entry";
+import { apiRequest } from "@/lib/api/client";
 
 export default function LogsPage() {
   const { user } = useAuth();
@@ -21,24 +23,16 @@ export default function LogsPage() {
     async function load() {
       if (!user) return;
 
-      const token = await user.getIdToken();
+      try {
+        const entries = await apiRequest<DailyEntry[]>(user, "/api/entries");
+        setEntries(entries);
 
-      const response = await fetch("/api/entries", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (!response.ok) {
         setLoading(false);
+      } catch (e) {
+        setLoading(false);
+        toast.error("Fetching logs failed");
         return;
       }
-
-      const data = await response.json();
-
-      setEntries(data);
-
-      setLoading(false);
     }
 
     load();

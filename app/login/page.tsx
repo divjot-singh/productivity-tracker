@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
 
 import LoginCard from "@/components/feature/auth/LoginCard";
 import { signInWithGoogle } from "@/lib/auth";
@@ -29,7 +30,7 @@ export default function LoginPage() {
       router.push("/dashboard");
     } catch (error) {
       console.error(error);
-      alert("Unable to sign in.");
+      toast.error("Unable to sign in.");
     } finally {
       setLoading(false);
     }
