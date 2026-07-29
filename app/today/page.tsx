@@ -44,15 +44,13 @@ export default function TodayPage() {
         setLoading(true);
 
         setError(null);
-        const config = await apiRequest<Config>(user, "/api/config");
+        const goals = await apiRequest<MetricDefinition[]>(user, "/api/goals");
 
-        const loadedMetrics = config.metrics ?? [];
-
-        setMetrics(loadedMetrics);
+        setMetrics(goals);
 
         const initialValues: EntryValues = {};
 
-        loadedMetrics.forEach((metric) => {
+        goals.forEach((metric) => {
           initialValues[metric.id] = metric.defaultValue;
         });
 

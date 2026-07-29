@@ -63,7 +63,7 @@ export const DEFAULT_METRICS: MetricDefinition[] = [
     weight: 4,
     scoring: {
       type: "multiplier",
-      multiplier: 1,
+      multiplier: 2,
       maxScore: 4,
     },
     createdAt: {

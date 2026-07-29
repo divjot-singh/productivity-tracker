@@ -10,8 +10,6 @@ export interface MetricScoreResult {
   weightedScore: number;
 
   bonus: number;
-
-  xp: number;
 }
 
 export interface ScoreResult {
@@ -20,4 +18,6 @@ export interface ScoreResult {
   totalXP: number;
 
   metrics: MetricScoreResult[];
+
+  totalHeight: number;
 }
