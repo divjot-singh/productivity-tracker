@@ -41,7 +41,7 @@ export default function OptionsConfig({ goal, updateGoal }: Props) {
       {
         label: "",
         value: "",
-        score: 0,
+        multiplier: 1,
       },
     ]);
   }
@@ -58,7 +58,7 @@ export default function OptionsConfig({ goal, updateGoal }: Props) {
         <h3 className="text-lg font-semibold">Options Configuration</h3>
 
         <p className="text-muted-foreground mt-1 text-sm">
-          Configure the selectable options and their scores.
+          Configure the selectable options and their score multipliers.
         </p>
       </div>
 
@@ -99,17 +99,24 @@ export default function OptionsConfig({ goal, updateGoal }: Props) {
               </div>
 
               <div className="space-y-2">
-                <Label>Score</Label>
+                <Label>Score Multiplier</Label>
 
                 <Input
                   type="number"
-                  value={option.score}
+                  min={0}
+                  step={0.05}
+                  value={option.multiplier}
                   onChange={(e) =>
                     updateOption(index, {
-                      score: Number(e.target.value),
+                      multiplier: Number(e.target.value),
                     })
                   }
                 />
+
+                <p className="text-muted-foreground text-xs">
+                  {(option.multiplier * goal.weight).toFixed(1)} / {goal.weight}{" "}
+                  points
+                </p>
               </div>
             </div>
 

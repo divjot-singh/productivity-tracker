@@ -10,6 +10,7 @@ import {
 } from "@/repositories/entry.server.repository";
 
 import { getMetrics } from "@/repositories/config.server.repository";
+import { getGoals } from "@/repositories/goals.server.repository";
 
 export async function POST(request: NextRequest) {
   try {
@@ -43,9 +44,11 @@ export async function POST(request: NextRequest) {
 
     // Load user's metric configuration
 
-    const config = await getMetrics(user.uid);
+    const config = await getGoals(user.uid);
 
-    if (!config?.metrics) {
+    const metrics = config;
+
+    if (!metrics?.length) {
       return NextResponse.json(
         {
           error: "Metric configuration missing",
@@ -58,7 +61,7 @@ export async function POST(request: NextRequest) {
 
     // Server side calculation
 
-    const result = calculateScore(config.metrics, values);
+    const result = calculateScore(metrics, values);
 
     await createEntry(user.uid, {
       date,

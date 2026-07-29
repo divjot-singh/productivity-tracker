@@ -33,12 +33,14 @@ export default function TimeRangeInput({ metric, value, onChange }: Props) {
     // handles ranges crossing midnight
     return currentMinutes >= fromMinutes || currentMinutes <= toMinutes;
   });
-
-  const bestRange = [...ranges].sort((a, b) => b.score - a.score)[0];
-  const score = matchedRange?.score ?? 0;
-
+  const score = matchedRange ? matchedRange.multiplier * metric.weight : 0;
   const progress =
-    metric.weight > 0 ? Math.min((score / metric.weight) * 100, 100) : 0;
+    metric.weight > 0 ? Math.min(matchedRange?.multiplier ?? 0, 1) * 100 : 0;
+  const bestRange = ranges.reduce(
+    (best, current) =>
+      !best || current.multiplier > best.multiplier ? current : best,
+    undefined as (typeof ranges)[number] | undefined,
+  );
 
   return (
     <MetricCard

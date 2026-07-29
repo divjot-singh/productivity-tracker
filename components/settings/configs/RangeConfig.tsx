@@ -41,7 +41,7 @@ export default function RangeConfig({ goal, updateGoal }: Props) {
       {
         min: 0,
         max: 0,
-        score: 0,
+        multiplier: 1,
       },
     ]);
   }
@@ -56,14 +56,14 @@ export default function RangeConfig({ goal, updateGoal }: Props) {
         <h3 className="text-lg font-semibold">Range Configuration</h3>
 
         <p className="text-muted-foreground mt-1 text-sm">
-          Configure score ranges for this goal.
+          Configure score multipliers for each range.
         </p>
       </div>
 
       <div className="space-y-4">
         {ranges.map((range, index) => (
           <div key={index} className="space-y-4 rounded-xl border p-4">
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid gap-3 md:grid-cols-3">
               <div className="space-y-2">
                 <Label>Min</Label>
 
@@ -93,17 +93,24 @@ export default function RangeConfig({ goal, updateGoal }: Props) {
               </div>
 
               <div className="space-y-2">
-                <Label>Score</Label>
+                <Label>Score Multiplier</Label>
 
                 <Input
                   type="number"
-                  value={range.score}
+                  min={0}
+                  step={0.05}
+                  value={range.multiplier}
                   onChange={(e) =>
                     updateRange(index, {
-                      score: Number(e.target.value),
+                      multiplier: Number(e.target.value),
                     })
                   }
                 />
+
+                <p className="text-muted-foreground text-xs">
+                  {(range.multiplier * goal.weight).toFixed(1)} / {goal.weight}{" "}
+                  points
+                </p>
               </div>
             </div>
 

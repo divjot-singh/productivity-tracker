@@ -199,7 +199,7 @@ export default function GoalDetails() {
                       </td>
 
                       <td className="px-4 py-3 text-right font-semibold">
-                        {range.score} pts
+                        {range.multiplier * goal.weight} pts
                       </td>
                     </tr>
                   ))}
@@ -218,7 +218,7 @@ export default function GoalDetails() {
                 <OverviewRow
                   key={index}
                   label={option.label}
-                  value={`${option.score} pts`}
+                  value={`${option.multiplier * goal.weight} pts`}
                 />
               ))}
             </div>
@@ -252,7 +252,7 @@ export default function GoalDetails() {
                       </td>
 
                       <td className="px-4 py-3 text-right font-semibold">
-                        {time.score} pts
+                        {time.multiplier * goal.weight} pts
                       </td>
                     </tr>
                   ))}

@@ -19,19 +19,19 @@ export type ScoringType =
 export interface OptionScore {
   value: string | number | boolean;
   label: string;
-  score: number;
+  multiplier: number;
 }
 
 export interface TimeRangeScore {
   from: string; // HH:mm
   to: string; // HH:mm
-  score: number;
+  multiplier: number;
 }
 
 export interface RangeScore {
   min: number;
   max: number;
-  score: number;
+  multiplier: number;
 }
 
 export interface ScoringDefinition {

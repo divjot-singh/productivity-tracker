@@ -41,7 +41,7 @@ export default function TimeRangeConfig({ goal, updateGoal }: Props) {
       {
         from: "08:00",
         to: "08:30",
-        score: 10,
+        multiplier: 1,
       },
     ]);
   }
@@ -93,17 +93,24 @@ export default function TimeRangeConfig({ goal, updateGoal }: Props) {
               </div>
 
               <div className="space-y-2">
-                <Label>Score</Label>
+                <Label>Score Multiplier</Label>
 
                 <Input
                   type="number"
-                  value={range.score}
+                  step="0.05"
+                  min={0}
+                  value={range.multiplier}
                   onChange={(e) =>
                     updateRange(index, {
-                      score: Number(e.target.value),
+                      multiplier: Number(e.target.value),
                     })
                   }
                 />
+
+                <p className="text-muted-foreground text-xs">
+                  {(range.multiplier * goal.weight).toFixed(1)} / {goal.weight}{" "}
+                  points
+                </p>
               </div>
             </div>
 

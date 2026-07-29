@@ -16,15 +16,15 @@ export default function RangeInput({ metric, value, onChange }: Props) {
     (range) => value >= range.min && value <= range.max,
   );
 
+  const score = matched ? matched.multiplier * metric.weight : 0;
+
   return (
     <MetricCard
       metric={metric}
-      score={matched?.score}
-      progress={matched ? (matched.score / metric.weight) * 100 : 0}
+      score={score}
+      progress={(score / metric.weight) * 100}
       subtitle={
-        matched
-          ? `${matched.score}/${metric.weight} points`
-          : "No matching range"
+        matched ? `${score.toFixed(1)} / ${metric.weight} pts` : "Enter a value"
       }
     >
       <div className="space-y-4">
@@ -34,27 +34,33 @@ export default function RangeInput({ metric, value, onChange }: Props) {
           onChange={(e) => onChange(Number(e.target.value))}
         />
 
-        {metric.scoring.ranges && (
-          <div className="space-y-2">
-            {metric.scoring.ranges.map((range, index) => {
-              const active = value >= range.min && value <= range.max;
+        {matched && (
+          <div className="bg-muted/50 rounded-xl border p-4">
+            <p className="text-muted-foreground text-xs tracking-wide uppercase">
+              Current Score
+            </p>
 
-              return (
-                <div
-                  key={index}
-                  className={`flex items-center justify-between rounded-xl border p-3 transition-colors ${
-                    active ? "border-primary bg-primary/10" : ""
-                  }`}
-                >
-                  <span>
-                    {range.min} - {range.max}
-                    {metric.unit && ` ${metric.unit}`}
-                  </span>
+            <div className="mt-2 flex items-center justify-between">
+              <div>
+                <p className="font-medium">
+                  {matched.min}
+                  {matched.max !== undefined && ` - ${matched.max}`}
+                  {metric.unit && ` ${metric.unit}`}
+                </p>
 
-                  <span className="font-medium">{range.score} pts</span>
-                </div>
-              );
-            })}
+                <p className="text-muted-foreground text-sm">Matching range</p>
+              </div>
+
+              <div className="text-right">
+                <p className="text-primary text-xl font-bold">
+                  {score.toFixed(1)}
+                </p>
+
+                <p className="text-muted-foreground text-sm">
+                  / {metric.weight} pts
+                </p>
+              </div>
+            </div>
           </div>
         )}
       </div>

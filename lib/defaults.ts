@@ -34,7 +34,7 @@ export const DEFAULT_METRICS: MetricDefinition[] = [
     category: "lifestyle",
     displayOrder: 999,
     type: "boolean",
-    defaultValue: false,
+    defaultValue: true,
     target: false,
     weight: 4,
     scoring: {
@@ -83,42 +83,18 @@ export const DEFAULT_METRICS: MetricDefinition[] = [
     category: "routine",
     displayOrder: 999,
     type: "time",
-    defaultValue: "00:00",
+    defaultValue: "12:00",
     target: "21:30",
     weight: 4,
     scoring: {
       type: "time-range",
       time: [
-        {
-          from: "21:00",
-          to: "21:59",
-          score: 4,
-        },
-        {
-          from: "22:00",
-          to: "22:59",
-          score: 3.5,
-        },
-        {
-          from: "23:00",
-          to: "23:59",
-          score: 3,
-        },
-        {
-          from: "00:00",
-          to: "00:59",
-          score: 2,
-        },
-        {
-          from: "01:00",
-          to: "01:59",
-          score: 1,
-        },
-        {
-          from: "02:00",
-          to: "20:59",
-          score: 0,
-        },
+        { from: "21:00", to: "21:59", multiplier: 1 },
+        { from: "22:00", to: "22:59", multiplier: 0.875 },
+        { from: "23:00", to: "23:59", multiplier: 0.75 },
+        { from: "00:00", to: "00:59", multiplier: 0.5 },
+        { from: "01:00", to: "01:59", multiplier: 0.25 },
+        { from: "02:00", to: "20:59", multiplier: 0 },
       ],
     },
     createdAt: {
@@ -138,7 +114,7 @@ export const DEFAULT_METRICS: MetricDefinition[] = [
     category: "lifestyle",
     displayOrder: 999,
     type: "boolean",
-    defaultValue: false,
+    defaultValue: true,
     target: false,
     weight: 4,
     scoring: {
@@ -266,29 +242,29 @@ export const DEFAULT_METRICS: MetricDefinition[] = [
       type: "options",
       options: [
         {
-          label: "Not started",
           value: 0,
-          score: 0,
+          label: "Not started",
+          multiplier: 0,
         },
         {
-          label: "Partially Worked",
-          value: 2,
-          score: 25,
+          value: 25,
+          label: "Partially worked",
+          multiplier: 0.25,
         },
         {
-          label: "Mostly Completed",
-          value: 4.8,
-          score: 60,
+          value: 60,
+          label: "Mostly completed",
+          multiplier: 0.6,
         },
         {
+          value: 100,
           label: "Completed",
-          value: 11,
-          score: 100,
+          multiplier: 1,
         },
         {
+          value: 125,
           label: "Exceeded plan",
-          value: 10,
-          score: 125,
+          multiplier: 1.25,
         },
       ],
     },
@@ -316,46 +292,14 @@ export const DEFAULT_METRICS: MetricDefinition[] = [
     scoring: {
       type: "range",
       ranges: [
-        {
-          min: 0,
-          max: 4.9,
-          score: 0,
-        },
-        {
-          min: 5,
-          max: 5.9,
-          score: 4,
-        },
-        {
-          min: 6,
-          max: 6.9,
-          score: 7,
-        },
-        {
-          min: 7,
-          max: 7.9,
-          score: 9,
-        },
-        {
-          min: 8,
-          max: 8.9,
-          score: 10,
-        },
-        {
-          min: 9,
-          max: 9.9,
-          score: 9,
-        },
-        {
-          min: 10,
-          max: 10.9,
-          score: 7,
-        },
-        {
-          min: 11,
-          max: 24,
-          score: 0,
-        },
+        { min: 0, max: 4.9, multiplier: 0 },
+        { min: 5, max: 5.9, multiplier: 0.4 },
+        { min: 6, max: 6.9, multiplier: 0.7 },
+        { min: 7, max: 7.9, multiplier: 0.9 },
+        { min: 8, max: 8.9, multiplier: 1 },
+        { min: 9, max: 9.9, multiplier: 0.9 },
+        { min: 10, max: 10.9, multiplier: 0.7 },
+        { min: 11, max: 24, multiplier: 0 },
       ],
     },
     createdAt: {
@@ -381,36 +325,12 @@ export const DEFAULT_METRICS: MetricDefinition[] = [
     scoring: {
       type: "time-range",
       time: [
-        {
-          from: "07:30",
-          to: "07:59",
-          score: 10,
-        },
-        {
-          from: "08:00",
-          to: "08:29",
-          score: 8,
-        },
-        {
-          from: "08:30",
-          to: "08:59",
-          score: 6,
-        },
-        {
-          from: "09:00",
-          to: "09:29",
-          score: 4,
-        },
-        {
-          from: "09:30",
-          to: "09:59",
-          score: 2,
-        },
-        {
-          from: "10:00",
-          to: "23:59",
-          score: 0,
-        },
+        { from: "07:30", to: "07:59", multiplier: 1 },
+        { from: "08:00", to: "08:29", multiplier: 0.8 },
+        { from: "08:30", to: "08:59", multiplier: 0.6 },
+        { from: "09:00", to: "09:29", multiplier: 0.4 },
+        { from: "09:30", to: "09:59", multiplier: 0.2 },
+        { from: "10:00", to: "23:59", multiplier: 0 },
       ],
     },
     createdAt: {

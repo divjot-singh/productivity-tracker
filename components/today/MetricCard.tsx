@@ -4,6 +4,7 @@ import { ReactNode } from "react";
 
 import { MetricDefinition } from "@/models/metric";
 import { ICONS } from "@/lib/metric-icons";
+import { formatValue } from "@/lib/utils";
 
 interface Props {
   metric: MetricDefinition;
@@ -81,7 +82,7 @@ export default function MetricCard({
                 </span>
               ) : (
                 <span>
-                  Target: {String(metric.target)}
+                  Target: {formatValue(metric.target)}
                   {metric.unit && ` ${metric.unit}`}
                 </span>
               )}

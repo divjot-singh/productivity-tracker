@@ -8,55 +8,66 @@ import {
 
 import { MetricScoreResult, ScoreResult } from "./scoring-types";
 
+function finalizeScore(
+  rawScore: number,
+  metric: MetricDefinition,
+): Pick<MetricScoreResult, "score" | "weightedScore" | "bonus"> {
+  let score = rawScore;
+  if (metric.scoring.maxScore !== undefined) {
+    score = Math.min(score, metric.scoring.maxScore);
+  }
+  if (metric.scoring.bonusRate !== undefined) {
+    score = Math.min(score, metric.weight + metric.scoring.bonusRate);
+  }
+
+  const bonus = Math.max(score - metric.weight, 0);
+
+  return {
+    score,
+    weightedScore: score,
+    bonus,
+  };
+}
+
 function calculateMetricScore(
   metric: MetricDefinition,
   value: MetricValue,
 ): MetricScoreResult {
-  let weightedScore = 0;
-  let bonus = 0;
-
   switch (metric.scoring.type) {
     case "goal": {
       if (
-        typeof metric.target !== "number" ||
         typeof value !== "number" ||
+        typeof metric.target !== "number" ||
         metric.target <= 0
       ) {
         break;
       }
 
-      const progress = Math.min(value / metric.target, 1);
+      const rawScore = (value / metric.target) * metric.weight;
 
-      weightedScore = progress * metric.weight;
-
-      bonus = value > metric.target ? (metric.scoring.bonusRate ?? 0) : 0;
-
-      weightedScore += bonus;
-
-      break;
+      return buildResult(metric, value, finalizeScore(rawScore, metric));
     }
 
     case "range": {
-      const score = calculateRangeScore(value, metric.scoring.ranges);
+      const rawScore =
+        calculateRangeMultiplier(value, metric.scoring.ranges) * metric.weight;
 
-      weightedScore = (score / 10) * metric.weight;
-
-      break;
+      return buildResult(metric, value, finalizeScore(rawScore, metric));
     }
 
     case "time-range": {
-      const score = calculateTimeRangeScore(value, metric.scoring.time);
+      const rawScore =
+        calculateTimeMultiplier(value, metric.scoring.time) * metric.weight;
 
-      weightedScore = score;
-
-      break;
+      return buildResult(metric, value, finalizeScore(rawScore, metric));
     }
 
     case "options": {
-      weightedScore = calculateOptionScore(value, metric.scoring.options);
+      const rawScore =
+        calculateOptionMultiplier(value, metric.scoring.options) *
+        metric.weight;
 
-      bonus = weightedScore > metric.weight ? weightedScore - metric.weight : 0;
-      break;
+      return buildResult(metric, value, finalizeScore(rawScore, metric));
     }
 
     case "multiplier": {
@@ -64,44 +75,26 @@ function calculateMetricScore(
         break;
       }
 
-      const maxScore = metric.scoring.maxScore;
-      const score = value * (metric.scoring.multiplier ?? 1);
-      if (!!maxScore) {
-        weightedScore = Math.min(score, maxScore);
-      } else {
-        weightedScore = score;
-      }
-      if (metric.scoring.bonusRate) {
-        bonus =
-          weightedScore > metric.weight
-            ? (metric.weight += metric.scoring.bonusRate)
-            : 0;
-      } else {
-        bonus =
-          weightedScore > metric.weight ? weightedScore - metric.weight : 0;
-      }
+      const rawScore = value * (metric.scoring.multiplier ?? 1);
 
-      break;
+      return buildResult(metric, value, finalizeScore(rawScore, metric));
     }
 
     case "boolean": {
-      weightedScore = value === metric.target ? metric.weight : 0;
+      const rawScore = value === metric.target ? metric.weight : 0;
 
-      break;
+      return buildResult(metric, value, finalizeScore(rawScore, metric));
     }
   }
 
-  return {
-    metricId: metric.id,
-    value,
-    score: weightedScore,
-    weight: metric.weight,
-    weightedScore,
-    bonus,
-  };
+  return buildResult(metric, value, {
+    score: 0,
+    weightedScore: 0,
+    bonus: 0,
+  });
 }
 
-function calculateRangeScore(
+function calculateRangeMultiplier(
   value: MetricValue,
   ranges?: RangeScore[],
 ): number {
@@ -116,10 +109,10 @@ function calculateRangeScore(
     return minOk && maxOk;
   });
 
-  return match?.score ?? 0;
+  return match?.multiplier ?? 0;
 }
 
-function calculateOptionScore(
+function calculateOptionMultiplier(
   value: MetricValue,
   options?: OptionScore[],
 ): number {
@@ -127,10 +120,10 @@ function calculateOptionScore(
     return 0;
   }
 
-  return options.find((option) => option.value === value)?.score ?? 0;
+  return options.find((option) => option.value === value)?.multiplier ?? 0;
 }
 
-function calculateTimeRangeScore(
+function calculateTimeMultiplier(
   value: MetricValue,
   ranges?: TimeRangeScore[],
 ): number {
@@ -151,7 +144,7 @@ function calculateTimeRangeScore(
     return current >= from || current <= to;
   });
 
-  return match?.score ?? 0;
+  return match?.multiplier ?? 0;
 }
 
 function convertTimeToMinutes(time: string): number {
@@ -168,32 +161,29 @@ export function calculateScore(
     calculateMetricScore(metric, values[metric.id] ?? metric.defaultValue),
   );
 
-  const totalWeight = metrics.reduce((sum, metric) => sum + metric.weight, 0);
+  const totalScore = results.reduce((sum, metric) => sum + metric.score, 0);
 
-  const weightedTotal = results.reduce(
-    (sum, metric) => sum + metric.weightedScore,
-    0,
-  );
+  const totalBonus = results.reduce((sum, metric) => sum + metric.bonus, 0);
 
-  console.log(weightedTotal, "weightedTotal");
-  console.log(
-    results.map((r) => {
-      return {
-        score: r.score,
-        bonus: r.bonus,
-        weight: metrics.find((m) => m.id == r.metricId)?.weight,
-        label: metrics.find((m) => m.id == r.metricId)?.label,
-      };
-    }),
-    "results",
-  );
+  const totalWeight = results.reduce((sum, metric) => sum + metric.weight, 0);
 
   return {
-    totalScore: totalWeight === 0 ? 0 : Math.round(weightedTotal),
-
-    totalXP: totalWeight,
-
+    totalScore: Math.round(totalScore),
+    totalXP: Math.round(totalBonus),
     metrics: results,
-    totalHeight: totalWeight,
+    totalWeights: totalWeight,
+  };
+}
+
+function buildResult(
+  metric: MetricDefinition,
+  value: MetricValue,
+  score: Pick<MetricScoreResult, "score" | "weightedScore" | "bonus">,
+): MetricScoreResult {
+  return {
+    metricId: metric.id,
+    value,
+    weight: metric.weight,
+    ...score,
   };
 }

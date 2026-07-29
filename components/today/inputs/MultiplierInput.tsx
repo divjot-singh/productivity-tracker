@@ -52,7 +52,10 @@ export default function MultiplierInput({ metric, value, onChange }: Props) {
           </div>
 
           <p className="text-muted-foreground mt-2 text-xs">
-            {value} × {multiplier} = {preview}
+            {value} × {multiplier} = {preview}{" "}
+            {!!metric.scoring.maxScore && preview == metric.scoring.maxScore
+              ? "(max)"
+              : ""}
           </p>
         </div>
       </div>

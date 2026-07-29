@@ -19,5 +19,5 @@ export interface ScoreResult {
 
   metrics: MetricScoreResult[];
 
-  totalHeight: number;
+  totalWeights: number;
 }

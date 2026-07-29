@@ -72,7 +72,7 @@ function ScoringConfiguration({ goal }: { goal: MetricDefinition }) {
               <Row
                 key={index}
                 label={`${range.min} - ${range.max}`}
-                value={`${range.score} pts`}
+                value={`${range.multiplier * goal.weight} pts`}
               />
             ))
           ) : (
@@ -83,13 +83,13 @@ function ScoringConfiguration({ goal }: { goal: MetricDefinition }) {
 
     case "options":
       return (
-        <ConfigCard title="Lookup Configuration">
+        <ConfigCard title="Options Configuration">
           {goal.scoring.options?.length ? (
             goal.scoring.options.map((value, index) => (
               <Row
                 key={index}
                 label={String(value.value)}
-                value={`${value.score} pts`}
+                value={`${value.multiplier * goal.weight} pts`}
               />
             ))
           ) : (
@@ -106,7 +106,7 @@ function ScoringConfiguration({ goal }: { goal: MetricDefinition }) {
               <Row
                 key={index}
                 label={`${time.from} - ${time.to}`}
-                value={`${time.score} pts`}
+                value={`${time.multiplier * goal.weight} pts`}
               />
             ))
           ) : (

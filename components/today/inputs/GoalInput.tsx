@@ -51,7 +51,7 @@ export default function GoalInput({ metric, value, onChange }: Props) {
 
         {/* Progress */}
 
-        <div>
+        {/* <div>
           <div className="mb-2 flex justify-between text-sm">
             <span className="text-muted-foreground">Progress</span>
 
@@ -69,7 +69,7 @@ export default function GoalInput({ metric, value, onChange }: Props) {
               }}
             />
           </div>
-        </div>
+        </div> */}
 
         {/* Stats */}
 

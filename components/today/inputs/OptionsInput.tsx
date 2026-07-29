@@ -15,16 +15,19 @@ export default function OptionsInput({ metric, value, onChange }: Props) {
 
   const selectedOption = options.find((option) => option.value === value);
 
-  const score = selectedOption?.score ?? 0;
+  const score = selectedOption ? selectedOption.multiplier * metric.weight : 0;
 
   const progress =
-    metric.weight > 0 ? Math.min((score / metric.weight) * 100, 100) : 0;
+    metric.weight > 0 ? Math.min(selectedOption?.multiplier ?? 0, 1) * 100 : 0;
+
+  const bonus = score > metric.weight ? score - metric.weight : undefined;
 
   return (
     <MetricCard
       metric={metric}
       progress={progress}
       score={score}
+      bonus={bonus}
       subtitle={`${options.length} available option${options.length === 1 ? "" : "s"}`}
     >
       <div className="space-y-3">
@@ -56,7 +59,7 @@ export default function OptionsInput({ metric, value, onChange }: Props) {
                     selected ? "bg-primary text-primary-foreground" : "bg-muted"
                   }`}
                 >
-                  {option.score} pts
+                  {(option.multiplier * metric.weight).toFixed(1)} pts
                 </div>
               </div>
             </button>
