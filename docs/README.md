@@ -12,7 +12,7 @@ Identify the task first, then read only the relevant document(s).
 
 **File**
 
-- `Architecture.md`
+- `dashboard-architecture.md`
 
 **Read when**
 
@@ -28,6 +28,19 @@ Identify the task first, then read only the relevant document(s).
 **File**
 
 - `IMPLEMENTATION_GUIDE.md`
+
+## Dashboard Progress
+
+**File**
+
+- `dashboard-remaining-work.md`
+
+**Read when**
+
+- implementing dashboard widgets
+- tracking dashboard visualization progress
+- reconciling dashboard provider, executor, and renderer work
+- checking current dashboard gaps and UI refinement notes
 
 **Read when**
 

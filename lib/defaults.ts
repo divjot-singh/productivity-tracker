@@ -1,4 +1,5 @@
 import { MetricDefinition } from "@/models/metric";
+import { VisualizationDefinition } from "@/models/visualization";
 
 export const DEFAULT_METRICS: MetricDefinition[] = [
   {
@@ -438,5 +439,904 @@ export const DEFAULT_METRICS: MetricDefinition[] = [
       _seconds: 1785239036,
       _nanoseconds: 959000000,
     },
+  },
+];
+
+export const TEST_DEFAULT_VISUALIZATIONS: VisualizationDefinition[] = [
+  {
+    id: "test-life-score-current",
+
+    title: "[Test] Life Score (Current)",
+
+    description: "Stat executor + entry provider",
+
+    widget: "stat-card",
+
+    scope: "global",
+
+    provider: "entry",
+
+    executor: "stat",
+
+    key: "score",
+
+    period: {
+      type: "days",
+      value: 14,
+    },
+
+    aggregation: "latest",
+
+    displayOrder: 10,
+
+    visible: true,
+
+    options: {
+      comparison: "previous-day",
+    },
+  },
+  {
+    id: "test-xp-current",
+
+    title: "[Test] XP (Current)",
+
+    description: "Stat executor + entry provider",
+
+    widget: "stat-card",
+
+    scope: "global",
+
+    provider: "entry",
+
+    executor: "stat",
+
+    key: "xp",
+
+    period: {
+      type: "days",
+      value: 14,
+    },
+
+    aggregation: "latest",
+
+    displayOrder: 11,
+
+    visible: true,
+
+    options: {
+      comparison: "previous-day",
+    },
+  },
+  {
+    id: "test-junk-food-streak",
+
+    title: "[Test] No Junk Food Streak",
+
+    description: "Current streak + best streak in subtitle",
+
+    widget: "stat-card",
+
+    scope: "goal",
+
+    provider: "goal",
+
+    executor: "streak",
+
+    key: "Junk food",
+
+    period: {
+      type: "days",
+      value: 90,
+    },
+
+    aggregation: "streak",
+
+    displayOrder: 12,
+
+    visible: true,
+  },
+  {
+    id: "test-alcohol-streak",
+
+    title: "[Test] No Alcohol Streak",
+
+    description: "Current streak + best streak in subtitle",
+
+    widget: "stat-card",
+
+    scope: "goal",
+
+    provider: "goal",
+
+    executor: "streak",
+
+    key: "Alcohol consumption",
+
+    period: {
+      type: "days",
+      value: 90,
+    },
+
+    aggregation: "streak",
+
+    displayOrder: 13,
+
+    visible: true,
+  },
+  {
+    id: "test-steps-trend-line",
+
+    title: "[Test] Steps Trend",
+
+    description: "Trend executor + metric provider (line)",
+
+    widget: "line-chart",
+
+    scope: "goal",
+
+    provider: "metric",
+
+    executor: "trend",
+
+    key: "Steps",
+
+    period: {
+      type: "days",
+      value: 30,
+    },
+
+    aggregation: "daily",
+
+    displayOrder: 14,
+
+    visible: true,
+  },
+  {
+    id: "test-protein-trend-bar",
+
+    title: "[Test] Protein Trend",
+
+    description: "Trend executor + metric provider (bar)",
+
+    widget: "bar-chart",
+
+    scope: "goal",
+
+    provider: "metric",
+
+    executor: "trend",
+
+    key: "Protein intake",
+
+    period: {
+      type: "days",
+      value: 30,
+    },
+
+    aggregation: "daily",
+
+    displayOrder: 15,
+
+    visible: true,
+  },
+  {
+    id: "test-life-score-trend-line",
+
+    title: "[Test] Life Score Trend",
+
+    description: "Trend executor + line renderer",
+
+    widget: "line-chart",
+
+    scope: "global",
+
+    provider: "entry",
+
+    executor: "trend",
+
+    key: "score",
+
+    period: {
+      type: "days",
+      value: 30,
+    },
+
+    aggregation: "daily",
+
+    displayOrder: 20,
+
+    visible: true,
+  },
+  {
+    id: "test-sleep-trend-line",
+
+    title: "[Test] Sleep Hours Trend",
+
+    description: "Trend executor + metric provider",
+
+    widget: "line-chart",
+
+    scope: "goal",
+
+    provider: "metric",
+
+    executor: "trend",
+
+    key: "Sleep",
+
+    period: {
+      type: "days",
+      value: 30,
+    },
+
+    aggregation: "daily",
+
+    displayOrder: 21,
+
+    visible: true,
+  },
+  {
+    id: "test-water-trend-area",
+
+    title: "[Test] Water Intake Trend",
+
+    description: "Trend executor + metric provider (area)",
+
+    widget: "area-chart",
+
+    scope: "goal",
+
+    provider: "metric",
+
+    executor: "trend",
+
+    key: "Water intake",
+
+    period: {
+      type: "days",
+      value: 30,
+    },
+
+    aggregation: "daily",
+
+    displayOrder: 22,
+
+    visible: true,
+  },
+  {
+    id: "test-work-progress-trend-bar",
+
+    title: "[Test] Work Progress Trend",
+
+    description: "Trend executor + metric provider (bar)",
+
+    widget: "bar-chart",
+
+    scope: "goal",
+
+    provider: "metric",
+
+    executor: "trend",
+
+    key: "Work progress",
+
+    period: {
+      type: "days",
+      value: 30,
+    },
+
+    aggregation: "daily",
+
+    displayOrder: 23,
+
+    visible: true,
+  },
+  {
+    id: "test-category-breakdown-radar",
+
+    title: "[Test] Category Breakdown",
+
+    description: "Trend executor + category provider + radar renderer",
+
+    widget: "radar-chart",
+
+    scope: "category",
+
+    provider: "category",
+
+    executor: "trend",
+
+    key: "all",
+
+    period: {
+      type: "days",
+      value: 30,
+    },
+
+    aggregation: "average",
+
+    displayOrder: 24,
+
+    visible: true,
+  },
+  {
+    id: "test-category-leaderboard",
+
+    title: "[Test] Category Leaderboard",
+
+    description: "Leaderboard executor + category provider",
+
+    widget: "leaderboard",
+
+    scope: "category",
+
+    provider: "category",
+
+    executor: "leaderboard",
+
+    key: "all",
+
+    period: {
+      type: "days",
+      value: 30,
+    },
+
+    aggregation: "average",
+
+    displayOrder: 25,
+
+    visible: true,
+  },
+  {
+    id: "test-consistency-heatmap",
+
+    title: "[Test] Consistency Heatmap",
+
+    description: "Heatmap executor + entry provider",
+
+    widget: "heatmap",
+
+    scope: "global",
+
+    provider: "entry",
+
+    executor: "heatmap",
+
+    key: "score",
+
+    period: {
+      type: "days",
+      value: 84,
+    },
+
+    aggregation: "daily",
+
+    displayOrder: 26,
+
+    visible: true,
+  },
+  {
+    id: "test-life-score-timeline",
+
+    title: "[Test] Life Score Timeline",
+
+    description: "Timeline executor + entry provider",
+
+    widget: "timeline",
+
+    scope: "global",
+
+    provider: "entry",
+
+    executor: "timeline",
+
+    key: "score",
+
+    period: {
+      type: "days",
+      value: 21,
+    },
+
+    aggregation: "daily",
+
+    displayOrder: 27,
+
+    visible: true,
+  },
+  {
+    id: "test-sleep-insight",
+
+    title: "[Test] Sleep Insight",
+
+    description: "Insight executor + metric provider",
+
+    widget: "insight-card",
+
+    scope: "goal",
+
+    provider: "metric",
+
+    executor: "insight",
+
+    key: "Sleep",
+
+    period: {
+      type: "days",
+      value: 30,
+    },
+
+    aggregation: "average",
+
+    displayOrder: 28,
+
+    visible: true,
+  },
+  // {
+  //   id: "life-score-trend",
+  //   title: "Life Score Trend",
+  //   description: "Score progression over time",
+  //   widget: "line-chart",
+  //   scope: "global",
+  //   provider: "entry",
+  //   executor: "chart",
+  //   key: "score",
+
+  //   period: {
+  //     type: "days",
+  //     value: 30,
+  //   },
+
+  //   aggregation: "daily",
+
+  //   displayOrder: 1,
+  //   visible: true,
+  // },
+  // // Latest Life Score
+  // {
+  //   id: "life-score-current",
+  //   title: "Current Life Score",
+  //   description: "Latest recorded life score",
+  //   widget: "stat-card",
+  //   scope: "global",
+  //   provider: "entry",
+  //   executor: "stat",
+  //   key: "score",
+  //   period: {
+  //     type: "days",
+  //     value: 7,
+  //   },
+  //   aggregation: "latest",
+  //   displayOrder: 1,
+  //   visible: true,
+  //   options: {
+  //     comparison: "previous-day",
+  //   },
+  // },
+
+  // // Average Life Score
+  // {
+  //   id: "life-score-average",
+  //   title: "Average Life Score",
+  //   description: "Average score over the selected period",
+  //   widget: "stat-card",
+  //   scope: "global",
+  //   provider: "entry",
+  //   executor: "stat",
+  //   key: "score",
+  //   period: {
+  //     type: "days",
+  //     value: 30,
+  //   },
+  //   aggregation: "average",
+  //   displayOrder: 2,
+  //   visible: true,
+  //   options: {
+  //     comparison: "previous-period",
+  //   },
+  // },
+
+  // // Total XP
+  // {
+  //   id: "xp-total",
+  //   title: "Total XP",
+  //   description: "XP earned during the selected period",
+  //   widget: "stat-card",
+  //   scope: "global",
+  //   provider: "entry",
+  //   executor: "stat",
+  //   key: "xp",
+  //   period: {
+  //     type: "days",
+  //     value: 30,
+  //   },
+  //   aggregation: "sum",
+  //   displayOrder: 3,
+  //   visible: true,
+  // },
+
+  // // Average XP
+  // {
+  //   id: "xp-average",
+  //   title: "Average XP",
+  //   description: "Average XP per day",
+  //   widget: "stat-card",
+  //   scope: "global",
+  //   provider: "entry",
+  //   executor: "stat",
+  //   key: "xp",
+  //   period: {
+  //     type: "days",
+  //     value: 30,
+  //   },
+  //   aggregation: "average",
+  //   displayOrder: 4,
+  //   visible: true,
+  // },
+
+  // // Entry Count
+  // {
+  //   id: "entry-count",
+  //   title: "Entries Logged",
+  //   description: "Number of recorded days",
+  //   widget: "stat-card",
+  //   scope: "global",
+  //   provider: "entry",
+  //   executor: "stat",
+  //   key: "score",
+  //   period: {
+  //     type: "days",
+  //     value: 30,
+  //   },
+  //   aggregation: "count",
+  //   displayOrder: 5,
+  //   visible: true,
+  // },
+
+  // // Latest Sleep Score
+  // {
+  //   id: "sleep-score",
+  //   title: "Sleep Score",
+  //   description: "Latest sleep score",
+  //   widget: "stat-card",
+  //   scope: "goal",
+  //   provider: "metric",
+  //   executor: "stat",
+  //   key: "sleep",
+  //   period: {
+  //     type: "days",
+  //     value: 30,
+  //   },
+  //   aggregation: "latest",
+  //   displayOrder: 6,
+  //   visible: true,
+  //   options: {
+  //     comparison: "previous-day",
+  //   },
+  // },
+
+  // // Average Sleep Score
+  // {
+  //   id: "sleep-average",
+  //   title: "Average Sleep",
+  //   description: "Average sleep score",
+  //   widget: "stat-card",
+  //   scope: "goal",
+  //   provider: "metric",
+  //   executor: "stat",
+  //   key: "sleep",
+  //   period: {
+  //     type: "days",
+  //     value: 30,
+  //   },
+  //   aggregation: "average",
+  //   displayOrder: 7,
+  //   visible: true,
+  // },
+
+  // // Total Sleep Score
+  // {
+  //   id: "sleep-total",
+  //   title: "Sleep Total",
+  //   description: "Total sleep score",
+  //   widget: "stat-card",
+  //   scope: "goal",
+  //   provider: "metric",
+  //   executor: "stat",
+  //   key: "sleep",
+  //   period: {
+  //     type: "days",
+  //     value: 30,
+  //   },
+  //   aggregation: "sum",
+  //   displayOrder: 8,
+  //   visible: true,
+  // },
+
+  // // Latest Protein Score
+  // {
+  //   id: "protein-score",
+  //   title: "Protein",
+  //   description: "Latest protein score",
+  //   widget: "stat-card",
+  //   scope: "goal",
+  //   provider: "metric",
+  //   executor: "stat",
+  //   key: "protein intake",
+  //   period: {
+  //     type: "days",
+  //     value: 30,
+  //   },
+  //   aggregation: "latest",
+  //   displayOrder: 9,
+  //   visible: true,
+  // },
+
+  // // Latest Steps Score
+  // {
+  //   id: "steps-score",
+  //   title: "Steps",
+  //   description: "Latest steps score",
+  //   widget: "stat-card",
+  //   scope: "goal",
+  //   provider: "metric",
+  //   executor: "stat",
+  //   key: "steps",
+  //   period: {
+  //     type: "days",
+  //     value: 30,
+  //   },
+  //   aggregation: "latest",
+  //   displayOrder: 10,
+  //   visible: true,
+  //   options: {
+  //     comparison: "previous-day",
+  //   },
+  // },
+];
+
+export const DEFAULT_VISUALIZATIONS: VisualizationDefinition[] = [
+  {
+    id: "life-score-current",
+    title: "Life Score Today",
+    description: "Latest recorded life score",
+    widget: "stat-card",
+    scope: "global",
+    provider: "entry",
+    executor: "stat",
+    key: "score",
+    period: {
+      type: "days",
+      value: 7,
+    },
+    aggregation: "latest",
+    displayOrder: 10,
+    visible: true,
+    options: {
+      comparison: "previous-day",
+    },
+  },
+  {
+    id: "life-score-weekly-average",
+    title: "Life Score (7d Avg)",
+    description: "Average life score over the last 7 days",
+    widget: "stat-card",
+    scope: "global",
+    provider: "entry",
+    executor: "stat",
+    key: "score",
+    period: {
+      type: "days",
+      value: 7,
+    },
+    aggregation: "average",
+    displayOrder: 11,
+    visible: true,
+    options: {
+      comparison: "previous-period",
+    },
+  },
+  {
+    id: "junk-food-streak",
+    title: "No Junk Food Streak",
+    description: "Current and best streak without junk food",
+    widget: "stat-card",
+    scope: "goal",
+    provider: "goal",
+    executor: "streak",
+    key: "Junk food",
+    period: {
+      type: "days",
+      value: 90,
+    },
+    aggregation: "streak",
+    displayOrder: 12,
+    visible: true,
+  },
+  {
+    id: "alcohol-streak",
+    title: "No Alcohol Streak",
+    description: "Current and best streak without alcohol",
+    widget: "stat-card",
+    scope: "goal",
+    provider: "goal",
+    executor: "streak",
+    key: "Alcohol consumption",
+    period: {
+      type: "days",
+      value: 90,
+    },
+    aggregation: "streak",
+    displayOrder: 13,
+    visible: true,
+  },
+  {
+    id: "steps-trend",
+    title: "Steps Trend",
+    description: "Daily steps progression",
+    widget: "line-chart",
+    scope: "goal",
+    provider: "metric",
+    executor: "trend",
+    key: "Steps",
+    period: {
+      type: "days",
+      value: 30,
+    },
+    aggregation: "daily",
+    displayOrder: 20,
+    visible: true,
+  },
+  {
+    id: "protein-intake-trend",
+    title: "Protein Intake Trend",
+    description: "Daily protein servings over time",
+    widget: "bar-chart",
+    scope: "goal",
+    provider: "metric",
+    executor: "trend",
+    key: "Protein intake",
+    period: {
+      type: "days",
+      value: 30,
+    },
+    aggregation: "daily",
+    displayOrder: 21,
+    visible: true,
+  },
+  {
+    id: "sleep-hours-trend",
+    title: "Sleep Hours Trend",
+    description: "Sleep duration trend across recent days",
+    widget: "line-chart",
+    scope: "goal",
+    provider: "metric",
+    executor: "trend",
+    key: "Sleep",
+    period: {
+      type: "days",
+      value: 30,
+    },
+    aggregation: "daily",
+    displayOrder: 22,
+    visible: true,
+  },
+  {
+    id: "water-intake-trend",
+    title: "Water Intake Trend",
+    description: "Daily water intake trend",
+    widget: "area-chart",
+    scope: "goal",
+    provider: "metric",
+    executor: "trend",
+    key: "Water intake",
+    period: {
+      type: "days",
+      value: 30,
+    },
+    aggregation: "daily",
+    displayOrder: 23,
+    visible: true,
+  },
+  {
+    id: "category-breakdown",
+    title: "Category Breakdown",
+    description: "Average score distribution by category",
+    widget: "radar-chart",
+    scope: "category",
+    provider: "category",
+    executor: "trend",
+    key: "all",
+    period: {
+      type: "days",
+      value: 30,
+    },
+    aggregation: "average",
+    displayOrder: 30,
+    visible: true,
+  },
+  {
+    id: "category-leaderboard",
+    title: "Category Leaderboard",
+    description: "Category ranking by average score",
+    widget: "leaderboard",
+    scope: "category",
+    provider: "category",
+    executor: "leaderboard",
+    key: "all",
+    period: {
+      type: "days",
+      value: 30,
+    },
+    aggregation: "average",
+    displayOrder: 31,
+    visible: true,
+  },
+  {
+    id: "bed-time-timeline",
+    title: "Bed Time Timeline",
+    description: "Recent bed time pattern and shifts",
+    widget: "timeline",
+    scope: "goal",
+    provider: "metric",
+    executor: "timeline",
+    key: "Bed time",
+    period: {
+      type: "days",
+      value: 21,
+    },
+    aggregation: "daily",
+    displayOrder: 40,
+    visible: true,
+  },
+  {
+    id: "wake-time-timeline",
+    title: "Wake Time Timeline",
+    description: "Recent wake time pattern and shifts",
+    widget: "timeline",
+    scope: "goal",
+    provider: "metric",
+    executor: "timeline",
+    key: "Wake time",
+    period: {
+      type: "days",
+      value: 21,
+    },
+    aggregation: "daily",
+    displayOrder: 41,
+    visible: true,
+  },
+  {
+    id: "work-progress-insight",
+    title: "Work Progress Insight",
+    description: "Narrative summary of work momentum",
+    widget: "insight-card",
+    scope: "goal",
+    provider: "metric",
+    executor: "insight",
+    key: "Work progress",
+    period: {
+      type: "days",
+      value: 30,
+    },
+    aggregation: "average",
+    displayOrder: 50,
+    visible: true,
+  },
+  {
+    id: "consistency-heatmap",
+    title: "Consistency Heatmap",
+    description: "Day-by-day life score intensity",
+    widget: "heatmap",
+    scope: "global",
+    provider: "entry",
+    executor: "heatmap",
+    key: "score",
+    period: {
+      type: "days",
+      value: 84,
+    },
+    aggregation: "daily",
+    displayOrder: 51,
+    visible: true,
   },
 ];

@@ -122,3 +122,17 @@ body {
   min-height: 100vh;
   padding-bottom: env(safe-area-inset-bottom);
 }
+
+:root {
+
+--chart-1: var(--primary);
+
+--chart-2: var(--accent);
+
+--chart-3: oklch(0.75 0.15 220);
+
+--chart-4: oklch(0.8 0.18 80);
+
+--chart-5: oklch(0.7 0.15 300);
+
+}

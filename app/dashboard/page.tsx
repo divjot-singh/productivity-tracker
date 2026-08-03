@@ -1,14 +1,27 @@
 "use client";
 
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+
 import AppShell from "@/components/layout/AppShell";
 import PageHeader from "@/components/common/PageHeader";
-import { useEffect } from "react";
-import { useRouter } from "next/navigation";
+import DashboardVisualizationRenderer from "@/components/dashboard/visualization-renderer";
+
 import { useAuth } from "@/contexts/AuthContext";
+import { apiRequest } from "@/lib/api/client";
+import { VisualizationResponse } from "@/models/visualization";
 
 export default function Dashboard() {
   const { user, loading } = useAuth();
   const router = useRouter();
+
+  const [visualizations, setVisualizations] = useState<VisualizationResponse[]>(
+    [],
+  );
+
+  const [loadingDashboard, setLoadingDashboard] = useState(false);
+
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -16,8 +29,57 @@ export default function Dashboard() {
     }
   }, [loading, user, router]);
 
-  if (loading || !user) {
-    return null;
+  useEffect(() => {
+    async function load() {
+      if (!user) {
+        return;
+      }
+
+      try {
+        setLoadingDashboard(true);
+        setError(null);
+
+        const response = await apiRequest<VisualizationResponse[]>(
+          user,
+          "/api/dashboard",
+        );
+
+        setVisualizations(response);
+      } catch (err) {
+        console.error(err);
+        setError("Unable to load dashboard.");
+      } finally {
+        setLoadingDashboard(false);
+      }
+    }
+
+    load();
+  }, [user]);
+
+  if (loading || loadingDashboard || !user) {
+    return (
+      <AppShell>
+        <PageHeader
+          title="Dashboard"
+          description="Monitor your daily consistency and long-term progress."
+        />
+
+        <div className="mt-6 grid min-w-0 gap-4 pb-28 sm:gap-6 xl:grid-cols-2">
+          {Array.from({ length: 6 }).map((_, index) => (
+            <div
+              key={index}
+              className={`bg-card/75 animate-pulse rounded-[28px] border border-white/8 p-5 ${
+                index >= 4 ? "xl:col-span-2" : ""
+              }`}
+            >
+              <div className="bg-muted h-4 w-28 rounded" />
+              <div className="bg-muted mt-3 h-9 w-20 rounded" />
+              <div className="bg-muted mt-6 h-32 rounded-2xl" />
+            </div>
+          ))}
+        </div>
+      </AppShell>
+    );
   }
 
   return (
@@ -26,6 +88,21 @@ export default function Dashboard() {
         title="Dashboard"
         description="Monitor your daily consistency and long-term progress."
       />
+
+      {error ? (
+        <div className="border-destructive text-destructive mt-6 rounded-xl border p-4">
+          {error}
+        </div>
+      ) : (
+        <div className="mt-6 grid min-w-0 gap-4 pb-26 sm:gap-6 xl:grid-cols-2">
+          {visualizations.map((visualization) => (
+            <DashboardVisualizationRenderer
+              key={visualization.id}
+              visualization={visualization}
+            />
+          ))}
+        </div>
+      )}
     </AppShell>
   );
 }

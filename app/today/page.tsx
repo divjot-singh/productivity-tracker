@@ -10,7 +10,7 @@ import { toast } from "sonner";
 
 import { useAuth } from "@/contexts/AuthContext";
 
-import { Config, MetricDefinition, MetricValue } from "@/models/metric";
+import { MetricDefinition, MetricValue } from "@/models/metric";
 
 import { calculateScore } from "@/lib/scoring/scoring-engine";
 import { apiRequest } from "@/lib/api/client";
@@ -148,7 +148,7 @@ export default function TodayPage() {
     return (
       <AppShell>
         <div className="text-muted-foreground p-6 text-sm">
-          Loading today's entry...
+          Loading today&apos;s entry...
         </div>
       </AppShell>
     );
@@ -167,7 +167,9 @@ export default function TodayPage() {
       <div className="mx-auto flex h-[calc(100vh-9rem)] w-full max-w-screen-sm flex-col">
         <div className="bg-background shrink-0 space-y-6 border-b px-4 py-4">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">Today's Entry</h1>
+            <h1 className="text-3xl font-bold tracking-tight">
+              Today&apos;s Entry
+            </h1>
 
             <p className="text-muted-foreground mt-1 text-sm">
               Record your daily habits
@@ -229,10 +231,11 @@ export default function TodayPage() {
           </Button>
         </div>
       </div>
+
       <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
         <DialogContent className="max-h-[80vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Review Today's Entry</DialogTitle>
+            <DialogTitle>Review Today&apos;s Entry</DialogTitle>
             <DialogDescription>
               Confirm your entries before saving.
             </DialogDescription>
@@ -287,12 +290,13 @@ export default function TodayPage() {
             </Button>
 
             <Button
+              disabled={saving}
               onClick={async () => {
                 await handleSave();
                 setPreviewOpen(false);
               }}
             >
-              Save Entry
+              {saving ? "Saving..." : "Save Entry"}
             </Button>
           </DialogFooter>
         </DialogContent>

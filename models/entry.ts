@@ -49,7 +49,7 @@ export interface DailyEntry {
    */
   breakdown?: MetricScoreBreakdown[];
 
-  createdAt?: Timestamp;
+  createdAt?: unknown;
 
-  updatedAt?: Timestamp;
+  updatedAt?: unknown;
 }
