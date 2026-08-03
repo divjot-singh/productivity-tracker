@@ -43,7 +43,7 @@ export const insightExecutor: VisualizationExecutor = {
 
     const insightData: InsightCardData = {
       tone,
-      headline: buildHeadline(tone, label),
+      headline: buildHeadline(tone, label ?? ""),
       message: buildMessage(tone, delta, unit),
       stats: [
         {
