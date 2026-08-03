@@ -26,7 +26,11 @@ export async function getServerUser(request: NextRequest) {
 
     return decodedToken;
   } catch (error) {
-    console.error("Invalid auth token", error);
+    console.error("[server-auth] token verification failed", {
+      path: request.nextUrl.pathname,
+      hasAuthHeader: Boolean(authorization),
+      error,
+    });
 
     return null;
   }
@@ -43,25 +47,7 @@ export async function verifyAuthToken(token: string | undefined) {
 }
 
 async function verifyToken(token: string): Promise<DecodedUser> {
-  try {
-    const { adminAuth } = await import("@/lib/firebase-admin");
-    return await adminAuth.verifyIdToken(token);
-  } catch (error) {
-    if (!isFirebaseAdminModuleError(error)) {
-      throw error;
-    }
-
-    return verifyTokenWithIdentityToolkit(token);
-  }
-}
-
-function isFirebaseAdminModuleError(error: unknown) {
-  if (!error || typeof error !== "object") {
-    return false;
-  }
-
-  const message = "message" in error ? String(error.message) : "";
-  return message.includes("ERR_REQUIRE_ESM") || message.includes("jwks-rsa");
+  return verifyTokenWithIdentityToolkit(token);
 }
 
 async function verifyTokenWithIdentityToolkit(
@@ -92,7 +78,10 @@ async function verifyTokenWithIdentityToolkit(
   );
 
   if (!response.ok) {
-    throw new Error("Failed to verify Firebase token via Identity Toolkit.");
+    const errorBody = await response.text();
+    throw new Error(
+      `[server-auth] Identity Toolkit verify failed (${response.status}): ${errorBody.slice(0, 300)}`,
+    );
   }
 
   const payload = (await response.json()) as {
