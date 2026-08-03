@@ -1,7 +1,7 @@
 import { StatEntryKey } from "@/models/visualization";
-import { VisualizationProvider } from "./provider-types";
+import { StatProviderData, VisualizationProvider } from "./provider-types";
 
-export const entryProvider: VisualizationProvider = {
+export const entryProvider: VisualizationProvider<StatProviderData> = {
   async getData({ visualization, entries }) {
     const key = visualization.key as StatEntryKey;
 

@@ -27,7 +27,8 @@ export const timelineExecutor: VisualizationExecutor = {
         label: formatDate(row.date),
         value: Number(row.rawValue.toFixed(1)),
         delta,
-        direction: delta > 0 ? "up" : delta < 0 ? "down" : "neutral",
+        direction: (delta > 0 ? "up" : delta < 0 ? "down" : "neutral") as
+          "up" | "down" | "neutral",
       };
     });
 

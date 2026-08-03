@@ -7,7 +7,7 @@ import { goalProvider } from "./goal-provider";
 
 export const providerRegistry: Record<
   VisualizationProviderType,
-  VisualizationProvider
+  VisualizationProvider<unknown>
 > = {
   entry: entryProvider,
   metric: metricHistoryProvider,
