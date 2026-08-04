@@ -60,6 +60,8 @@ export interface LeaderboardItem {
 export interface StatProviderData {
   values: StatValuePoint[];
 
+  valueKind?: "number" | "boolean" | "time";
+
   unit?: string;
 
   label?: string;

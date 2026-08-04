@@ -1284,6 +1284,9 @@ export const DEFAULT_VISUALIZATIONS: VisualizationDefinition[] = [
       type: "days",
       value: 21,
     },
+    options: {
+      greenIfDeltaPositive: false,
+    },
     aggregation: "daily",
     displayOrder: 40,
     visible: true,
@@ -1300,6 +1303,9 @@ export const DEFAULT_VISUALIZATIONS: VisualizationDefinition[] = [
     period: {
       type: "days",
       value: 21,
+    },
+    options: {
+      greenIfDeltaPositive: false,
     },
     aggregation: "daily",
     displayOrder: 41,

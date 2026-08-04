@@ -26,6 +26,7 @@ export type VisualizationComparison = "previous-day" | "previous-period";
 
 export interface VisualizationOptions {
   comparison?: VisualizationComparison;
+  greenIfDeltaPositive?: boolean;
 }
 
 export type VisualizationAggregation =

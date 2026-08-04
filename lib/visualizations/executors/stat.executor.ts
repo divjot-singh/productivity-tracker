@@ -60,7 +60,7 @@ export const statExecutor: VisualizationExecutor = {
         const delta = current - previous;
 
         comparison = {
-          label: "vs yesterday",
+          label: "vs previous day",
 
           value: Math.abs(calculatePercentageChange(current, previous)),
 

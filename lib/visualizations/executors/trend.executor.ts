@@ -42,8 +42,11 @@ export const trendExecutor: VisualizationExecutor = {
       };
     }
 
+    const valueKind =
+      "valueKind" in providerData ? providerData.valueKind : undefined;
+
     const normalizedValues = providerData.values.map((item) =>
-      normalizeValue(item.value, providerData.valueKind),
+      normalizeValue(item.value, valueKind),
     );
     const chartData: TrendChartData = {
       labels: providerData.values.map((item) => formatDate(item.date)),

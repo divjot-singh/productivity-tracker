@@ -16,11 +16,13 @@ export const timelineExecutor: VisualizationExecutor = {
   execute(visualization, data) {
     const providerData = data as
       StatProviderData | MetricHistoryData | GoalProviderData;
+    const valueKind =
+      "valueKind" in providerData ? providerData.valueKind : undefined;
 
     const rows = providerData.values
       .map((item) => ({
         date: item.date,
-        rawValue: normalizeValue(item.value, providerData.valueKind),
+        rawValue: normalizeValue(item.value, valueKind),
       }))
       .sort((left, right) => left.date.localeCompare(right.date));
 
@@ -28,21 +30,24 @@ export const timelineExecutor: VisualizationExecutor = {
       const previous = index === 0 ? row.rawValue : rows[index - 1].rawValue;
       const delta = Number((row.rawValue - previous).toFixed(1));
 
+      let direction = "neutral";
+
+      if (delta > 0) {
+        direction = visualization.options?.greenIfDeltaPositive ? "up" : "down";
+      } else if (delta < 0) {
+        direction = visualization.options?.greenIfDeltaPositive ? "down" : "up";
+      }
+
       return {
         date: row.date,
         label: formatDate(row.date),
         value: Number(row.rawValue.toFixed(1)),
         valueLabel:
-          providerData.valueKind === "time"
-            ? formatClockTime(row.rawValue * 60)
-            : undefined,
+          valueKind === "time" ? formatClockTime(row.rawValue * 60) : undefined,
         delta,
         deltaLabel:
-          providerData.valueKind === "time"
-            ? formatDurationMinutes(delta * 60)
-            : undefined,
-        direction: (delta > 0 ? "up" : delta < 0 ? "down" : "neutral") as
-          "up" | "down" | "neutral",
+          valueKind === "time" ? formatDurationMinutes(delta * 60) : undefined,
+        direction: direction as "up" | "down" | "neutral",
       };
     });
 
@@ -50,9 +55,9 @@ export const timelineExecutor: VisualizationExecutor = {
       unit: "unit" in providerData ? providerData.unit : undefined,
       label: "label" in providerData ? providerData.label : undefined,
       valueKind:
-        providerData.valueKind === "time"
+        valueKind === "time"
           ? "time-of-day"
-          : providerData.valueKind === "boolean"
+          : valueKind === "boolean"
             ? "boolean"
             : "number",
       items,
