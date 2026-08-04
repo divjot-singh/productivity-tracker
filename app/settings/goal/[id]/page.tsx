@@ -8,7 +8,7 @@ import { apiRequest } from "@/lib/api/client";
 import { ICONS } from "@/lib/metric-icons";
 
 import { MetricDefinition } from "@/models/metric";
-import { ChevronLeft, Pencil, Trash2 } from "lucide-react";
+import { ChevronLeft, type LucideIcon, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -372,7 +372,7 @@ function ScoringConfig({
 function ReadOnlyConfig({ goal }: { goal: MetricDefinition }) {
   return (
     <div className="space-y-4">
-      <ReadOnlyRow label="Icon" value={goal.icon} />
+      <ReadOnlyRow label="Icon" value={ICONS[goal.icon]} />
       <ReadOnlyRow label="Weight" value={`${goal.weight} pts`} />
       <ReadOnlyRow label="Unit" value={goal.unit || "None"} />
       <ReadOnlyRow label="Target" value={String(goal.target)} />
@@ -405,11 +405,23 @@ function ReadOnlyConfig({ goal }: { goal: MetricDefinition }) {
   );
 }
 
-function ReadOnlyRow({ label, value }: { label: string; value: string }) {
+function ReadOnlyRow({
+  label,
+  value,
+}: {
+  label: string;
+  value: string | LucideIcon;
+}) {
+  let Icon: LucideIcon | null = null;
+  if (typeof value !== "string") {
+    Icon = value;
+  }
   return (
     <div className="flex items-center justify-between border-b py-3 last:border-b-0">
       <span className="text-muted-foreground text-sm">{label}</span>
-      <span className="font-medium">{value}</span>
+      <span className="font-medium">
+        {typeof value === "string" ? value : Icon && <Icon />}
+      </span>
     </div>
   );
 }
