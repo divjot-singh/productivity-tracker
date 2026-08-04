@@ -7,9 +7,9 @@ import { calculateScore } from "@/lib/scoring/scoring-engine";
 import {
   createEntry,
   getEntries,
+  getEntry,
 } from "@/repositories/entry.server.repository";
 
-import { getMetrics } from "@/repositories/config.server.repository";
 import { getGoals } from "@/repositories/goals.server.repository";
 
 export async function POST(request: NextRequest) {
@@ -109,6 +109,26 @@ export async function GET(request: NextRequest) {
           status: 401,
         },
       );
+    }
+
+    const { searchParams } = new URL(request.url);
+    const date = searchParams.get("date");
+    const from = searchParams.get("from");
+    const to = searchParams.get("to");
+
+    if (date) {
+      const entry = await getEntry(user.uid, date);
+
+      return NextResponse.json(entry);
+    }
+
+    if (from && to) {
+      const entries = await getEntries(user.uid);
+      const dates = entries
+        .filter((entry) => entry.date >= from && entry.date <= to)
+        .map((entry) => entry.date);
+
+      return NextResponse.json({ dates });
     }
 
     const entries = await getEntries(user.uid);

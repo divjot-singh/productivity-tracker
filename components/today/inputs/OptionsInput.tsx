@@ -1,5 +1,7 @@
 "use client";
 
+import { cn } from "@/lib/utils";
+
 import MetricCard from "../MetricCard";
 
 import { MetricDefinition } from "@/models/metric";
@@ -28,9 +30,9 @@ export default function OptionsInput({ metric, value, onChange }: Props) {
       progress={progress}
       score={score}
       bonus={bonus}
-      subtitle={`${options.length} available option${options.length === 1 ? "" : "s"}`}
+      subtitle={metric.scoringExplanation}
     >
-      <div className="space-y-3">
+      <div className="grid grid-cols-2 gap-2">
         {options.map((option) => {
           const selected = value === option.value;
 
@@ -39,28 +41,18 @@ export default function OptionsInput({ metric, value, onChange }: Props) {
               key={String(option.value)}
               type="button"
               onClick={() => onChange(option.value)}
-              className={`w-full rounded-xl border p-4 text-left transition-all ${
+              className={cn(
+                "rounded-xl border p-2.5 text-left text-sm transition-all",
                 selected
-                  ? "border-primary bg-primary/10"
-                  : "border-border hover:bg-accent"
-              }`}
+                  ? "border-primary bg-primary/10 text-primary"
+                  : "border-border hover:bg-accent",
+              )}
             >
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="font-medium">{option.label}</p>
-
-                  <p className="text-muted-foreground mt-1 text-sm">
-                    Value: {String(option.value)}
-                  </p>
-                </div>
-
-                <div
-                  className={`rounded-lg px-3 py-1 text-sm font-semibold ${
-                    selected ? "bg-primary text-primary-foreground" : "bg-muted"
-                  }`}
-                >
+              <div className="flex flex-col gap-0.5">
+                <span className="font-medium">{option.label}</span>
+                <span className="text-muted-foreground text-xs">
                   {(option.multiplier * metric.weight).toFixed(1)} pts
-                </div>
+                </span>
               </div>
             </button>
           );

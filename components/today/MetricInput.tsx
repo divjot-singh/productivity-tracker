@@ -6,10 +6,12 @@ import OptionsInput from "./inputs/OptionsInput";
 import RangeInput from "./inputs/RangeInput";
 import TimeRangeInput from "./inputs/TimeRangeInput";
 
+export type EntryFormValue = MetricValue | "";
+
 interface Props {
   metric: MetricDefinition;
-  value: MetricValue;
-  onChange: (value: MetricValue) => void;
+  value: EntryFormValue;
+  onChange: (value: EntryFormValue) => void;
 }
 
 export default function MetricInput({ metric, value, onChange }: Props) {
@@ -24,23 +26,15 @@ export default function MetricInput({ metric, value, onChange }: Props) {
       );
 
     case "goal":
-      return (
-        <GoalInput metric={metric} value={Number(value)} onChange={onChange} />
-      );
+      return <GoalInput metric={metric} value={value} onChange={onChange} />;
 
     case "multiplier":
       return (
-        <MultiplierInput
-          metric={metric}
-          value={Number(value)}
-          onChange={onChange}
-        />
+        <MultiplierInput metric={metric} value={value} onChange={onChange} />
       );
 
     case "range":
-      return (
-        <RangeInput metric={metric} value={Number(value)} onChange={onChange} />
-      );
+      return <RangeInput metric={metric} value={value} onChange={onChange} />;
 
     case "time-range":
       return (
@@ -52,7 +46,13 @@ export default function MetricInput({ metric, value, onChange }: Props) {
       );
 
     case "options":
-      return <OptionsInput metric={metric} value={value} onChange={onChange} />;
+      return (
+        <OptionsInput
+          metric={metric}
+          value={value === "" ? metric.defaultValue : value}
+          onChange={onChange}
+        />
+      );
 
     default:
       return null;

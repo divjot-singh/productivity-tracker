@@ -58,6 +58,7 @@ export interface MetricDefinition {
   icon: string;
 
   description?: string;
+  scoringExplanation?: string;
 
   category: MetricCategory;
 

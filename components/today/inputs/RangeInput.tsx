@@ -1,19 +1,20 @@
 "use client";
 
-import { MetricDefinition } from "@/models/metric";
+import { MetricDefinition, MetricValue } from "@/models/metric";
 
 import MetricCard from "../MetricCard";
 import { Input } from "@/components/ui/input";
 
 interface Props {
   metric: MetricDefinition;
-  value: number;
-  onChange: (value: number) => void;
+  value: MetricValue | "";
+  onChange: (value: MetricValue | "") => void;
 }
 
 export default function RangeInput({ metric, value, onChange }: Props) {
+  const numericValue = value === "" ? 0 : Number(value);
   const matched = metric.scoring.ranges?.find(
-    (range) => value >= range.min && value <= range.max,
+    (range) => numericValue >= range.min && numericValue <= range.max,
   );
 
   const score = matched ? matched.multiplier * metric.weight : 0;
@@ -27,11 +28,15 @@ export default function RangeInput({ metric, value, onChange }: Props) {
         matched ? `${score.toFixed(1)} / ${metric.weight} pts` : "Enter a value"
       }
     >
-      <div className="space-y-4">
+      <div className="space-y-3">
         <Input
           type="number"
-          value={value}
-          onChange={(e) => onChange(Number(e.target.value))}
+          inputMode="decimal"
+          placeholder="0"
+          value={value === "" ? "" : Number(value)}
+          onChange={(e) =>
+            onChange(e.target.value === "" ? "" : Number(e.target.value))
+          }
         />
 
         {matched && (

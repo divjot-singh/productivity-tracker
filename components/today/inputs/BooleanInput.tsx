@@ -2,6 +2,7 @@
 
 import MetricCard from "../MetricCard";
 
+import { cn } from "@/lib/utils";
 import { MetricDefinition } from "@/models/metric";
 
 interface Props {
@@ -18,39 +19,33 @@ export default function BooleanInput({ metric, value, onChange }: Props) {
       metric={metric}
       score={score}
       progress={progress}
-      subtitle="Choose whether you completed this today."
+      subtitle={metric.scoringExplanation}
     >
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-2 gap-2">
         <button
           type="button"
           onClick={() => onChange(true)}
-          className={`rounded-xl border p-4 transition-all ${
+          className={cn(
+            "rounded-xl border p-3 text-sm font-medium transition-all",
             value
-              ? "border-primary bg-primary/10"
-              : "border-border hover:bg-accent"
-          }`}
+              ? "border-primary bg-primary/10 text-primary"
+              : "border-border hover:bg-accent",
+          )}
         >
-          <div className="text-center">
-            <p className="text-2xl">✅</p>
-
-            <p className="mt-2 font-medium">Yes</p>
-          </div>
+          Yes
         </button>
 
         <button
           type="button"
           onClick={() => onChange(false)}
-          className={`rounded-xl border p-4 transition-all ${
+          className={cn(
+            "rounded-xl border p-3 text-sm font-medium transition-all",
             !value
-              ? "border-primary bg-primary/10"
-              : "border-border hover:bg-accent"
-          }`}
+              ? "border-primary bg-primary/10 text-primary"
+              : "border-border hover:bg-accent",
+          )}
         >
-          <div className="text-center">
-            <p className="text-2xl">❌</p>
-
-            <p className="mt-2 font-medium">No</p>
-          </div>
+          No
         </button>
       </div>
     </MetricCard>

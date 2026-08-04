@@ -47,13 +47,9 @@ export default function TimeRangeInput({ metric, value, onChange }: Props) {
       metric={metric}
       score={score}
       progress={progress}
-      subtitle={
-        bestRange
-          ? `Best score between ${bestRange.from} - ${bestRange.to}`
-          : undefined
-      }
+      subtitle={metric.scoringExplanation}
     >
-      <div className="space-y-4">
+      <div className="space-y-2">
         <Input
           type="time"
           value={value}
@@ -62,16 +58,10 @@ export default function TimeRangeInput({ metric, value, onChange }: Props) {
         />
 
         {bestRange && (
-          <div className="bg-muted/50 rounded-xl border p-3">
-            <p className="text-muted-foreground text-xs tracking-wide uppercase">
-              Recommended
-            </p>
-
-            <p className="mt-1 flex items-center gap-2 font-medium">
-              <Clock3 className="h-4 w-4" />
-              {bestRange.from} – {bestRange.to}
-            </p>
-          </div>
+          <p className="text-muted-foreground flex items-center gap-1.5 text-xs">
+            <Clock3 className="h-3.5 w-3.5" />
+            Best: {bestRange.from} – {bestRange.to}
+          </p>
         )}
       </div>
     </MetricCard>
