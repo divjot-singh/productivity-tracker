@@ -11,6 +11,8 @@ export async function seedDefaultConfig(uid: string) {
       {
         ...metric,
 
+        isProtected: true,
+
         createdAt: new Date(),
 
         updatedAt: new Date(),

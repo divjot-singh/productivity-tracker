@@ -80,3 +80,14 @@ export async function getEntries(uid: string): Promise<DailyEntry[]> {
     ...(doc.data() as DailyEntry),
   }));
 }
+
+export async function goalHasHistory(
+  uid: string,
+  goalId: string,
+): Promise<boolean> {
+  const entries = await getEntries(uid);
+
+  return entries.some((entry) =>
+    Object.prototype.hasOwnProperty.call(entry.values ?? {}, goalId),
+  );
+}

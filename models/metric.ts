@@ -75,6 +75,12 @@ export interface MetricDefinition {
   weight: number;
 
   scoring: ScoringDefinition;
+
+  /**
+   * Whether the goal is a protected seed/core goal that cannot be deleted.
+   */
+  isProtected?: boolean;
+
   createdAt?: unknown;
   updatedAt?: unknown;
 }

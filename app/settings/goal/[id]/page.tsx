@@ -8,11 +8,19 @@ import { apiRequest } from "@/lib/api/client";
 import { ICONS } from "@/lib/metric-icons";
 
 import { MetricDefinition } from "@/models/metric";
-import { ChevronLeft, Pencil } from "lucide-react";
+import { ChevronLeft, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 import IconSelector from "@/components/settings/IconSelector";
 import TargetConfig from "@/components/settings/configs/TargetConfig";
@@ -36,6 +44,8 @@ export default function GoalDetails() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string>();
   const [isEditing, setIsEditing] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     async function loadGoal() {
@@ -102,6 +112,29 @@ export default function GoalDetails() {
     router.back();
   }
 
+  async function handleDelete() {
+    if (!user || !goal) {
+      return;
+    }
+
+    try {
+      setIsDeleting(true);
+
+      await apiRequest(user, `/api/goals/${id}`, {
+        method: "DELETE",
+      });
+
+      toast.success("Goal deleted");
+      router.push("/settings");
+    } catch (err) {
+      console.error(err);
+      toast.error(err instanceof Error ? err.message : "Failed to delete goal");
+      setIsDeleteDialogOpen(false);
+    } finally {
+      setIsDeleting(false);
+    }
+  }
+
   if (loading) {
     return <div className="p-6">Loading goal...</div>;
   }
@@ -137,7 +170,7 @@ export default function GoalDetails() {
         )}
       </div>
 
-      <div className="bg-card relative overflow-hidden rounded-3xl border">
+      <div className="bg-card relative mb-6 overflow-hidden rounded-3xl border">
         <div className="from-primary/15 via-primary/5 to-background h-28 bg-gradient-to-r" />
 
         <div className="-mt-10 px-6 pb-6 sm:px-8">
@@ -175,7 +208,7 @@ export default function GoalDetails() {
         </div>
       </div>
 
-      <div className="bg-card rounded-3xl border p-6">
+      <div className="bg-card mb-6 rounded-3xl border p-6">
         <h2 className="mb-4 text-lg font-semibold">Configuration</h2>
 
         {isEditing ? (
@@ -218,6 +251,66 @@ export default function GoalDetails() {
           <ReadOnlyConfig goal={goal} />
         )}
       </div>
+
+      {!isEditing && (
+        <div className="bg-card border-destructive/20 rounded-3xl border p-6">
+          <h2 className="text-destructive mb-4 text-lg font-semibold">
+            Danger Zone
+          </h2>
+
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-sm font-medium">Delete this goal</p>
+
+              <p className="text-muted-foreground mt-1 text-sm">
+                {goal.isProtected
+                  ? "Protected seed/core goals cannot be deleted."
+                  : "Permanently remove this goal from your configuration."}
+              </p>
+            </div>
+
+            <Button
+              variant="destructive"
+              onClick={() => setIsDeleteDialogOpen(true)}
+              disabled={goal.isProtected}
+            >
+              <Trash2 className="mr-1.5 h-4 w-4" />
+              Delete Goal
+            </Button>
+          </div>
+        </div>
+      )}
+
+      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <DialogContent showCloseButton={false}>
+          <DialogHeader>
+            <DialogTitle>Delete goal?</DialogTitle>
+
+            <DialogDescription>
+              This will permanently delete this goal. This action cannot be
+              undone.
+            </DialogDescription>
+          </DialogHeader>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsDeleteDialogOpen(false)}
+              disabled={isDeleting}
+            >
+              Cancel
+            </Button>
+
+            <Button
+              variant="destructive"
+              onClick={handleDelete}
+              disabled={isDeleting}
+            >
+              {isDeleting ? "Deleting..." : "Delete"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {isEditing && (
         <div className="bg-background fixed inset-x-0 bottom-0 z-20 border-t p-4 lg:left-64">

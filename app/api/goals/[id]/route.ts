@@ -6,6 +6,7 @@ import { getServerUser } from "@/lib/server-auth";
 
 import { MetricDefinition } from "@/models/metric";
 
+import { goalHasHistory } from "@/repositories/entry.server.repository";
 import {
   deleteGoal,
   getGoal,
@@ -199,6 +200,31 @@ export async function DELETE(request: NextRequest, { params }: RouteContext) {
         },
         {
           status: 404,
+        },
+      );
+    }
+
+    if (existingGoal.isProtected) {
+      return NextResponse.json(
+        {
+          error: "Protected seed/core goals cannot be deleted.",
+        },
+        {
+          status: 400,
+        },
+      );
+    }
+
+    const hasHistory = await goalHasHistory(user.uid, id);
+
+    if (hasHistory) {
+      return NextResponse.json(
+        {
+          error:
+            "This goal cannot be deleted because it has historical entries.",
+        },
+        {
+          status: 400,
         },
       );
     }
