@@ -72,7 +72,7 @@ export default function BarChartRenderer({
 
             <Tooltip
               cursor={{ fill: "rgba(255,255,255,0.02)" }}
-              content={<ChartTooltipContent />}
+              content={<ChartTooltipContent data={data} />}
             />
 
             {data.datasets.map((dataset, index) => (

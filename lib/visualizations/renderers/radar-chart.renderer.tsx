@@ -86,7 +86,7 @@ export default function RadarChartRenderer({
               }}
             />
 
-            <Tooltip content={<ChartTooltipContent />} />
+            <Tooltip content={<ChartTooltipContent data={data} />} />
 
             {data.datasets.map((dataset, index) => (
               <Radar

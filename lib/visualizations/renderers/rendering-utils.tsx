@@ -3,6 +3,7 @@ import { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
 import { TrendChartData } from "../types";
+import { formatClockTime } from "../time-utils";
 
 interface VisualizationCardProps {
   title: string;
@@ -20,6 +21,8 @@ interface ChartTooltipContentProps {
   active?: boolean;
 
   label?: string;
+
+  data?: TrendChartData;
 
   payload?: Array<{
     name?: string;
@@ -60,6 +63,7 @@ export function VisualizationCard({
 export function ChartTooltipContent({
   active,
   label,
+  data,
   payload,
 }: ChartTooltipContentProps) {
   if (!active || !payload?.length) {
@@ -90,7 +94,7 @@ export function ChartTooltipContent({
             </div>
 
             <span className="text-sm font-semibold">
-              {formatCompactNumber(item.value)}
+              {formatTooltipValue(item.value, data)}
             </span>
           </div>
         ))}
@@ -138,11 +142,8 @@ export function formatAxisValue(
     return value >= 1 ? "Yes" : "No";
   }
 
-  if (data.valueKind === "duration-hours") {
-    const hours = Math.floor(value);
-    const minutes = Math.round((value - hours) * 60);
-
-    return `${hours}:${String(minutes).padStart(2, "0")}`;
+  if (data.valueKind === "time-of-day") {
+    return formatClockTime(value * 60);
   }
 
   const formatted = formatCompactNumber(value);
@@ -152,6 +153,21 @@ export function formatAxisValue(
   }
 
   return `${formatted} ${data.unit}`;
+}
+
+function formatTooltipValue(
+  value: number | string | undefined,
+  data?: TrendChartData,
+) {
+  if (typeof value !== "number") {
+    return value ?? "-";
+  }
+
+  if (data?.valueKind === "time-of-day") {
+    return formatClockTime(value * 60);
+  }
+
+  return formatCompactNumber(value);
 }
 
 export function formatXAxisLabel(label: string, index: number, total: number) {

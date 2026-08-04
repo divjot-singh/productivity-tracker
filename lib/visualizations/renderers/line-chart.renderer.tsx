@@ -69,7 +69,7 @@ export default function LineChartRenderer({
               }
             />
 
-            <Tooltip content={<ChartTooltipContent />} />
+            <Tooltip content={<ChartTooltipContent data={data} />} />
 
             {data.datasets.map((dataset, index) => (
               <Line

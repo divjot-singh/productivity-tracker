@@ -20,21 +20,50 @@ export const categoryProvider: VisualizationProvider<CategoryProviderData> = {
             return null;
           }
 
-          return metrics.reduce(
+          const score = metrics.reduce(
             (sum, metric) => sum + (metric?.weightedScore ?? 0),
             0,
           );
-        })
-        .filter((value): value is number => value !== null);
 
-      const total = relevantEntries.reduce((sum, value) => sum + value, 0);
-      const average =
-        relevantEntries.length === 0 ? 0 : total / relevantEntries.length;
+          const weight = metrics.reduce(
+            (sum, metric) => sum + (metric?.weight ?? 0),
+            0,
+          );
+
+          return {
+            score,
+            weight,
+          };
+        })
+        .filter(
+          (
+            value,
+          ): value is {
+            score: number;
+            weight: number;
+          } => value !== null,
+        );
+
+      const totalScore = relevantEntries.reduce(
+        (sum, value) => sum + value.score,
+        0,
+      );
+
+      const totalWeight = relevantEntries.reduce(
+        (sum, value) => sum + value.weight,
+        0,
+      );
+
+      const percentage =
+        totalWeight === 0 ? 0 : (totalScore / totalWeight) * 100;
 
       return {
         id: category,
         label: category,
-        value: Number(average.toFixed(1)),
+        value: Number(percentage.toFixed(1)),
+        score: Number(totalScore.toFixed(1)),
+        weight: Number(totalWeight.toFixed(1)),
+        percentage: Number(percentage.toFixed(1)),
       };
     });
     const leaderboardMode =
@@ -67,17 +96,24 @@ export const categoryProvider: VisualizationProvider<CategoryProviderData> = {
           return null;
         }
 
+        const score = metrics.reduce(
+          (sum, metric) => sum + (metric?.weightedScore ?? 0),
+          0,
+        );
+
+        const weight = metrics.reduce(
+          (sum, metric) => sum + (metric?.weight ?? 0),
+          0,
+        );
+
+        const percentage = weight === 0 ? 0 : (score / weight) * 100;
+
         return {
           date: entry.date,
-          value: metrics.reduce(
-            (sum, metric) => sum + (metric?.weightedScore ?? 0),
-            0,
-          ),
-          score: metrics.reduce((sum, metric) => sum + (metric?.score ?? 0), 0),
-          weight: metrics.reduce(
-            (sum, metric) => sum + (metric?.weight ?? 0),
-            0,
-          ),
+          value: Number(percentage.toFixed(1)),
+          score: Number(score.toFixed(1)),
+          weight: Number(weight.toFixed(1)),
+          percentage: Number(percentage.toFixed(1)),
           bonus: metrics.reduce((sum, metric) => sum + (metric?.bonus ?? 0), 0),
           xp: metrics.reduce((sum, metric) => sum + (metric?.xp ?? 0), 0),
         };

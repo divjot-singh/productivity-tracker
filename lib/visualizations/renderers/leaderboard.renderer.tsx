@@ -16,12 +16,15 @@ export default function LeaderboardRenderer({
   const { items } = visualization.data;
 
   return (
-    <VisualizationCard title={visualization.title} subtitle={visualization.subtitle}>
+    <VisualizationCard
+      title={visualization.title}
+      subtitle={visualization.subtitle}
+    >
       <div className="space-y-3">
         {items.map((item, index) => (
           <div
             key={item.label}
-            className="flex items-center justify-between gap-3 rounded-2xl border border-white/6 bg-background/30 px-3 py-3"
+            className="bg-background/30 flex items-center justify-between gap-3 rounded-2xl border border-white/6 px-3 py-3"
           >
             <div className="flex min-w-0 items-center gap-3">
               <div
@@ -31,12 +34,24 @@ export default function LeaderboardRenderer({
               </div>
 
               <div className="min-w-0">
-                <p className="truncate text-sm font-medium capitalize">{item.label}</p>
-                <p className="text-muted-foreground text-xs">Average category score</p>
+                <p className="truncate text-sm font-medium capitalize">
+                  {item.label}
+                </p>
               </div>
             </div>
 
-            <p className="text-base font-semibold">{formatCompactNumber(item.value)}</p>
+            <div className="text-right">
+              <p className="text-base font-semibold">
+                {formatCompactNumber(item.value)}%
+              </p>
+
+              {item.score !== undefined && item.weight !== undefined ? (
+                <p className="text-muted-foreground text-xs">
+                  {formatCompactNumber(item.score)} /{" "}
+                  {formatCompactNumber(item.weight)}
+                </p>
+              ) : null}
+            </div>
           </div>
         ))}
       </div>

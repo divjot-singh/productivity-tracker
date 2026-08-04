@@ -5,6 +5,7 @@ import {
 } from "../providers/provider-types";
 import { TrendChartData } from "../types";
 import { VisualizationExecutor } from "./executor-types";
+import { normalizeSleepDayMinutes, parseClockTime } from "../time-utils";
 
 export const trendExecutor: VisualizationExecutor = {
   execute(visualization, data) {
@@ -42,7 +43,7 @@ export const trendExecutor: VisualizationExecutor = {
     }
 
     const normalizedValues = providerData.values.map((item) =>
-      normalizeValue(item.value),
+      normalizeValue(item.value, providerData.valueKind),
     );
     const chartData: TrendChartData = {
       labels: providerData.values.map((item) => formatDate(item.date)),
@@ -75,7 +76,18 @@ function formatDate(date: string) {
   });
 }
 
-function normalizeValue(value: number | boolean | string) {
+function normalizeValue(
+  value: number | boolean | string,
+  kind?: "number" | "boolean" | "time",
+) {
+  if (kind === "time" && typeof value === "string") {
+    const normalized = normalizeSleepDayMinutes(value);
+
+    if (normalized !== null) {
+      return Number((normalized / 60).toFixed(1));
+    }
+  }
+
   if (typeof value === "number") {
     return Number(value.toFixed(1));
   }
@@ -87,10 +99,11 @@ function normalizeValue(value: number | boolean | string) {
   const timeMatch = /^(\d{1,2}):(\d{2})$/.exec(value);
 
   if (timeMatch) {
-    const hours = Number(timeMatch[1]);
-    const minutes = Number(timeMatch[2]);
+    const minutes = parseClockTime(value);
 
-    return Number((hours + minutes / 60).toFixed(1));
+    if (minutes !== null) {
+      return Number((minutes / 60).toFixed(1));
+    }
   }
 
   const numericValue = Number(value);
@@ -101,6 +114,14 @@ function normalizeValue(value: number | boolean | string) {
 function inferValueKind(
   providerData: StatProviderData | MetricHistoryData | CategoryProviderData,
 ): TrendChartData["valueKind"] {
+  if ("valueKind" in providerData && providerData.valueKind === "time") {
+    return "time-of-day";
+  }
+
+  if ("valueKind" in providerData && providerData.valueKind === "boolean") {
+    return "boolean";
+  }
+
   if (providerData.values.length === 0) {
     return "number";
   }
@@ -115,7 +136,7 @@ function inferValueKind(
     const timeMatch = /^(\d{1,2}):(\d{2})$/.exec(sampleValue);
 
     if (timeMatch) {
-      return "duration-hours";
+      return "score";
     }
   }
 

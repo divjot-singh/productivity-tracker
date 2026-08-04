@@ -30,6 +30,8 @@ export interface CategoryValuePoint extends DataPoint {
 
   weight: number;
 
+  percentage: number;
+
   bonus: number;
 
   xp: number;
@@ -41,6 +43,12 @@ export interface LeaderboardItem {
   label: string;
 
   value: number;
+
+  score?: number;
+
+  weight?: number;
+
+  percentage?: number;
 
   unit?: string;
 }
@@ -70,6 +78,8 @@ export interface MetricHistoryData {
 
   target: EntryValue;
 
+  valueKind?: "number" | "boolean" | "time";
+
   unit?: string;
 
   values: MetricValuePoint[];
@@ -87,6 +97,8 @@ export interface GoalProviderData {
   category: string;
 
   target: EntryValue;
+
+  valueKind?: "number" | "boolean" | "time";
 
   unit?: string;
 

@@ -11,6 +11,16 @@ export const leaderboardExecutor: VisualizationExecutor = {
       .map((item) => ({
         label: item.label,
         value: Number(item.value.toFixed(1)),
+        score:
+          item.score !== undefined ? Number(item.score.toFixed(1)) : undefined,
+        weight:
+          item.weight !== undefined
+            ? Number(item.weight.toFixed(1))
+            : undefined,
+        percentage:
+          item.percentage !== undefined
+            ? Number(item.percentage.toFixed(1))
+            : undefined,
       }));
 
     return {

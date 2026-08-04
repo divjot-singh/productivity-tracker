@@ -35,14 +35,14 @@ export default function TimelineRenderer({
               <div className="min-w-0">
                 <p className="truncate text-sm font-medium">{item.label}</p>
                 <p className="text-muted-foreground text-xs">
-                  {item.delta > 0 ? "+" : ""}
-                  {formatCompactNumber(item.delta)} change
+                  {item.deltaLabel ??
+                    `${item.delta > 0 ? "+" : ""}${formatCompactNumber(item.delta)} change`}
                 </p>
               </div>
             </div>
 
             <p className="text-sm font-semibold">
-              {formatCompactNumber(item.value)}
+              {item.valueLabel ?? formatCompactNumber(item.value)}
               {visualization.data.unit ? ` ${visualization.data.unit}` : ""}
             </p>
           </div>

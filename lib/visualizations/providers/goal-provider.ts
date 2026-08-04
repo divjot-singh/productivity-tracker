@@ -31,6 +31,12 @@ export const goalProvider: VisualizationProvider<GoalProviderData> = {
       id: goal.id,
       label: goal.label,
       category: goal.category,
+      valueKind:
+        goal.type === "time"
+          ? "time"
+          : goal.type === "boolean"
+            ? "boolean"
+            : "number",
       target: goal.target,
       unit: goal.unit,
       values: history.map((item) => ({

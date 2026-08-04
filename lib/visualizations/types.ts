@@ -45,7 +45,7 @@ export interface TrendChartData {
 
   unit?: string;
 
-  valueKind?: "number" | "score" | "duration-hours" | "boolean";
+  valueKind?: "number" | "score" | "time-of-day" | "boolean";
 
   domain?: {
     min: number;
@@ -62,6 +62,9 @@ export interface LeaderboardData {
   items: {
     label: string;
     value: number;
+    score?: number;
+    weight?: number;
+    percentage?: number;
   }[];
 }
 
@@ -81,11 +84,15 @@ export interface TimelineData {
 
   label?: string;
 
+  valueKind?: "number" | "time-of-day" | "boolean";
+
   items: {
     date: string;
     label: string;
     value: number;
+    valueLabel?: string;
     delta: number;
+    deltaLabel?: string;
     direction: "up" | "down" | "neutral";
   }[];
 }

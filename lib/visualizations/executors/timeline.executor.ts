@@ -5,6 +5,12 @@ import {
 } from "../providers/provider-types";
 import { TimelineData } from "../types";
 import { VisualizationExecutor } from "./executor-types";
+import {
+  formatClockTime,
+  formatDurationMinutes,
+  normalizeSleepDayMinutes,
+  parseClockTime,
+} from "../time-utils";
 
 export const timelineExecutor: VisualizationExecutor = {
   execute(visualization, data) {
@@ -14,7 +20,7 @@ export const timelineExecutor: VisualizationExecutor = {
     const rows = providerData.values
       .map((item) => ({
         date: item.date,
-        rawValue: normalizeValue(item.value),
+        rawValue: normalizeValue(item.value, providerData.valueKind),
       }))
       .sort((left, right) => left.date.localeCompare(right.date));
 
@@ -26,7 +32,15 @@ export const timelineExecutor: VisualizationExecutor = {
         date: row.date,
         label: formatDate(row.date),
         value: Number(row.rawValue.toFixed(1)),
+        valueLabel:
+          providerData.valueKind === "time"
+            ? formatClockTime(row.rawValue * 60)
+            : undefined,
         delta,
+        deltaLabel:
+          providerData.valueKind === "time"
+            ? formatDurationMinutes(delta * 60)
+            : undefined,
         direction: (delta > 0 ? "up" : delta < 0 ? "down" : "neutral") as
           "up" | "down" | "neutral",
       };
@@ -35,6 +49,12 @@ export const timelineExecutor: VisualizationExecutor = {
     const timelineData: TimelineData = {
       unit: "unit" in providerData ? providerData.unit : undefined,
       label: "label" in providerData ? providerData.label : undefined,
+      valueKind:
+        providerData.valueKind === "time"
+          ? "time-of-day"
+          : providerData.valueKind === "boolean"
+            ? "boolean"
+            : "number",
       items,
     };
 
@@ -48,7 +68,18 @@ export const timelineExecutor: VisualizationExecutor = {
   },
 };
 
-function normalizeValue(value: number | boolean | string) {
+function normalizeValue(
+  value: number | boolean | string,
+  kind?: "number" | "boolean" | "time",
+) {
+  if (kind === "time" && typeof value === "string") {
+    const normalized = normalizeSleepDayMinutes(value);
+
+    if (normalized !== null) {
+      return normalized / 60;
+    }
+  }
+
   if (typeof value === "number") {
     return value;
   }
@@ -60,10 +91,11 @@ function normalizeValue(value: number | boolean | string) {
   const timeMatch = /^(\d{1,2}):(\d{2})$/.exec(value);
 
   if (timeMatch) {
-    const hours = Number(timeMatch[1]);
-    const minutes = Number(timeMatch[2]);
+    const minutes = parseClockTime(value);
 
-    return Number((hours + minutes / 60).toFixed(1));
+    if (minutes !== null) {
+      return Number((minutes / 60).toFixed(1));
+    }
   }
 
   const numericValue = Number(value);

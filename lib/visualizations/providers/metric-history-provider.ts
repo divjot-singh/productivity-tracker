@@ -48,6 +48,12 @@ export const metricHistoryProvider: VisualizationProvider<MetricHistoryData> = {
       id: goal.id,
       label: goal.label,
       category: goal.category,
+      valueKind:
+        goal.type === "time"
+          ? "time"
+          : goal.type === "boolean"
+            ? "boolean"
+            : "number",
       unit: goal.unit,
       target: goal.target,
       values: history,
