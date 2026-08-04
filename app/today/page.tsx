@@ -32,7 +32,6 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 
 type EntryValues = Record<string, EntryFormValue>;
@@ -126,6 +125,17 @@ export default function TodayPage() {
   );
 
   useEffect(() => {
+    async function loadAll() {
+      if (!user) return;
+
+      await loadEntryForDate(selectedDate, metrics);
+      await loadEntryDates(selectedDate);
+    }
+
+    loadAll();
+  }, [user, metrics, selectedDate, loadEntryForDate, loadEntryDates]);
+
+  useEffect(() => {
     async function loadMetrics() {
       if (!user) {
         return;
@@ -148,26 +158,6 @@ export default function TodayPage() {
 
     loadMetrics();
   }, [user]);
-
-  useEffect(() => {
-    if (!user || !metrics.length) {
-      return;
-    }
-
-    async function loadSelectedDate() {
-      await loadEntryForDate(selectedDate, metrics);
-    }
-
-    loadSelectedDate();
-  }, [user, metrics, selectedDate, loadEntryForDate]);
-
-  useEffect(() => {
-    if (!user) {
-      return;
-    }
-
-    loadEntryDates(selectedDate);
-  }, [user, selectedDate, loadEntryDates]);
 
   const groupedMetrics = useMemo(() => {
     return metrics.reduce(

@@ -3,7 +3,8 @@
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-import { MetricDefinition } from "@/models/metric";
+import { MetricDefinition, ScoringDefinition } from "@/models/metric";
+import ScoringExplanationInput from "./ScoringExplanationInput";
 
 interface Props {
   goal: MetricDefinition;
@@ -12,10 +13,15 @@ interface Props {
 }
 
 export default function MultiplierConfig({ goal, updateGoal }: Props) {
-  function updateScoring(partial: Record<string, unknown>) {
+  const scoring = goal.scoring as ScoringDefinition & {
+    multiplier?: number;
+    maxScore?: number;
+  };
+
+  function updateScoring(partial: Partial<typeof scoring>) {
     updateGoal({
       scoring: {
-        ...goal.scoring,
+        ...scoring,
         ...partial,
       },
     });
@@ -31,6 +37,8 @@ export default function MultiplierConfig({ goal, updateGoal }: Props) {
         </p>
       </div>
 
+      <ScoringExplanationInput goal={goal} updateGoal={updateGoal} />
+
       <div className="space-y-2">
         <Label>Multiplier</Label>
 
@@ -38,7 +46,7 @@ export default function MultiplierConfig({ goal, updateGoal }: Props) {
           type="number"
           step="0.0001"
           placeholder="0.001"
-          value={(goal.scoring as any).multiplier ?? ""}
+          value={scoring.multiplier ?? ""}
           onChange={(e) =>
             updateScoring({
               multiplier: Number(e.target.value),
@@ -57,7 +65,7 @@ export default function MultiplierConfig({ goal, updateGoal }: Props) {
         <Input
           type="number"
           placeholder="Leave empty for unlimited"
-          value={(goal.scoring as any).maxScore ?? ""}
+          value={scoring.maxScore ?? ""}
           onChange={(e) =>
             updateScoring({
               maxScore:

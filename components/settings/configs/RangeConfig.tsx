@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 import { MetricDefinition, RangeScore } from "@/models/metric";
+import ScoringExplanationInput from "./ScoringExplanationInput";
 
 interface Props {
   goal: MetricDefinition;
@@ -59,6 +60,8 @@ export default function RangeConfig({ goal, updateGoal }: Props) {
           Configure score multipliers for each range.
         </p>
       </div>
+
+      <ScoringExplanationInput goal={goal} updateGoal={updateGoal} />
 
       <div className="space-y-4">
         {ranges.map((range, index) => (

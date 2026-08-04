@@ -1,213 +1,674 @@
 # V2 Implementation Plan
 
-Date: 2026-08-03
+**Date:** 2026-08-03  
+**Current focus:** Goals Management
 
 ## Goal
 
 Ship V2 with:
 
-1. Correct category comparison logic on Dashboard (percentage by category score/weight).
+1. Correct category comparison logic on Dashboard.
 2. Correct wake time and bed time trend semantics on a sleep-day axis.
 3. Better Today UX aligned with Apple Fitness style interaction.
-4. Goals management with controlled edit and safe delete rules.
-5. Dashboard visualizations sourced from Firebase (no fallback to defaults in V2 runtime path).
+4. Goals management with controlled editing and safe complete deletion rules.
+5. Dashboard visualizations sourced from Firebase, with no implicit fallback to defaults in the V2 runtime path.
 
-## Current Status
+---
 
-### Completed Immediately (Point 1)
+# Current Status
 
-- Category breakdown and leaderboard now use:
-  - category score = sum of weighted scores for that category
-  - category weight = sum of weights present in that category history
-  - category percentage = `(category score / category weight) * 100`
-- Leaderboard now displays both:
-  - percentage
-  - raw score/weight context
-- Wake and bed time trends now:
-  - display time labels as clock time
-  - use a sleep-day axis where post-midnight values are treated as later than late-evening values
-  - preserve ordering semantics such that `23:00` is earlier than `01:30`
+## Completed
 
-## V2 Scope By Area
+### 1. Dashboard — Category Comparison Logic ✅
+
+Completed.
+
+Category breakdown and leaderboard now use:
+
+- **Category score** = sum of weighted scores for that category.
+- **Category weight** = sum of weights present in that category history.
+- **Category percentage** = `(category score / category weight) * 100`.
+
+Leaderboard now displays:
+
+- Percentage as the primary comparison value.
+- Raw score / weight as secondary context.
+
+Radar and category trend widgets use normalized percentage values for consistent scale comparison.
+
+### 2. Dashboard — Wake Time and Bed Time Trends ✅
+
+Completed.
+
+Time trends now:
+
+- Display clock time as `HH:mm`.
+- Use a sleep-day axis for ordering.
+- Treat post-midnight values as later than late-evening values.
+- Preserve correct ordering semantics such as:
+
+```text
+23:00 → 00:30 → 01:30
+```
+
+Tooltips, axis labels, and timeline values use clock-time formatting.
+
+### 3. Today Experience ✅
+
+Completed.
+
+The Today page now has the V2 UX direction:
+
+- Calendar-style date selector.
+- Existing-entry date indicators.
+- Selected date remains visible.
+- Existing entries can be loaded and edited.
+- Sticky status area for live Life Score and XP.
+- Progress indicator with capped visual progress.
+- Compact grouped metric inputs.
+- Empty numeric inputs rather than forced visible `0`.
+- Empty numeric values normalize to `0` for scoring/API submission.
+- Scoring explanations exposed through info UI.
+- Reset uses an in-app confirmation UI rather than `window.confirm`.
+- Review and Save uses a bottom-sheet interaction.
+- Saving keeps the selected date and saved values visible rather than clearing the form.
+- Existing dates can be updated without creating a separate client-side editing flow.
+
+The Today page is considered complete for the current V2 scope.
+
+---
+
+# V2 Scope By Area
 
 ## 1) Dashboard
 
 ### 1.1 Category Widgets
 
-What to change:
+**Status: ✅ Complete**
 
-- Keep percentage as the primary comparison value for category widgets.
-- Keep raw score and weight visible as secondary context.
+Keep percentage as the primary comparison value for category widgets.
 
-How to implement:
+Keep raw score and weight visible as secondary context.
 
-- Category provider returns percentage + score + weight.
-- Leaderboard renderer uses percentage for ranking and displays score/weight as detail text.
-- Radar and category trend widgets use normalized percentage values for scale consistency.
-
-Acceptance criteria:
+Acceptance criteria completed:
 
 - Rankings are not biased toward categories with larger absolute weights.
 - Every category row shows `%` and `score / weight`.
+- Radar and category trend visualizations use normalized percentages.
 
 ### 1.2 Wake Time and Bed Time Trends
 
-What to change:
+**Status: ✅ Complete**
+
+Acceptance criteria completed:
 
 - Time axes show `HH:mm`, never decimal values.
-- Time comparison runs on a sleep-day axis.
+- Post-midnight ordering is handled using a sleep-day axis.
+- Bedtime sequence `23:00 → 00:30 → 01:30` appears as increasing later times.
+- Tooltips and axis ticks show clock time.
 
-How to implement:
+---
 
-- Parse `HH:mm` to minutes.
-- Normalize values under cutoff into next-day range for ordering.
-- Use clock-time formatter for axis labels, tooltip labels, and timeline row values.
-- Use duration formatter for day-to-day delta labels in timelines.
+# 2) Today Experience
 
-Acceptance criteria:
+**Status: ✅ Complete**
 
-- Bedtime sequence `23:00 -> 00:30 -> 01:30` appears as increasing later times.
-- Tooltips and axis ticks show time, not fractional hours.
+The Today redesign has been implemented and is no longer part of the remaining V2 build queue.
 
-## 2) Today Experience (Design + Build in V2)
+The final behavior is:
 
-Target UX direction:
+```text
+Select date
+    ↓
+Load existing entry if present
+    ↓
+Edit / enter values
+    ↓
+Live score + XP update
+    ↓
+Review & Save
+    ↓
+Bottom-sheet confirmation
+    ↓
+Save
+    ↓
+Keep selected date + saved values visible
+```
 
-- Calendar-style date selector.
-- Sticky header with live Life Score and XP updates.
-- Inputs remain scrollable and compact (no oversized card wrappers).
-- Save confirmation becomes a bottom sheet instead of centered dialog.
+No further Today redesign work is required for V2 unless regression testing identifies an issue.
 
-What to change:
+---
 
-- Replace date input control with a compact calendar selector surface.
-- Keep score and XP in a fixed/sticky top strip.
-- Keep grouped inputs in a clean vertical flow with tighter spacing.
-- Replace current modal review with bottom sheet summary and primary save CTA.
+# 3) Logs
 
-Implementation notes:
+**Status: No V2 change planned**
 
-- Preserve existing scoring calculation flow.
-- Preserve server save contract for `/api/entries`.
-- Keep confirmation review content but move to sheet interaction pattern.
+The Logs experience remains unchanged for this V2 iteration.
 
-Acceptance criteria:
+---
 
-- User can select any day quickly from calendar control.
-- Score and XP stay visible while scrolling inputs.
-- Save interaction uses a bottom sheet with full summary and final confirmation.
+# 4) Goals Management
 
-## 3) Logs
+**Status: 🚧 Next implementation**
 
-No V2 change planned.
+This is the next area to implement.
 
-## 4) Goals Management
+## 4.1 Goal Editing
 
-### 4.1 Editing
+### Target behavior
 
-Target behavior:
+Allow users to edit goals from:
 
-- Allow editing from goal detail page and inline entry points.
-- Restrict edits to numeric tuning only.
+- Goal detail page.
+- Inline edit entry points from the goal list.
 
-Locked fields (not editable in V2):
+The edit experience should be focused on **numeric/scoring configuration**, not structural changes to the goal.
 
-- goal name
-- description
-- category
-- scoring type
+### Editable fields
 
-Editable fields in V2:
+The following fields are editable in V2:
 
-- weight
-- numeric scoring values (targets, ranges, multipliers, bonuses, score tuning fields)
+- `weight`
+- Numeric scoring values
+- Targets
+- Ranges
+- Multipliers
+- Bonus values
+- Other numeric scoring/tuning fields supported by the existing scoring configuration
+- `icon`
 
-How to implement:
+The exact numeric fields shown should remain driven by the existing goal/scoring configuration rather than hard-coding unrelated fields into the UI.
 
-- Add goal detail route/page for focused editing.
-- Add inline “Edit” action in goal list that deep-links to detail editor.
-- Server-side guard in PATCH route to enforce immutable field policy.
+### Locked fields
 
-Acceptance criteria:
+The following fields are **not editable in V2**:
 
-- Restricted fields cannot be changed via UI.
-- Restricted fields cannot be changed via API payload tampering.
-- Numeric changes persist and reflect in scoring and dashboard outputs.
+- Goal name
+- Description
+- Category
+- Scoring type
 
-### 4.2 Deletion Restrictions
+These fields should be displayed as read-only in the UI.
 
-V2 requirement:
+### API enforcement
 
-- Do not allow unsafe deletion.
+The immutable-field policy must be enforced server-side.
 
-Proposed safe baseline:
+The PATCH API must reject attempts to modify:
 
-- Block delete if goal has historical references in entries.
-- Block delete for protected seed/core goals.
-- Show actionable message when delete is blocked.
+```text
+name
+description
+category
+scoring type
+```
 
-Open decision needed before implementation:
+even if a client manually sends those fields.
 
-- confirm exact final policy and whether soft-delete should be used instead of hard-delete.
+Do not rely on UI disabling alone.
 
-## 5) Visualizations Source of Truth
+The server should validate the incoming payload and either reject immutable fields with a clear validation error or construct an update object containing only permitted fields.
 
-V2 requirement:
+Prefer explicit server-side validation so accidental API misuse is visible.
 
-- Dashboard visualizations should come from Firebase collection.
-- Do not read visualization definitions from defaults at runtime.
+### Acceptance criteria
 
-What to change:
+- User can open a goal for editing.
+- User can edit permitted numeric/scoring fields.
+- User can edit the icon.
+- Goal name cannot be changed.
+- Description cannot be changed.
+- Category cannot be changed.
+- Scoring type cannot be changed.
+- UI cannot submit immutable fields as editable changes.
+- API rejects/treats immutable field modification attempts as invalid.
+- Numeric changes persist to Firebase.
+- Updated goal configuration is immediately reflected in scoring.
+- Updated configuration is reflected in Dashboard outputs after relevant data is recalculated/loaded.
 
-- Ensure `GET /api/dashboard` reads only stored visualization definitions from repository.
-- Keep deterministic fallback behavior explicit (empty state or one-time seed flow), not implicit defaults.
+---
 
-Developer tooling requirement:
+## 4.2 Goal Detail Page
 
-- Add visualization seeding action to settings dev page:
-  - add “Seed Visualizations” button in `app/settings/dev/page.tsx`
-  - seed from `DEFAULT_VISUALIZATIONS` into Firebase for current user
+Add a focused goal detail/edit page.
 
-Acceptance criteria:
+Suggested route:
 
-- Dashboard shows visualizations only from Firebase state.
-- On clean account, developer can seed visualizations using dev page action.
+```text
+app/settings/goals/[id]/page.tsx
+```
 
-## Implementation Order for Remaining V2 Work
+or the equivalent route consistent with the existing project structure.
 
-1. Today page UX redesign (calendar + sticky score/XP + bottom sheet).
-2. Goals detail + inline entry points with immutable field restrictions.
-3. Delete restriction policy implementation.
-4. Firebase-only visualization sourcing and dev seeding button.
-5. Regression pass on dashboard, logs, settings, and today flows.
+The page should provide:
 
-## Testing Checklist
+### Header
 
-- Dashboard category widgets:
-  - percentage math
-  - ranking correctness
-  - score/weight secondary labels
-- Time widgets:
-  - post-midnight ordering
-  - axis labels and tooltips as `HH:mm`
-  - delta labels readable and correct
-- Today:
-  - calendar date selection
-  - sticky live score/XP
-  - bottom sheet review and save
-- Goals:
-  - immutable fields locked at UI and API layers
-  - numeric edits persist
-  - deletion restrictions enforced with clear errors
-- Visualization sourcing:
-  - Firebase-only load path
-  - dev seeding path works from dev page
+```text
+← Goals
 
-## Open Questions To Resolve Before Full V2 Build
+[Icon]
 
-1. Final delete policy:
-   - hard block with no override, or soft-delete with archival?
-2. Immutable field policy exception:
-   - should icon be immutable too?
-3. Calendar UX depth:
-   - month view only, or month + quick recent strip?
+Goal Name
+Category
+```
+
+The name/category are informational and read-only.
+
+### Editable configuration
+
+Show only the fields relevant to the selected goal's configuration.
+
+For example:
+
+```text
+Weight
+[ 8 ]
+
+Target
+[ 3 ]
+
+Bonus Rate
+[ 0.1 ]
+
+Icon
+[ icon selector ]
+```
+
+Do not show irrelevant scoring fields.
+
+The form should be configuration-driven.
+
+### Save
+
+Provide a clear primary action:
+
+```text
+Save Changes
+```
+
+Disable it while saving.
+
+After successful save:
+
+- Show success feedback.
+- Keep the user on the goal detail page.
+- Show the updated values.
+- Do not reset the form.
+
+### Cancel / Back
+
+Allow the user to return without saving.
+
+If there are unsaved changes, consider a confirmation before leaving.
+
+---
+
+## 4.3 Goal List Inline Entry Point
+
+The existing goal list should expose an Edit action.
+
+Example:
+
+```text
+Protein
+Nutrition
+
+Weight: 8
+Target: 3
+
+                     Edit
+```
+
+Clicking Edit should navigate to the goal detail page.
+
+Do not create a large inline editing form inside the list unless the existing UI strongly benefits from it.
+
+The goal detail page should remain the primary editing surface.
+
+---
+
+## 4.4 Icon Editing
+
+The icon is explicitly editable in V2.
+
+The icon editor should:
+
+- Use the application's existing icon system if one exists.
+- Avoid allowing arbitrary unsafe values.
+- Persist the selected icon through the existing goal update API.
+- Show the current icon when opening the editor.
+
+If the project already has a finite icon set, use that set rather than allowing arbitrary icon names.
+
+The server should validate the icon value against the supported icon set if practical.
+
+---
+
+# 5) Goal Deletion
+
+**Status: 🚧 Implement after goal editing**
+
+## Final deletion policy
+
+Use **complete deletion**.
+
+No soft-delete/archive mechanism is required for V2.
+
+However, deletion must be blocked when it would break historical data integrity.
+
+### Delete should be blocked when:
+
+1. The goal has historical references in entries.
+2. The goal is a protected seed/core goal.
+
+### Delete should be allowed when:
+
+- The goal has no historical entry references.
+- The goal is not protected.
+
+There is no override for these restrictions in the V2 UI.
+
+---
+
+## 5.1 Historical References
+
+Before deleting a goal, the server must determine whether the goal is referenced by historical entries.
+
+Do not rely only on the client.
+
+The server-side delete operation must perform the integrity check.
+
+If historical references exist, return a clear error such as:
+
+```text
+This goal cannot be deleted because it has historical entries.
+```
+
+The UI should present an actionable explanation.
+
+Do not silently fail.
+
+---
+
+## 5.2 Protected Goals
+
+Protected seed/core goals cannot be deleted.
+
+The protected state should come from the existing goal/config model rather than relying on a hard-coded list in the UI wherever possible.
+
+If the current model does not have a protection flag, inspect the existing seeding/config architecture before introducing one.
+
+Potential representation:
+
+```ts
+isProtected?: boolean
+```
+
+Do not introduce this field blindly if the existing data model already provides an equivalent concept.
+
+---
+
+## 5.3 Delete Confirmation
+
+Deletion is permanent.
+
+Use an in-app confirmation dialog, not `window.confirm()`.
+
+Example:
+
+```text
+┌─────────────────────────────────────┐
+│ Delete goal?                        │
+│                                     │
+│ This will permanently delete this   │
+│ goal. This action cannot be undone. │
+│                                     │
+│ Cancel                 Delete       │
+└─────────────────────────────────────┘
+```
+
+The Delete action should use destructive styling.
+
+If the server determines deletion is blocked, show the reason instead of presenting a destructive confirmation that can never succeed.
+
+---
+
+## 5.4 Delete Acceptance Criteria
+
+- Delete action exists on the goal detail page.
+- Delete action uses an in-app confirmation dialog.
+- Deletion is permanent.
+- Goals with historical entry references cannot be deleted.
+- Protected seed/core goals cannot be deleted.
+- API enforces deletion restrictions.
+- Client cannot bypass restrictions by modifying request payloads.
+- Successful deletion removes the goal from Firebase.
+- Successful deletion returns the user to the goals list.
+- Failed deletion keeps the goal intact and displays a clear reason.
+
+---
+
+# 6) Visualizations Source of Truth
+
+**Status: ⏳ Remaining V2 work**
+
+## Requirement
+
+Dashboard visualizations must come from Firebase.
+
+Do not read visualization definitions from `DEFAULT_VISUALIZATIONS` during the normal V2 runtime path.
+
+### Runtime behavior
+
+`GET /api/dashboard` should read stored visualization definitions from the repository.
+
+The runtime should not silently fall back to defaults.
+
+If no visualizations exist:
+
+- Return an explicit empty state, or
+- Require the one-time developer seeding flow.
+
+Do not implicitly substitute defaults.
+
+---
+
+## 6.1 Visualization Seeding
+
+Add a developer action to:
+
+```text
+app/settings/dev/page.tsx
+```
+
+Add:
+
+```text
+Seed Visualizations
+```
+
+The action should seed:
+
+```text
+DEFAULT_VISUALIZATIONS
+```
+
+into Firebase for the current user.
+
+The developer should be able to use this on a clean account before testing Dashboard visualizations.
+
+### Acceptance criteria
+
+- Dashboard visualization definitions come from Firebase.
+- No implicit default fallback occurs at runtime.
+- Clean account can be initialized through the dev page.
+- Seed action is safe to execute according to the project's existing seeding conventions.
+- Dashboard loads seeded visualization definitions correctly.
+
+---
+
+# 7) Remaining V2 Implementation Order
+
+The first three areas are complete.
+
+The remaining work should now be implemented in this order:
+
+## 1. Goals Editing
+
+- Inspect existing goal list/settings implementation.
+- Add goal detail page.
+- Add controlled numeric/scoring editing.
+- Add icon editing.
+- Add client-side validation.
+- Add PATCH API support if not already present.
+- Add server-side immutable-field enforcement.
+- Verify persistence in Firebase.
+- Verify updated configuration affects scoring/dashboard behavior.
+
+## 2. Goal Deletion Restrictions
+
+- Determine how historical goal references are stored.
+- Implement server-side historical-reference check.
+- Identify/protect seed/core goals.
+- Add permanent delete action.
+- Add in-app confirmation.
+- Add clear blocked-delete messages.
+- Test successful and blocked deletion paths.
+
+## 3. Firebase-Only Visualization Sourcing
+
+- Remove implicit runtime fallback to `DEFAULT_VISUALIZATIONS`.
+- Ensure dashboard repository reads stored visualization definitions.
+- Add dev-page seed action.
+- Test clean-account initialization.
+
+---
+
+# 8) Testing Checklist
+
+## Dashboard
+
+### Category widgets
+
+- Percentage math
+- Ranking correctness
+- Score/weight secondary labels
+- Radar percentage normalization
+- Category trend percentage normalization
+
+### Time widgets
+
+- Post-midnight ordering
+- `HH:mm` axis labels
+- `HH:mm` tooltip labels
+- Correct day-to-day delta calculations
+
+## Today
+
+- Calendar date selection
+- Existing-entry indicators
+- Existing entry loading
+- New date empty state
+- Sticky live score/XP
+- Live progress updates
+- Numeric blank values
+- Blank → `0` normalization
+- Reset confirmation
+- Reset behavior
+- Bottom-sheet review
+- Save new entry
+- Update existing entry
+- Saved values remain visible after save
+- Selected date remains selected
+- Calendar marker appears after save
+
+## Goals
+
+### Editing
+
+- Open goal detail page
+- Edit weight
+- Edit target
+- Edit numeric scoring values
+- Edit icon
+- Name remains locked
+- Description remains locked
+- Category remains locked
+- Scoring type remains locked
+- PATCH API rejects/treats immutable-field modifications correctly
+- Changes persist
+- Updated values affect scoring
+
+### Deletion
+
+- Delete goal with no history
+- Block goal with historical entries
+- Block protected goal
+- Destructive confirmation UI
+- Server-side enforcement
+- Successful deletion returns to goal list
+- Failed deletion preserves goal
+
+## Visualizations
+
+- Firebase-only runtime loading
+- No implicit defaults
+- Empty visualization state
+- Dev seeding action
+- Seeded dashboard visualization loading
+
+---
+
+# 9) Final Decisions
+
+| Question                          | Final Decision                                  |
+| --------------------------------- | ----------------------------------------------- |
+| Dashboard category comparison     | Percentage based on score / weight              |
+| Wake/bed time semantics           | Sleep-day axis                                  |
+| Today redesign                    | Complete                                        |
+| Today calendar depth              | Already fixed; no further decision required     |
+| Goal name editing                 | Not allowed in V2                               |
+| Goal description editing          | Not allowed in V2                               |
+| Goal category editing             | Not allowed in V2                               |
+| Goal scoring type editing         | Not allowed in V2                               |
+| Goal numeric/scoring tuning       | Allowed                                         |
+| Goal icon editing                 | **Allowed**                                     |
+| Goal deletion                     | **Complete permanent deletion**                 |
+| Delete with historical references | **Blocked**                                     |
+| Delete protected/core goal        | **Blocked**                                     |
+| Soft delete                       | **Not used in V2**                              |
+| Delete override                   | **No override**                                 |
+| Visualization runtime source      | Firebase only                                   |
+| Visualization defaults            | Used for explicit seeding, not runtime fallback |
+| Next implementation area          | **Goals Editing**                               |
+
+---
+
+# 10) Current V2 State
+
+```text
+Dashboard category comparison     ✅ Complete
+Wake/bed time trends              ✅ Complete
+Today UX                          ✅ Complete
+Logs                              ⏸ No V2 changes
+Goals editing                     🚧 NEXT
+Goal deletion restrictions        ⏳
+Firebase visualizations           ⏳
+```
+
+**Next task: implement Goals Editing.**
+
+Before changing the goals code, inspect the existing:
+
+- Goal list/page
+- Goal detail components, if any
+- `MetricDefinition` / goal model
+- Goals repository
+- `/api/goals` routes
+- Firebase data structure
+- Scoring configuration types
+- Existing seed/default goal configuration
+- Existing settings navigation
+
+Do not assume the current schema. Reuse the existing model and repository patterns wherever possible.

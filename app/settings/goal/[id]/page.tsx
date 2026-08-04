@@ -1,16 +1,26 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 
 import { useAuth } from "@/contexts/AuthContext";
-
 import { apiRequest } from "@/lib/api/client";
-import { ICONS, ICON_LABELS } from "@/lib/metric-icons";
+import { ICONS } from "@/lib/metric-icons";
 
 import { MetricDefinition } from "@/models/metric";
-import { ChevronLeft } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { ChevronLeft, Pencil } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { toast } from "sonner";
+
+import IconSelector from "@/components/settings/IconSelector";
+import TargetConfig from "@/components/settings/configs/TargetConfig";
+import MultiplierConfig from "@/components/settings/configs/MultiplierConfig";
+import RangeConfig from "@/components/settings/configs/RangeConfig";
+import TimeRangeConfig from "@/components/settings/configs/TimeRangeConfig";
+import OptionsConfig from "@/components/settings/configs/OptionConfig";
+import BooleanConfig from "@/components/settings/configs/BooleanConfig";
 
 export default function GoalDetails() {
   const { user } = useAuth();
@@ -18,9 +28,14 @@ export default function GoalDetails() {
 
   const { id } = useParams<{ id: string }>();
 
+  const [originalGoal, setOriginalGoal] = useState<MetricDefinition | null>(
+    null,
+  );
   const [goal, setGoal] = useState<MetricDefinition | null>(null);
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string>();
+  const [isEditing, setIsEditing] = useState(false);
 
   useEffect(() => {
     async function loadGoal() {
@@ -31,12 +46,13 @@ export default function GoalDetails() {
       try {
         setLoading(true);
 
-        const goal = await apiRequest<MetricDefinition>(
+        const loaded = await apiRequest<MetricDefinition>(
           user,
           `/api/goals/${id}`,
         );
 
-        setGoal(goal);
+        setOriginalGoal(loaded);
+        setGoal(loaded);
       } catch (err) {
         console.error(err);
         setError("Failed to load goal.");
@@ -48,6 +64,44 @@ export default function GoalDetails() {
     loadGoal();
   }, [id, user]);
 
+  function updateGoal(partial: Partial<MetricDefinition>) {
+    setGoal((previous) => (previous ? { ...previous, ...partial } : previous));
+  }
+
+  async function handleSave() {
+    if (!user || !goal) {
+      return;
+    }
+
+    try {
+      setSaving(true);
+
+      await apiRequest(user, `/api/goals/${id}`, {
+        method: "PATCH",
+        body: goal,
+      });
+
+      setOriginalGoal(goal);
+      setIsEditing(false);
+      toast.success("Goal updated successfully");
+    } catch (err) {
+      console.error(err);
+      toast.error(err instanceof Error ? err.message : "Failed to update goal");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  function handleCancel() {
+    if (isEditing && originalGoal) {
+      setGoal(originalGoal);
+      setIsEditing(false);
+      return;
+    }
+
+    router.back();
+  }
+
   if (loading) {
     return <div className="p-6">Loading goal...</div>;
   }
@@ -58,21 +112,35 @@ export default function GoalDetails() {
 
   const Icon = ICONS[goal.icon] ?? ICONS.goal;
 
+  const hasChanges = JSON.stringify(goal) !== JSON.stringify(originalGoal);
+
   return (
-    <div className="space-y-6 p-4">
-      {/* Hero */}
+    <div className="relative p-4 pb-24">
+      <div className="absolute top-10 left-0 z-10 flex w-full items-center justify-between px-6">
+        <button
+          onClick={handleCancel}
+          className="text-muted-foreground hover:text-foreground inline-flex items-center gap-1 text-sm transition-colors"
+        >
+          <ChevronLeft size={18} />
+          Back
+        </button>
+
+        {!isEditing && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setIsEditing(true)}
+          >
+            <Pencil className="mr-1.5 h-3.5 w-3.5" />
+            Edit
+          </Button>
+        )}
+      </div>
 
       <div className="bg-card relative overflow-hidden rounded-3xl border">
-        {/* Accent */}
-
         <div className="from-primary/15 via-primary/5 to-background h-28 bg-gradient-to-r" />
-        <button
-          onClick={() => router.back()}
-          className="absolute top-8 left-2 flex w-full"
-        >
-          <ChevronLeft size={24} /> Back
-        </button>
-        <div className="-mt-10 px-8 pb-8">
+
+        <div className="-mt-10 px-6 pb-6 sm:px-8">
           <div className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
             <div className="flex items-center gap-5">
               <div className="bg-background ring-background flex h-20 w-20 items-center justify-center rounded-3xl border shadow-sm ring-4">
@@ -107,177 +175,148 @@ export default function GoalDetails() {
         </div>
       </div>
 
-      {/* Overview */}
+      <div className="bg-card rounded-3xl border p-6">
+        <h2 className="mb-4 text-lg font-semibold">Configuration</h2>
 
-      <div className="bg-card rounded-3xl border">
-        <div className="border-b px-6 py-4">
-          <h2 className="text-lg font-semibold">Overview</h2>
-        </div>
+        {isEditing ? (
+          <div className="space-y-6">
+            <div className="space-y-2">
+              <Label>Icon</Label>
+              <IconSelector
+                value={goal.icon}
+                onChange={(icon) => updateGoal({ icon })}
+              />
+            </div>
 
-        <div className="divide-y">
-          <OverviewRow
-            label="Target"
-            value={`${goal.scoring.type === "boolean" ? (goal.target === true ? "Yes" : "No") : goal.target}${goal.unit ? ` ${goal.unit}` : ""}`}
-          />
+            <div className="space-y-2">
+              <Label>Weight</Label>
 
-          <OverviewRow
-            label="Default Value"
-            value={`${goal.scoring.type === "boolean" ? (goal.defaultValue === true ? "Yes" : "No") : goal.defaultValue}${goal.unit ? ` ${goal.unit}` : ""}`}
-          />
+              <Input
+                type="number"
+                min={0}
+                value={goal.weight}
+                onChange={(e) => updateGoal({ weight: Number(e.target.value) })}
+              />
+            </div>
 
-          <OverviewRow label="Weight" value={`${goal.weight} pts`} />
+            <div className="space-y-2">
+              <Label>Unit</Label>
 
-          <OverviewRow label="Unit" value={goal.unit || "None"} />
-        </div>
+              <Input
+                value={goal.unit ?? ""}
+                onChange={(e) =>
+                  updateGoal({
+                    unit: e.target.value === "" ? undefined : e.target.value,
+                  })
+                }
+              />
+            </div>
+
+            <ScoringConfig goal={goal} updateGoal={updateGoal} />
+          </div>
+        ) : (
+          <ReadOnlyConfig goal={goal} />
+        )}
       </div>
 
-      {/* Scoring */}
+      {isEditing && (
+        <div className="bg-background fixed inset-x-0 bottom-0 z-20 border-t p-4 lg:left-64">
+          <div className="mx-auto flex max-w-screen-sm gap-3">
+            <Button
+              variant="outline"
+              className="flex-1"
+              onClick={handleCancel}
+              disabled={saving}
+            >
+              Cancel
+            </Button>
 
-      <div className="bg-card rounded-3xl border">
-        <div className="flex items-center justify-between border-b px-6 py-5">
-          <div>
-            <h2 className="text-lg font-semibold">Scoring</h2>
-
-            <p className="text-muted-foreground mt-1 text-sm">
-              How this goal contributes towards your Life Score.
-            </p>
+            <Button
+              className="flex-[2]"
+              onClick={handleSave}
+              disabled={saving || !hasChanges}
+            >
+              {saving ? "Saving..." : "Save Changes"}
+            </Button>
           </div>
-
-          <span className="bg-primary/10 text-primary rounded-full px-3 py-1 text-sm font-medium">
-            {capitalize(goal.scoring.type)}
-          </span>
         </div>
-
-        <div className="divide-y">
-          {"bonusRate" in goal.scoring && (
-            <OverviewRow
-              label="Bonus Rate"
-              value={`+${goal.scoring.bonusRate}`}
-            />
-          )}
-
-          {"multiplier" in goal.scoring && (
-            <OverviewRow
-              label="Multiplier"
-              value={`× ${goal.scoring.multiplier}`}
-            />
-          )}
-
-          {goal.scoring.type === "boolean" && (
-            <>
-              <OverviewRow label="Yes" value={`${goal.weight} pts`} />
-              <OverviewRow label="No" value="0 pts" />
-            </>
-          )}
-        </div>
-
-        {(goal.scoring.ranges?.length ?? 0) > 0 && (
-          <div className="border-t p-6">
-            <h3 className="mb-4 font-medium">Ranges</h3>
-
-            <div className="overflow-hidden rounded-xl border">
-              <table className="w-full">
-                <thead className="bg-muted">
-                  <tr>
-                    <th className="px-4 py-3 text-left text-sm">From</th>
-                    <th className="px-4 py-3 text-left text-sm">To</th>
-                    <th className="px-4 py-3 text-right text-sm">Score</th>
-                  </tr>
-                </thead>
-
-                <tbody>
-                  {goal.scoring.ranges!.map((range, index) => (
-                    <tr key={index} className="border-t">
-                      <td className="px-4 py-3">
-                        {range.min}
-                        {goal.unit && ` ${goal.unit}`}
-                      </td>
-
-                      <td className="px-4 py-3">
-                        {range.max}
-                        {goal.unit && ` ${goal.unit}`}
-                      </td>
-
-                      <td className="px-4 py-3 text-right font-semibold">
-                        {range.multiplier * goal.weight} pts
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
-
-        {(goal.scoring.options?.length ?? 0) > 0 && (
-          <div className="border-t p-6">
-            <h3 className="mb-4 font-medium">Options</h3>
-
-            <div className="divide-y overflow-hidden rounded-xl border">
-              {goal.scoring.options!.map((option, index) => (
-                <OverviewRow
-                  key={index}
-                  label={option.label}
-                  value={`${option.multiplier * goal.weight} pts`}
-                />
-              ))}
-            </div>
-          </div>
-        )}
-        {(goal.scoring.time?.length ?? 0) > 0 && (
-          <div className="border-t p-6">
-            <h3 className="mb-4 font-medium">Time ranges</h3>
-
-            <div className="overflow-hidden rounded-xl border">
-              <table className="w-full">
-                <thead className="bg-muted">
-                  <tr>
-                    <th className="px-4 py-3 text-left text-sm">From</th>
-                    <th className="px-4 py-3 text-left text-sm">To</th>
-                    <th className="px-4 py-3 text-right text-sm">Score</th>
-                  </tr>
-                </thead>
-
-                <tbody>
-                  {goal.scoring.time!.map((time, index) => (
-                    <tr key={index} className="border-t">
-                      <td className="px-4 py-3">
-                        {time.from}
-                        {goal.unit && ` ${goal.unit}`}
-                      </td>
-
-                      <td className="px-4 py-3">
-                        {time.to}
-                        {goal.unit && ` ${goal.unit}`}
-                      </td>
-
-                      <td className="px-4 py-3 text-right font-semibold">
-                        {time.multiplier * goal.weight} pts
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
-        {(goal.scoring.maxScore ?? 0) > 0 && (
-          <OverviewRow
-            label="Max score"
-            value={`${goal.scoring.maxScore} pts`}
-          />
-        )}
-      </div>
+      )}
     </div>
   );
 }
 
-function OverviewRow({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="flex items-center justify-between px-6 py-5">
-      <span className="text-muted-foreground">{label}</span>
+function ScoringConfig({
+  goal,
+  updateGoal,
+}: {
+  goal: MetricDefinition;
+  updateGoal: (partial: Partial<MetricDefinition>) => void;
+}) {
+  switch (goal.scoring.type) {
+    case "boolean":
+      return <BooleanConfig goal={goal} updateGoal={updateGoal} />;
 
-      <span className="font-semibold">{value}</span>
+    case "goal":
+      return <TargetConfig goal={goal} updateGoal={updateGoal} />;
+
+    case "multiplier":
+      return <MultiplierConfig goal={goal} updateGoal={updateGoal} />;
+
+    case "range":
+      return <RangeConfig goal={goal} updateGoal={updateGoal} />;
+
+    case "options":
+      return <OptionsConfig goal={goal} updateGoal={updateGoal} />;
+
+    case "time-range":
+      return <TimeRangeConfig goal={goal} updateGoal={updateGoal} />;
+
+    default:
+      return null;
+  }
+}
+
+function ReadOnlyConfig({ goal }: { goal: MetricDefinition }) {
+  return (
+    <div className="space-y-4">
+      <ReadOnlyRow label="Icon" value={goal.icon} />
+      <ReadOnlyRow label="Weight" value={`${goal.weight} pts`} />
+      <ReadOnlyRow label="Unit" value={goal.unit || "None"} />
+      <ReadOnlyRow label="Target" value={String(goal.target)} />
+      <ReadOnlyRow label="Default Value" value={String(goal.defaultValue)} />
+      <ReadOnlyRow label="Scoring Type" value={capitalize(goal.scoring.type)} />
+
+      {"bonusRate" in goal.scoring && goal.scoring.bonusRate !== undefined && (
+        <ReadOnlyRow label="Bonus Rate" value={`${goal.scoring.bonusRate}`} />
+      )}
+
+      {"multiplier" in goal.scoring &&
+        goal.scoring.multiplier !== undefined && (
+          <ReadOnlyRow
+            label="Multiplier"
+            value={`× ${goal.scoring.multiplier}`}
+          />
+        )}
+
+      {goal.scoring.maxScore !== undefined && (
+        <ReadOnlyRow label="Max Score" value={`${goal.scoring.maxScore} pts`} />
+      )}
+
+      {goal.scoringExplanation && (
+        <ReadOnlyRow
+          label="Scoring Explanation"
+          value={goal.scoringExplanation}
+        />
+      )}
+    </div>
+  );
+}
+
+function ReadOnlyRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex items-center justify-between border-b py-3 last:border-b-0">
+      <span className="text-muted-foreground text-sm">{label}</span>
+      <span className="font-medium">{value}</span>
     </div>
   );
 }

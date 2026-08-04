@@ -88,7 +88,7 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
 
     const { id } = await params;
 
-    const body = (await request.json()) as MetricDefinition;
+    const body = (await request.json()) as Partial<MetricDefinition>;
 
     const existingGoal = await getGoal(user.uid, id);
 
@@ -103,9 +103,51 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
       );
     }
 
+    const immutableViolations: string[] = [];
+
+    if ("label" in body && body.label !== existingGoal.label) {
+      immutableViolations.push("label");
+    }
+
+    if (
+      "description" in body &&
+      body.description !== existingGoal.description
+    ) {
+      immutableViolations.push("description");
+    }
+
+    if ("category" in body && body.category !== existingGoal.category) {
+      immutableViolations.push("category");
+    }
+
+    if (
+      body.scoring &&
+      "type" in body.scoring &&
+      body.scoring.type !== existingGoal.scoring.type
+    ) {
+      immutableViolations.push("scoring.type");
+    }
+
+    if (immutableViolations.length > 0) {
+      return NextResponse.json(
+        {
+          error: `Cannot update immutable field(s): ${immutableViolations.join(", ")}`,
+        },
+        {
+          status: 400,
+        },
+      );
+    }
+
     const updatedGoal: MetricDefinition = {
+      ...existingGoal,
       ...body,
       id,
+      scoring: {
+        ...existingGoal.scoring,
+        ...body.scoring,
+        type: existingGoal.scoring.type,
+      },
     };
 
     await updateGoal(user.uid, updatedGoal);

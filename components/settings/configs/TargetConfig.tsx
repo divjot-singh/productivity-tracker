@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 import { MetricDefinition } from "@/models/metric";
+import ScoringExplanationInput from "./ScoringExplanationInput";
 
 interface Props {
   goal: MetricDefinition;
@@ -22,18 +23,35 @@ export default function TargetConfig({ goal, updateGoal }: Props) {
         </p>
       </div>
 
-      {/* Target Summary */}
+      <ScoringExplanationInput goal={goal} updateGoal={updateGoal} />
 
-      <div className="bg-muted rounded-xl p-4">
-        <p className="text-muted-foreground text-sm">Target</p>
+      <div className="space-y-2">
+        <Label>Target</Label>
 
-        <p className="mt-1 text-lg font-semibold">
-          {String(goal.target)}
-          {goal.unit && ` ${goal.unit}`}
-        </p>
+        <Input
+          type="number"
+          value={String(goal.target)}
+          onChange={(e) =>
+            updateGoal({
+              target: Number(e.target.value),
+            })
+          }
+        />
       </div>
 
-      {/* Bonus Rate */}
+      <div className="space-y-2">
+        <Label>Default Value</Label>
+
+        <Input
+          type="number"
+          value={String(goal.defaultValue)}
+          onChange={(e) =>
+            updateGoal({
+              defaultValue: Number(e.target.value),
+            })
+          }
+        />
+      </div>
 
       <div className="space-y-2">
         <Label>Bonus Rate</Label>
