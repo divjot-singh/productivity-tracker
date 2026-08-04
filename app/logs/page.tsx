@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ChevronDown, CalendarDays, Trophy } from "lucide-react";
+import { ChevronDown, CalendarDays } from "lucide-react";
 
 import AppShell from "@/components/layout/AppShell";
 
@@ -47,6 +47,7 @@ export default function LogsPage() {
         setGoals(goalsResponse);
         setLoading(false);
       } catch (e) {
+        console.log(e);
         setLoading(false);
         toast.error("Fetching logs failed");
         return;

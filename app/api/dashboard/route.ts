@@ -7,9 +7,9 @@ import { getVisualizationDefinitions } from "@/repositories/visualization.server
 import { getEntries } from "@/repositories/entry.server.repository";
 import { VisualizationService } from "@/lib/services/visualization-service";
 
-import MOCK_ENTRIES from "@/lib/mocks/generated-entries.json";
-import { getMockEntries } from "@/lib/mocks/dashboard.mock";
-import { saveMockEntries } from "@/lib/mocks/export-mock-entries";
+// import MOCK_ENTRIES from "@/lib/mocks/generated-entries.json";
+// import { getMockEntries } from "@/lib/mocks/dashboard.mock";
+// import { saveMockEntries } from "@/lib/mocks/export-mock-entries";
 
 export async function GET(request: NextRequest) {
   try {

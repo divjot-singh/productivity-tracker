@@ -6,21 +6,31 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
 export default function DevSettings() {
+  const { user } = useAuth();
+
   if (process.env.NODE_ENV !== "development") {
     return null;
   }
-  const { user } = useAuth();
 
-  async function reseed() {
+  async function reseedConfig() {
     if (!user) return;
 
     await SeederService.seedDefaults();
     toast.success("Config reseeded");
   }
 
+  async function reseedVisualizations() {
+    if (!user) return;
+
+    await SeederService.seedVisualizations();
+    toast.success("Visualizations seeded");
+  }
+
   return (
-    <div className="p-6">
-      <Button onClick={reseed}>Reseed Default Config</Button>
+    <div className="flex flex-col items-start gap-4 p-6">
+      <Button onClick={reseedConfig}>Reseed Default Config</Button>
+
+      <Button onClick={reseedVisualizations}>Seed Visualizations</Button>
     </div>
   );
 }

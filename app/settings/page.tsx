@@ -6,8 +6,9 @@ import AppShell from "@/components/layout/AppShell";
 import Section from "@/components/ui/section";
 
 import { useAuth } from "@/contexts/AuthContext";
-import { Config, MetricDefinition } from "@/models/metric";
+import { MetricDefinition } from "@/models/metric";
 import QuickActions from "@/components/settings/QuickActions";
+import SettingsSubNav from "@/components/settings/SettingsSubNav";
 import { toast } from "sonner";
 import { apiRequest } from "@/lib/api/client";
 
@@ -28,6 +29,7 @@ export default function SettingsPage() {
         const goals = await apiRequest<MetricDefinition[]>(user, "/api/goals");
         setMetrics(goals ?? []);
       } catch (e) {
+        console.log(e);
         toast.error("Fetching logs failed");
         return;
       } finally {
@@ -67,13 +69,17 @@ export default function SettingsPage() {
     <AppShell>
       <div className="mx-auto w-full max-w-screen-sm px-4 pt-4 pb-28">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold tracking-tight">Goals</h1>
+          <h1 className="text-3xl font-bold tracking-tight">Settings</h1>
 
           <p className="text-muted-foreground mt-1 text-sm">
-            Current productivity configuration
+            Manage your goals and dashboard visualizations
           </p>
         </div>
+
+        <SettingsSubNav />
+
         <QuickActions />
+
         <div className="space-y-8">
           {Object.entries(grouped).map(([category, values]) => (
             <Section

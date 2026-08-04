@@ -1,5 +1,3 @@
-import { Timestamp } from "firebase/firestore";
-
 export type EntryValue = number | boolean | string;
 
 export interface MetricScoreBreakdown {

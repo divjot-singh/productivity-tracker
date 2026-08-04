@@ -260,54 +260,59 @@ export default function TodayPage() {
 
   return (
     <AppShell>
-      <div className="mx-auto flex h-[calc(100dvh-4rem-4rem-env(safe-area-inset-bottom))] w-full max-w-screen-sm flex-col lg:h-[calc(100dvh-4rem)]">
-        <div className="shrink-0 px-4 pt-3 pb-2">
-          <h1 className="text-xl font-bold tracking-tight">
-            Today&apos;s Entry
-          </h1>
+      <div className="mx-auto flex h-[calc(100dvh-5rem-4rem-env(safe-area-inset-bottom))] min-h-0 w-full max-w-screen-sm flex-col overflow-hidden lg:h-[calc(100dvh-4rem)]">
+        <div className="min-h-0 flex-1 overflow-y-auto">
+          <div className="mb-2 px-4 pt-3 pb-2">
+            <h1 className="mb-1 text-xl font-bold tracking-tight">
+              {dateLabel}&apos;s Entry
+            </h1>
 
-          <p className="text-muted-foreground text-xs">
-            Record your daily habits
-          </p>
-        </div>
+            <p className="text-muted-foreground text-xs">
+              Record your daily habits
+            </p>
+          </div>
 
-        <div className="shrink-0 px-4 pb-3">
-          <DateSelector
-            selectedDate={selectedDate}
-            hasEntry={currentEntryExists}
-            entryDates={entryDates}
-            onChange={setSelectedDate}
+          <div className="px-4 pb-3">
+            <DateSelector
+              selectedDate={selectedDate}
+              hasEntry={currentEntryExists}
+              entryDates={entryDates}
+              onChange={setSelectedDate}
+            />
+          </div>
+
+          {/* Status bar - ONLY sticky element */}
+          <TodayStatusBar
+            dateLabel={dateLabel}
+            totalScore={scoreResult.totalScore}
+            totalWeights={scoreResult.totalWeights}
+            totalXP={scoreResult.totalXP}
           />
+
+          {/* Metrics - scroll */}
+          <div className="px-4 py-4">
+            {Object.entries(groupedMetrics).map(([category, list]) => (
+              <section key={category} className="mb-5 space-y-3">
+                <h2 className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
+                  {category}
+                </h2>
+
+                {list
+                  .toSorted((a, b) => a.displayOrder - b.displayOrder)
+                  .map((metric) => (
+                    <MetricInput
+                      key={metric.id}
+                      metric={metric}
+                      value={values[metric.id]}
+                      onChange={(value) => updateValue(metric.id, value)}
+                    />
+                  ))}
+              </section>
+            ))}
+          </div>
         </div>
 
-        <TodayStatusBar
-          dateLabel={dateLabel}
-          totalScore={scoreResult.totalScore}
-          totalWeights={scoreResult.totalWeights}
-          totalXP={scoreResult.totalXP}
-        />
-
-        <div className="flex-1 overflow-y-auto px-4 py-4">
-          {Object.entries(groupedMetrics).map(([category, list]) => (
-            <section key={category} className="mb-5 space-y-3">
-              <h2 className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
-                {category}
-              </h2>
-
-              {list
-                .toSorted((a, b) => a.displayOrder - b.displayOrder)
-                .map((metric) => (
-                  <MetricInput
-                    key={metric.id}
-                    metric={metric}
-                    value={values[metric.id]}
-                    onChange={(value) => updateValue(metric.id, value)}
-                  />
-                ))}
-            </section>
-          ))}
-        </div>
-
+        {/* Buttons - always visible */}
         <div className="bg-background shrink-0 border-t p-4 pb-[calc(1rem+env(safe-area-inset-bottom))]">
           <div className="flex gap-3">
             <AlertDialog

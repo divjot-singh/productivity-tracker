@@ -18,4 +18,21 @@ export class SeederService {
       throw new Error("Failed to seed config");
     }
   }
+
+  static async seedVisualizations() {
+    const user = auth.currentUser;
+
+    if (!user) {
+      throw new Error("User not authenticated");
+    }
+
+    try {
+      return apiRequest(user, "/api/config/visualizations", {
+        method: "POST",
+      });
+    } catch (e) {
+      console.error(e);
+      throw new Error("Failed to seed visualizations");
+    }
+  }
 }

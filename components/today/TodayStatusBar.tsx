@@ -29,7 +29,7 @@ export default function TodayStatusBar({
           : "bg-gradient-to-r from-red-400 to-red-500";
 
   return (
-    <div className="bg-background/95 supports-[backdrop-filter]:bg-background/80 sticky top-0 z-20 border-b px-4 py-2.5 backdrop-blur-sm">
+    <div className="bg-background/95 supports-[backdrop-filter]:bg-background/80 sticky top-0 z-20 border-b px-4 py-2.5 backdrop-blur-md">
       <div className="flex items-center justify-between gap-3">
         <span className="text-sm font-medium">{dateLabel}</span>
 
@@ -47,7 +47,6 @@ export default function TodayStatusBar({
           </div>
         </div>
       </div>
-
       <div className="mt-2">
         <div className="bg-muted h-1.5 overflow-hidden rounded-full">
           <div

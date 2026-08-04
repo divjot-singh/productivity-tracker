@@ -137,10 +137,6 @@ function generateNumberValue(goal: MetricDefinition, index: number): number {
   return Number(value.toFixed(1));
 }
 
-function generateScore(index: number) {
-  return Math.floor(70 + ((index * 7) % 30));
-}
-
 function generateXp(index: number) {
   return Math.floor((index * 17) % 50);
 }

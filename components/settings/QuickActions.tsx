@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Plus, Settings2, ChevronRight } from "lucide-react";
+import { Plus, ChevronRight } from "lucide-react";
 
 export default function QuickActions() {
   return (
