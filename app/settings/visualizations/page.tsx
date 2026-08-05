@@ -2,18 +2,32 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { Plus, Eye, EyeOff } from "lucide-react";
+import {
+  AreaChart,
+  BarChart3,
+  ChevronRight,
+  Eye,
+  EyeOff,
+  Goal,
+  Grid2x2,
+  LineChart,
+  ListOrdered,
+  Plus,
+  Radar,
+  Sparkles,
+  TrendingUp,
+} from "lucide-react";
 
 import AppShell from "@/components/layout/AppShell";
 import SettingsSubNav from "@/components/settings/SettingsSubNav";
 import { buttonVariants } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { useAuth } from "@/contexts/AuthContext";
 import { apiRequest } from "@/lib/api/client";
 import { cn } from "@/lib/utils";
 import {
   VisualizationDefinition,
   VisualizationScope,
+  VisualizationWidget,
 } from "@/models/visualization";
 import { toast } from "sonner";
 
@@ -24,6 +38,26 @@ const SCOPE_LABELS: Record<VisualizationScope, string> = {
 };
 
 const SCOPE_ORDER: VisualizationScope[] = ["global", "goal", "category"];
+
+const SCOPE_COLORS: Record<VisualizationScope, string> = {
+  global: "bg-green-500",
+  goal: "bg-blue-500",
+  category: "bg-orange-500",
+};
+
+const WIDGET_ICONS: Record<VisualizationWidget, typeof Goal> = {
+  "stat-card": Goal,
+  "progress-bar": TrendingUp,
+  "progress-ring": TrendingUp,
+  "line-chart": LineChart,
+  "bar-chart": BarChart3,
+  "area-chart": AreaChart,
+  heatmap: Grid2x2,
+  leaderboard: ListOrdered,
+  timeline: Sparkles,
+  "radar-chart": Radar,
+  "insight-card": Sparkles,
+};
 
 export default function VisualizationsPage() {
   const { user } = useAuth();
@@ -65,6 +99,7 @@ export default function VisualizationsPage() {
       if (!groups[visualization.scope]) {
         continue;
       }
+
       groups[visualization.scope].push(visualization);
     }
 
@@ -88,16 +123,31 @@ export default function VisualizationsPage() {
 
         <SettingsSubNav />
 
-        <div className="mb-6 flex items-center justify-between">
-          <h2 className="text-xl font-semibold">Visualizations</h2>
+        <div className="mb-8">
+          <h2 className="text-muted-foreground mb-3 text-sm font-semibold tracking-wide uppercase">
+            Quick Actions
+          </h2>
 
-          <Link
-            href="/settings/visualizations/new"
-            className={buttonVariants({ size: "sm" })}
-          >
-            <Plus className="mr-1.5 h-4 w-4" />
-            Add Visualization
-          </Link>
+          <div className="bg-card overflow-hidden rounded-2xl border">
+            <Link
+              href="/settings/visualizations/new"
+              className="hover:bg-accent flex items-center gap-4 p-4 transition-colors"
+            >
+              <div className="bg-primary/10 text-primary flex h-10 w-10 items-center justify-center rounded-xl">
+                <Plus size={20} />
+              </div>
+
+              <div className="flex-1">
+                <p className="font-medium">Add Visualization</p>
+
+                <p className="text-muted-foreground text-sm">
+                  Create a custom visualization
+                </p>
+              </div>
+
+              <ChevronRight size={18} className="text-muted-foreground" />
+            </Link>
+          </div>
         </div>
 
         {loading ? (
@@ -123,17 +173,25 @@ export default function VisualizationsPage() {
             {SCOPE_ORDER.map((scope) => {
               const items = grouped[scope];
 
-              if (items.length === 0) return null;
+              if (items.length === 0) {
+                return null;
+              }
 
               return (
                 <section key={scope}>
-                  <h3 className="text-muted-foreground mb-3 text-sm font-semibold tracking-wide uppercase">
-                    {SCOPE_LABELS[scope]}
-                  </h3>
+                  <div className="mb-3 flex items-center gap-2">
+                    <div
+                      className={`h-2.5 w-2.5 rounded-full ${SCOPE_COLORS[scope]}`}
+                    />
 
-                  <div className="space-y-3">
+                    <h2 className="text-lg font-semibold">
+                      {SCOPE_LABELS[scope]}
+                    </h2>
+                  </div>
+
+                  <div className="bg-card overflow-hidden rounded-2xl border border-zinc-800">
                     {items.map((visualization) => (
-                      <VisualizationCard
+                      <VisualizationRow
                         key={visualization.id}
                         visualization={visualization}
                       />
@@ -149,49 +207,84 @@ export default function VisualizationsPage() {
   );
 }
 
-function VisualizationCard({
+function VisualizationRow({
   visualization,
 }: {
   visualization: VisualizationDefinition;
 }) {
+  const Icon = WIDGET_ICONS[visualization.widget] ?? Goal;
+
   return (
-    <Link href={`/settings/visualizations/${visualization.id}`}>
-      <Card className="hover:bg-accent/40 transition-colors">
-        <div className="flex items-start justify-between gap-4 p-4">
-          <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-2">
-              <h4 className="font-semibold">{visualization.title}</h4>
+    <Link
+      href={`/settings/visualizations/${visualization.id}`}
+      className="hover:bg-accent/40 flex items-start gap-4 border-b px-4 py-5 transition-colors last:border-b-0"
+    >
+      <div className="bg-secondary rounded-xl p-3">
+        <Icon size={20} className="text-muted-foreground" />
+      </div>
 
-              {visualization.visible ? (
-                <Eye className="text-muted-foreground h-4 w-4" />
-              ) : (
-                <EyeOff className="text-muted-foreground h-4 w-4" />
-              )}
-            </div>
+      <div className="min-w-0 flex-1">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <h3 className="text-base font-semibold">{visualization.title}</h3>
 
-            {visualization.description && (
-              <p className="text-muted-foreground mt-1 line-clamp-2 text-sm">
-                {visualization.description}
-              </p>
-            )}
-
-            <div className="mt-3 flex flex-wrap gap-2 text-xs">
-              <Badge>{toTitleCase(visualization.widget)}</Badge>
-              <Badge>{toTitleCase(visualization.aggregation)}</Badge>
-              <Badge>{formatPeriod(visualization.period)}</Badge>
-            </div>
+            <p className="text-muted-foreground mt-1 line-clamp-2 text-sm">
+              {visualization.description || "No description provided."}
+            </p>
           </div>
+
+          <ChevronRight
+            size={18}
+            className="text-muted-foreground mt-1 shrink-0"
+          />
         </div>
-      </Card>
+
+        <div className="mt-4 grid grid-cols-3 gap-4 text-sm">
+          <SummaryItem
+            label="Widget"
+            value={toTitleCase(visualization.widget)}
+          />
+          <SummaryItem
+            label="Period"
+            value={formatPeriod(visualization.period)}
+          />
+          <SummaryItem
+            label="State"
+            value={
+              <span className="inline-flex items-center gap-1.5">
+                {visualization.visible ? (
+                  <Eye className="h-3.5 w-3.5" />
+                ) : (
+                  <EyeOff className="h-3.5 w-3.5" />
+                )}
+                <span>
+                  {toTitleCase(visualization.aggregation)}
+                  {visualization.visible ? "" : " (hidden)"}
+                </span>
+              </span>
+            }
+          />
+        </div>
+      </div>
     </Link>
   );
 }
 
-function Badge({ children }: { children: React.ReactNode }) {
+function SummaryItem({
+  label,
+  value,
+}: {
+  label: string;
+  value: React.ReactNode;
+}) {
   return (
-    <span className="bg-muted text-muted-foreground rounded-full px-2.5 py-1 font-medium">
-      {children}
-    </span>
+    <div>
+      <p className="text-muted-foreground text-xs tracking-wide uppercase">
+        {label}
+      </p>
+
+      <p className="mt-1 font-medium">{value}</p>
+    </div>
   );
 }
 

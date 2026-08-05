@@ -3,7 +3,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerUser } from "@/lib/server-auth";
 
 import { VisualizationDefinition } from "@/models/visualization";
-import { validateVisualizationDefinition } from "@/lib/visualizations/validation";
+import {
+  VISUALIZATION_COMBINATIONS,
+  normalizeVisualizationOptions,
+  validateVisualizationDefinition,
+} from "@/lib/visualizations/validation";
 import { getGoals } from "@/repositories/goals.server.repository";
 import {
   createVisualization,
@@ -67,8 +71,20 @@ export async function POST(request: NextRequest) {
       aggregation: body.aggregation!,
       displayOrder,
       visible: body.visible ?? true,
-      options: body.options,
+      options: undefined,
     };
+
+    const combination =
+      VISUALIZATION_COMBINATIONS[definition.provider]?.[definition.executor];
+
+    if (combination) {
+      definition.options = normalizeVisualizationOptions(
+        body.options,
+        combination.options,
+      );
+    } else {
+      definition.options = body.options;
+    }
 
     const errors = validateVisualizationDefinition(definition, {
       goalLabels,

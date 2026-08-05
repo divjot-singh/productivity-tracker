@@ -6,9 +6,7 @@ import { ChevronLeft, Pencil, Trash2 } from "lucide-react";
 
 import AppShell from "@/components/layout/AppShell";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import {
   Select,
@@ -30,12 +28,11 @@ import { apiRequest } from "@/lib/api/client";
 import {
   VISUALIZATION_COMBINATIONS,
   AllowedCombination,
+  normalizeVisualizationOptions,
 } from "@/lib/visualizations/validation";
 import {
-  VisualizationAggregation,
-  VisualizationComparison,
   VisualizationDefinition,
-  VisualizationPeriod,
+  VisualizationWidget,
 } from "@/models/visualization";
 import { toast } from "sonner";
 
@@ -50,6 +47,7 @@ export default function VisualizationDetailPage() {
   const [visualization, setVisualization] =
     useState<VisualizationDefinition | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string>();
   const [saving, setSaving] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -61,6 +59,7 @@ export default function VisualizationDetailPage() {
 
       try {
         setLoading(true);
+        setError(undefined);
         const data = await apiRequest<VisualizationDefinition>(
           user,
           `/api/visualizations/${id}`,
@@ -69,7 +68,7 @@ export default function VisualizationDetailPage() {
         setVisualization(data);
       } catch (e) {
         console.error(e);
-        toast.error("Failed to load visualization");
+        setError("Failed to load visualization.");
       } finally {
         setLoading(false);
       }
@@ -86,6 +85,11 @@ export default function VisualizationDetailPage() {
       ] ?? null
     );
   }, [visualization]);
+
+  const widgetOptions = useMemo<VisualizationWidget[]>(() => {
+    if (!visualization) return [];
+    return combination?.widgets ?? [visualization.widget];
+  }, [combination, visualization]);
 
   function updateVisualization(partial: Partial<VisualizationDefinition>) {
     setVisualization((previous) =>
@@ -109,12 +113,56 @@ export default function VisualizationDetailPage() {
     try {
       setSaving(true);
 
+      const combination =
+        VISUALIZATION_COMBINATIONS[visualization.provider]?.[
+          visualization.executor
+        ];
+
+      if (!combination) {
+        toast.error("Selected visualization configuration is invalid.");
+        return;
+      }
+
+      if (!combination.widgets.includes(visualization.widget)) {
+        toast.error("Selected widget is not valid for this visualization.");
+        return;
+      }
+
+      if (
+        visualization.period.type === "days" &&
+        (!Number.isInteger(visualization.period.value) ||
+          visualization.period.value <= 0)
+      ) {
+        toast.error("Period must be a positive number of days.");
+        return;
+      }
+
+      if (
+        !Number.isFinite(visualization.displayOrder) ||
+        visualization.displayOrder <= 0
+      ) {
+        toast.error("Display order must be a positive number.");
+        return;
+      }
+
+      const payload: VisualizationDefinition = {
+        ...visualization,
+        title: visualization.title.trim(),
+        description: visualization.description?.trim() || undefined,
+        key: visualization.key.trim(),
+        options: normalizeVisualizationOptions(
+          visualization.options,
+          combination.options,
+        ),
+      };
+
       await apiRequest(user, `/api/visualizations/${id}`, {
         method: "PATCH",
-        body: visualization,
+        body: payload,
       });
 
-      setOriginal(visualization);
+      setOriginal(payload);
+      setVisualization(payload);
       setIsEditing(false);
       toast.success("Visualization updated");
     } catch (err) {
@@ -158,20 +206,23 @@ export default function VisualizationDetailPage() {
     );
   }
 
-  if (!visualization) {
+  if (error || !visualization) {
     return (
       <AppShell>
-        <div className="p-6">Visualization not found.</div>
+        <div className="p-6 text-red-500">
+          {error ?? "Visualization not found."}
+        </div>
       </AppShell>
     );
   }
 
   const hasChanges = JSON.stringify(visualization) !== JSON.stringify(original);
+  const widgetLabel = toTitleCase(visualization.widget);
 
   return (
     <AppShell>
       <div className="relative mx-auto w-full max-w-screen-sm px-4 pt-4 pb-28">
-        <div className="mb-6 flex items-center justify-between">
+        <div className="absolute top-10 left-0 z-10 flex w-full items-center justify-between px-6">
           <button
             onClick={handleCancel}
             className="text-muted-foreground hover:text-foreground inline-flex items-center gap-1 text-sm transition-colors"
@@ -192,16 +243,45 @@ export default function VisualizationDetailPage() {
           )}
         </div>
 
-        <div className="mb-6">
-          <h1 className="text-3xl font-bold tracking-tight">
-            {visualization.title}
-          </h1>
+        <div className="bg-card relative mb-6 overflow-hidden rounded-3xl border">
+          <div className="from-primary/15 via-primary/5 to-background h-28 bg-gradient-to-r" />
 
-          {visualization.description && (
-            <p className="text-muted-foreground mt-2 text-sm">
-              {visualization.description}
-            </p>
-          )}
+          <div className="-mt-10 px-6 pb-6 sm:px-8">
+            <div className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
+              <div className="flex items-center gap-5">
+                <div className="bg-background ring-background flex h-20 w-20 items-center justify-center rounded-3xl border shadow-sm ring-4">
+                  <span className="text-primary text-center text-xs leading-4 font-semibold uppercase">
+                    {widgetLabel}
+                  </span>
+                </div>
+
+                <div>
+                  <h1 className="text-3xl font-bold tracking-tight">
+                    {visualization.title}
+                  </h1>
+
+                  <p className="text-muted-foreground mt-2 max-w-2xl text-sm leading-6">
+                    {visualization.description || "No description provided."}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex flex-wrap gap-2">
+                <div className="bg-muted rounded-full px-4 py-2 text-sm font-medium">
+                  {toTitleCase(visualization.scope)}
+                </div>
+
+                <div className="bg-primary/10 text-primary rounded-full px-4 py-2 text-sm font-medium">
+                  {toTitleCase(visualization.provider)} /{" "}
+                  {toTitleCase(visualization.executor)}
+                </div>
+
+                <div className="bg-secondary rounded-full px-4 py-2 text-sm font-medium">
+                  {widgetLabel}
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
         <div className="bg-card mb-6 rounded-3xl border p-6">
@@ -210,122 +290,32 @@ export default function VisualizationDetailPage() {
           {isEditing ? (
             <div className="space-y-6">
               <div className="space-y-2">
-                <Label htmlFor="title">Title</Label>
-                <Input
-                  id="title"
-                  value={visualization.title}
-                  onChange={(e) =>
-                    updateVisualization({ title: e.target.value })
-                  }
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="description">Description</Label>
-                <Textarea
-                  id="description"
-                  value={visualization.description ?? ""}
-                  onChange={(e) =>
+                <Label htmlFor="widget">Widget</Label>
+                <Select
+                  value={visualization.widget}
+                  onValueChange={(value) =>
                     updateVisualization({
-                      description:
-                        e.target.value === "" ? undefined : e.target.value,
+                      widget: value as VisualizationWidget,
                     })
                   }
-                />
-              </div>
-
-              {combination && (
-                <div className="space-y-2">
-                  <Label htmlFor="aggregation">Aggregation</Label>
-                  <Select
-                    value={visualization.aggregation}
-                    onValueChange={(value) =>
-                      updateVisualization({
-                        aggregation: value as VisualizationAggregation,
-                      })
-                    }
-                  >
-                    <SelectTrigger id="aggregation" className="w-full">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {combination.aggregations.map((aggregation) => (
-                        <SelectItem key={aggregation} value={aggregation}>
-                          {toTitleCase(aggregation)}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
-
-              <PeriodEditor
-                period={visualization.period}
-                onChange={(period) => updateVisualization({ period })}
-              />
-
-              {combination?.options.comparison && (
-                <div className="space-y-2">
-                  <Label htmlFor="comparison">Comparison</Label>
-                  <Select
-                    value={visualization.options?.comparison ?? "previous-day"}
-                    onValueChange={(value) =>
-                      updateVisualization({
-                        options: {
-                          ...visualization.options,
-                          comparison: value as VisualizationComparison,
-                        },
-                      })
-                    }
-                  >
-                    <SelectTrigger id="comparison" className="w-full">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="previous-day">Previous day</SelectItem>
-                      <SelectItem value="previous-period">
-                        Previous period
+                >
+                  <SelectTrigger id="widget" className="w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {widgetOptions.map((widget) => (
+                      <SelectItem key={widget} value={widget}>
+                        {toTitleCase(widget)}
                       </SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
-
-              {combination?.options.greenIfDeltaPositive && (
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="green-if-delta-positive">
-                    Green if delta positive
-                  </Label>
-                  <Switch
-                    id="green-if-delta-positive"
-                    checked={
-                      visualization.options?.greenIfDeltaPositive ?? false
-                    }
-                    onCheckedChange={(checked) =>
-                      updateVisualization({
-                        options: {
-                          ...visualization.options,
-                          greenIfDeltaPositive: checked,
-                        },
-                      })
-                    }
-                  />
-                </div>
-              )}
-
-              <div className="space-y-2">
-                <Label htmlFor="display-order">Display order</Label>
-                <Input
-                  id="display-order"
-                  type="number"
-                  value={visualization.displayOrder}
-                  onChange={(e) =>
-                    updateVisualization({
-                      displayOrder: Number(e.target.value),
-                    })
-                  }
-                />
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
+
+              <p className="text-muted-foreground text-sm">
+                Only the widget is editable here. The rest of the visualization
+                configuration is locked.
+              </p>
             </div>
           ) : (
             <ReadOnlyConfig visualization={visualization} />
@@ -485,58 +475,6 @@ function ReadOnlyRow({
       <span className="text-muted-foreground text-sm">{label}</span>
 
       <span className="font-medium">{value}</span>
-    </div>
-  );
-}
-
-function PeriodEditor({
-  period,
-  onChange,
-}: {
-  period: VisualizationPeriod;
-  onChange: (period: VisualizationPeriod) => void;
-}) {
-  const isAll = period.type === "all";
-
-  return (
-    <div className="space-y-2">
-      <Label htmlFor="period">Period</Label>
-
-      <div className="flex items-center gap-3">
-        <Select
-          value={isAll ? "all" : "days"}
-          onValueChange={(value) =>
-            onChange(
-              value === "all"
-                ? { type: "all" }
-                : {
-                    type: "days",
-                    value: period.type === "days" ? period.value : 30,
-                  },
-            )
-          }
-        >
-          <SelectTrigger id="period" className="w-40">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="days">Last N days</SelectItem>
-            <SelectItem value="all">All time</SelectItem>
-          </SelectContent>
-        </Select>
-
-        {!isAll && (
-          <Input
-            type="number"
-            min={1}
-            value={period.value}
-            onChange={(e) =>
-              onChange({ type: "days", value: Number(e.target.value) })
-            }
-            className="w-28"
-          />
-        )}
-      </div>
     </div>
   );
 }

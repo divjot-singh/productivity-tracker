@@ -3,7 +3,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerUser } from "@/lib/server-auth";
 
 import { VisualizationDefinition } from "@/models/visualization";
-import { validateVisualizationDefinition } from "@/lib/visualizations/validation";
+import {
+  normalizeVisualizationOptions,
+  validateVisualizationDefinition,
+  VISUALIZATION_COMBINATIONS,
+} from "@/lib/visualizations/validation";
 import { getGoals } from "@/repositories/goals.server.repository";
 import {
   deleteVisualization,
@@ -19,7 +23,6 @@ interface RouteContext {
 
 const LOCKED_FIELDS: Array<keyof VisualizationDefinition> = [
   "id",
-  "widget",
   "scope",
   "provider",
   "executor",
@@ -77,6 +80,13 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
 
     const body = (await request.json()) as Partial<VisualizationDefinition>;
 
+    const nextDisplayOrder =
+      typeof body.displayOrder === "number" &&
+      Number.isFinite(body.displayOrder) &&
+      body.displayOrder > 0
+        ? body.displayOrder
+        : existing.displayOrder;
+
     const immutableViolations: string[] = [];
 
     for (const field of LOCKED_FIELDS) {
@@ -98,7 +108,18 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
       ...existing,
       ...body,
       id,
+      displayOrder: nextDisplayOrder,
     };
+
+    const combination =
+      VISUALIZATION_COMBINATIONS[updated.provider]?.[updated.executor];
+
+    if (combination) {
+      updated.options = normalizeVisualizationOptions(
+        body.options ?? updated.options,
+        combination.options,
+      );
+    }
 
     const goals = await getGoals(user.uid);
     const goalLabels = goals.map((goal) => goal.label);

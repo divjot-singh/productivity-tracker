@@ -22,6 +22,8 @@ import { apiRequest } from "@/lib/api/client";
 import {
   AllowedCombination,
   VISUALIZATION_COMBINATIONS,
+  getProviderScopes,
+  normalizeVisualizationOptions,
 } from "@/lib/visualizations/validation";
 import {
   VisualizationAggregation,
@@ -103,7 +105,7 @@ export default function NewVisualizationPage() {
         ),
       ]
     >) {
-      const scopes = providerToScopes(provider as VisualizationProviderType);
+      const scopes = getProviderScopes(provider as VisualizationProviderType);
 
       for (const [, combination] of Object.entries(executors ?? {}) as Array<
         [VisualizationExecutorType, AllowedCombination | undefined]
@@ -135,7 +137,7 @@ export default function NewVisualizationPage() {
         ),
       ]
     >) {
-      const scopes = providerToScopes(provider as VisualizationProviderType);
+      const scopes = getProviderScopes(provider as VisualizationProviderType);
 
       if (!scopes.includes(visualization.scope)) continue;
 
@@ -235,9 +237,30 @@ export default function NewVisualizationPage() {
     try {
       setCreating(true);
 
+      const combination =
+        VISUALIZATION_COMBINATIONS[visualization.provider]?.[
+          visualization.executor
+        ];
+
+      if (!combination) {
+        toast.error("Selected visualization configuration is invalid.");
+        return;
+      }
+
+      const payload: VisualizationDefinition = {
+        ...visualization,
+        title: visualization.title.trim(),
+        description: visualization.description?.trim() || undefined,
+        key: visualization.key.trim(),
+        options: normalizeVisualizationOptions(
+          visualization.options,
+          combination.options,
+        ),
+      };
+
       await apiRequest(user, "/api/visualizations", {
         method: "POST",
-        body: visualization,
+        body: payload,
       });
 
       toast.success("Visualization created");
@@ -252,7 +275,21 @@ export default function NewVisualizationPage() {
     }
   }
 
-  const canSubmit = visualization.title.trim().length > 0;
+  const hasValidPeriod =
+    visualization.period.type === "all" ||
+    (Number.isInteger(visualization.period.value) &&
+      visualization.period.value > 0);
+
+  const hasValidDisplayOrder =
+    Number.isNaN(visualization.displayOrder) ||
+    (Number.isFinite(visualization.displayOrder) &&
+      visualization.displayOrder > 0);
+
+  const canSubmit =
+    visualization.title.trim().length > 0 &&
+    visualization.key.trim().length > 0 &&
+    hasValidPeriod &&
+    hasValidDisplayOrder;
 
   return (
     <AppShell>
@@ -582,22 +619,6 @@ function PeriodEditor({
   );
 }
 
-function providerToScopes(
-  provider: VisualizationProviderType,
-): VisualizationScope[] {
-  switch (provider) {
-    case "entry":
-      return ["global"];
-    case "metric":
-    case "goal":
-      return ["goal"];
-    case "category":
-      return ["category"];
-    default:
-      return [];
-  }
-}
-
 function providerExecutorOptionsFor(
   widget: VisualizationWidget,
   scope: VisualizationScope,
@@ -616,7 +637,7 @@ function providerExecutorOptionsFor(
     ]
   >) {
     if (
-      !providerToScopes(provider as VisualizationProviderType).includes(scope)
+      !getProviderScopes(provider as VisualizationProviderType).includes(scope)
     )
       continue;
 

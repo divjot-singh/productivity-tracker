@@ -123,6 +123,50 @@ export interface ValidationContext {
   goalLabels?: string[];
 }
 
+const PROVIDER_SCOPE_MAP: Record<
+  VisualizationProviderType,
+  VisualizationScope[]
+> = {
+  entry: ["global"],
+  metric: ["goal"],
+  goal: ["goal"],
+  category: ["category"],
+};
+
+const COMPARISON_VALUES: VisualizationOptions["comparison"][] = [
+  "previous-day",
+  "previous-period",
+];
+
+export function getProviderScopes(
+  provider: VisualizationProviderType,
+): VisualizationScope[] {
+  return PROVIDER_SCOPE_MAP[provider] ?? [];
+}
+
+export function normalizeVisualizationOptions(
+  options: VisualizationOptions | undefined,
+  allowed: AllowedCombination["options"],
+): VisualizationOptions | undefined {
+  const normalized: VisualizationOptions = {};
+
+  if (allowed.comparison) {
+    normalized.comparison =
+      options?.comparison && COMPARISON_VALUES.includes(options.comparison)
+        ? options.comparison
+        : "previous-day";
+  }
+
+  if (allowed.greenIfDeltaPositive) {
+    normalized.greenIfDeltaPositive =
+      typeof options?.greenIfDeltaPositive === "boolean"
+        ? options.greenIfDeltaPositive
+        : false;
+  }
+
+  return Object.keys(normalized).length > 0 ? normalized : undefined;
+}
+
 export function validateVisualizationDefinition(
   definition: VisualizationDefinition,
   context?: ValidationContext,
@@ -137,8 +181,12 @@ export function validateVisualizationDefinition(
   if (!definition.executor) errors.push("executor is required");
   if (!definition.key?.trim()) errors.push("key is required");
 
-  if (typeof definition.displayOrder !== "number") {
-    errors.push("displayOrder must be a number");
+  if (
+    typeof definition.displayOrder !== "number" ||
+    !Number.isFinite(definition.displayOrder) ||
+    definition.displayOrder <= 0
+  ) {
+    errors.push("displayOrder must be a positive number");
   }
 
   if (typeof definition.visible !== "boolean") {
@@ -161,6 +209,14 @@ export function validateVisualizationDefinition(
   if (!combination.widgets.includes(definition.widget)) {
     errors.push(
       `Widget '${definition.widget}' is not supported for ${definition.provider}/${definition.executor}. Allowed: ${combination.widgets.join(", ")}.`,
+    );
+  }
+
+  const supportedScopes = getProviderScopes(definition.provider);
+
+  if (!supportedScopes.includes(definition.scope)) {
+    errors.push(
+      `Scope '${definition.scope}' is not supported for provider '${definition.provider}'. Allowed: ${supportedScopes.join(", ")}.`,
     );
   }
 
@@ -227,6 +283,20 @@ function validateOptions(
     }
   }
 
+  if (
+    options.comparison !== undefined &&
+    !COMPARISON_VALUES.includes(options.comparison)
+  ) {
+    return "Option 'comparison' must be either 'previous-day' or 'previous-period'.";
+  }
+
+  if (
+    options.greenIfDeltaPositive !== undefined &&
+    typeof options.greenIfDeltaPositive !== "boolean"
+  ) {
+    return "Option 'greenIfDeltaPositive' must be a boolean.";
+  }
+
   return null;
 }
 
@@ -237,16 +307,6 @@ export function getAllowedCombinations() {
     widget: VisualizationWidget;
     scope: VisualizationScope;
   }> = [];
-
-  const providerExecutorScopeMap: Record<
-    VisualizationProviderType,
-    VisualizationScope[]
-  > = {
-    entry: ["global"],
-    metric: ["goal"],
-    goal: ["goal"],
-    category: ["category"],
-  };
 
   for (const [provider, executors] of Object.entries(
     VISUALIZATION_COMBINATIONS,
@@ -260,7 +320,7 @@ export function getAllowedCombinations() {
       executors ?? {},
     ) as Array<[VisualizationExecutorType, AllowedCombination]>) {
       for (const widget of combination.widgets) {
-        for (const scope of providerExecutorScopeMap[provider]) {
+        for (const scope of getProviderScopes(provider)) {
           result.push({ provider, executor, widget, scope });
         }
       }

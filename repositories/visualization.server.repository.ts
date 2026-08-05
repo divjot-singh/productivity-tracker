@@ -42,6 +42,20 @@ export async function getVisualizationDefinition(
   };
 }
 
+function removeUndefined<T extends Record<string, unknown>>(
+  value: T,
+): Record<string, unknown> {
+  const result: Record<string, unknown> = {};
+
+  for (const [key, entry] of Object.entries(value)) {
+    if (entry !== undefined) {
+      result[key] = entry;
+    }
+  }
+
+  return result;
+}
+
 export async function createVisualization(
   uid: string,
   visualization: VisualizationDefinition,
@@ -50,7 +64,7 @@ export async function createVisualization(
 
   await ref.set(
     {
-      ...visualization,
+      ...removeUndefined(visualization as unknown as Record<string, unknown>),
       createdAt: new Date(),
       updatedAt: new Date(),
     },
@@ -70,7 +84,7 @@ export async function updateVisualization(
 
   await ref.set(
     {
-      ...visualization,
+      ...removeUndefined(visualization as unknown as Record<string, unknown>),
       updatedAt: new Date(),
     },
     {
