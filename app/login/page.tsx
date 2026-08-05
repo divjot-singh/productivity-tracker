@@ -38,14 +38,14 @@ export default function LoginPage() {
 
   if (authLoading) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-zinc-950">
+      <main className="flex min-h-dvh items-center justify-center bg-zinc-950">
         Loading...
       </main>
     );
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-zinc-950 px-4">
+    <main className="flex min-h-dvh items-center justify-center bg-zinc-950 px-4">
       <LoginCard onLogin={handleLogin} loading={loading} />
     </main>
   );

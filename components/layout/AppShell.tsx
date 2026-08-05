@@ -10,7 +10,7 @@ interface Props {
 
 export default function AppShell({ children }: Props) {
   return (
-    <div className="bg-background flex min-h-screen">
+    <div className="bg-background flex min-h-dvh">
       {/* Desktop only */}
       <aside className="border-border hidden w-64 border-r lg:flex">
         <Sidebar />
