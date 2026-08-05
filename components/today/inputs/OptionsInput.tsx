@@ -42,13 +42,13 @@ export default function OptionsInput({ metric, value, onChange }: Props) {
               type="button"
               onClick={() => onChange(option.value)}
               className={cn(
-                "rounded-xl border p-2.5 text-left text-sm transition-all",
+                "rounded-sm border p-2.5 text-left text-sm transition-all",
                 selected
                   ? "border-primary bg-primary/10 text-primary"
                   : "border-border hover:bg-accent",
               )}
             >
-              <div className="flex flex-col gap-0.5">
+              <div className="flex flex-col gap-0.5 text-center">
                 <span className="font-medium">{option.label}</span>
                 <span className="text-muted-foreground text-xs">
                   {(option.multiplier * metric.weight).toFixed(1)} pts

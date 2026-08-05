@@ -26,7 +26,7 @@ export default function BooleanInput({ metric, value, onChange }: Props) {
           type="button"
           onClick={() => onChange(true)}
           className={cn(
-            "rounded-xl border p-3 text-sm font-medium transition-all",
+            "rounded-sm border p-3 text-sm font-medium transition-all",
             value
               ? "border-primary bg-primary/10 text-primary"
               : "border-border hover:bg-accent",

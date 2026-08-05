@@ -259,7 +259,7 @@ export default function TodayPage() {
   }
 
   return (
-    <AppShell>
+    <AppShell mainClass="overflow-hidden">
       <div className="mx-auto flex h-[calc(100dvh-5rem-4rem-env(safe-area-inset-bottom))] min-h-0 w-full max-w-screen-sm flex-col overflow-hidden lg:h-[calc(100dvh-4rem)]">
         <div className="min-h-0 flex-1 overflow-y-auto">
           <div className="mb-2 px-4 pt-3 pb-2">

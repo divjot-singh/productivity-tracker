@@ -98,13 +98,13 @@
   * {
     @apply border-border outline-ring/50;
   }
+
   body {
     @apply bg-background text-foreground;
   }
-  input[type="date"]::-webkit-calendar-picker-indicator,
-   input[type="time"]::-webkit-calendar-picker-indicator,
-   input[type="datetime-local"]::-webkit-calendar-picker-indicator {
-    filter: invert(1);
+
+  input {
+    color-scheme: dark;
   }
 }
 
@@ -124,7 +124,6 @@ body {
 }
 
 :root {
-
 --chart-1: var(--primary);
 
 --chart-2: var(--accent);
@@ -135,4 +134,13 @@ body {
 
 --chart-5: oklch(0.7 0.15 300);
 
+}
+
+@supports (-webkit-touch-callout: none) {
+  input[type="time"] {
+    box-sizing: border-box;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+  }
 }
