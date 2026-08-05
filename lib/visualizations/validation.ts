@@ -1,4 +1,6 @@
 import {
+  StreakConditionComparator,
+  StreakRule,
   VisualizationAggregation,
   VisualizationDefinition,
   VisualizationExecutorType,
@@ -16,6 +18,7 @@ export interface AllowedCombination {
   options: {
     comparison?: boolean;
     greenIfDeltaPositive?: boolean;
+    streakRule?: boolean;
   };
 }
 
@@ -94,7 +97,7 @@ export const VISUALIZATION_COMBINATIONS: Partial<
       widgets: ["stat-card"],
       keys: "*",
       aggregations: ["streak"],
-      options: {},
+      options: { streakRule: true },
     },
     progress: {
       widgets: ["progress-bar", "progress-ring"],
@@ -138,6 +141,16 @@ const COMPARISON_VALUES: VisualizationOptions["comparison"][] = [
   "previous-period",
 ];
 
+const STREAK_OPERATORS: Array<StreakRule["operator"]> = ["and", "or"];
+
+const STREAK_COMPARATORS: StreakConditionComparator[] = [
+  "eq",
+  "gt",
+  "gte",
+  "lt",
+  "lte",
+];
+
 export function getProviderScopes(
   provider: VisualizationProviderType,
 ): VisualizationScope[] {
@@ -155,6 +168,17 @@ export function normalizeVisualizationOptions(
       options?.comparison && COMPARISON_VALUES.includes(options.comparison)
         ? options.comparison
         : "previous-day";
+  }
+
+  if (allowed.streakRule && options?.streakRule) {
+    normalized.streakRule = {
+      operator: options.streakRule.operator === "and" ? "and" : "or",
+      conditions: options.streakRule.conditions.map((condition) => ({
+        goalLabel: condition.goalLabel.trim(),
+        comparator: condition.comparator,
+        value: condition.value,
+      })),
+    };
   }
 
   if (allowed.greenIfDeltaPositive) {
@@ -229,6 +253,7 @@ export function validateVisualizationDefinition(
   if (
     combination.keys === "*" &&
     context?.goalLabels?.length &&
+    !definition.options?.streakRule &&
     !context.goalLabels.some(
       (label) => label.toLowerCase() === definition.key.toLowerCase(),
     )
@@ -276,6 +301,7 @@ function validateOptions(
   const allowedKeys = new Set<keyof VisualizationOptions>();
   if (allowed.comparison) allowedKeys.add("comparison");
   if (allowed.greenIfDeltaPositive) allowedKeys.add("greenIfDeltaPositive");
+  if (allowed.streakRule) allowedKeys.add("streakRule");
 
   for (const key of Object.keys(options) as Array<keyof VisualizationOptions>) {
     if (!allowedKeys.has(key)) {
@@ -295,6 +321,44 @@ function validateOptions(
     typeof options.greenIfDeltaPositive !== "boolean"
   ) {
     return "Option 'greenIfDeltaPositive' must be a boolean.";
+  }
+
+  if (options.streakRule !== undefined) {
+    if (!allowed.streakRule) {
+      return "Option 'streakRule' is not supported for this visualization configuration.";
+    }
+
+    const streakRuleError = validateStreakRule(options.streakRule);
+
+    if (streakRuleError) {
+      return streakRuleError;
+    }
+  }
+
+  return null;
+}
+
+function validateStreakRule(rule: StreakRule): string | null {
+  if (!STREAK_OPERATORS.includes(rule.operator)) {
+    return "Option 'streakRule.operator' must be either 'and' or 'or'.";
+  }
+
+  if (!Array.isArray(rule.conditions) || rule.conditions.length === 0) {
+    return "Option 'streakRule.conditions' must include at least one condition.";
+  }
+
+  for (const [index, condition] of rule.conditions.entries()) {
+    if (!condition.goalLabel?.trim()) {
+      return `Option 'streakRule.conditions[${index}].goalLabel' is required.`;
+    }
+
+    if (!STREAK_COMPARATORS.includes(condition.comparator)) {
+      return `Option 'streakRule.conditions[${index}].comparator' is invalid.`;
+    }
+
+    if (condition.comparator !== "eq" && typeof condition.value !== "number") {
+      return `Option 'streakRule.conditions[${index}].value' must be a number for comparator '${condition.comparator}'.`;
+    }
   }
 
   return null;

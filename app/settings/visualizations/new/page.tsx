@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/select";
 import { useAuth } from "@/contexts/AuthContext";
 import { apiRequest } from "@/lib/api/client";
+import StreakRuleEditor from "@/components/settings/StreakRuleEditor";
 import {
   AllowedCombination,
   VISUALIZATION_COMBINATIONS,
@@ -37,6 +38,8 @@ import {
 } from "@/models/visualization";
 import { MetricDefinition } from "@/models/metric";
 import { toast } from "sonner";
+
+const INTERNAL_COMPOSITE_STREAK_KEY = "__composite_streak__";
 
 const SCOPE_OPTIONS: VisualizationScope[] = ["global", "goal", "category"];
 
@@ -166,6 +169,8 @@ export default function NewVisualizationPage() {
     ];
   }, [visualization.provider, visualization.executor]);
 
+  const isCompositeStreak = Boolean(visualization.options?.streakRule);
+
   function updateVisualization(partial: Partial<VisualizationDefinition>) {
     setVisualization((previous) => ({
       ...previous,
@@ -251,7 +256,9 @@ export default function NewVisualizationPage() {
         ...visualization,
         title: visualization.title.trim(),
         description: visualization.description?.trim() || undefined,
-        key: visualization.key.trim(),
+        key: isCompositeStreak
+          ? INTERNAL_COMPOSITE_STREAK_KEY
+          : visualization.key.trim(),
         options: normalizeVisualizationOptions(
           visualization.options,
           combination.options,
@@ -287,7 +294,7 @@ export default function NewVisualizationPage() {
 
   const canSubmit =
     visualization.title.trim().length > 0 &&
-    visualization.key.trim().length > 0 &&
+    (isCompositeStreak || visualization.key.trim().length > 0) &&
     hasValidPeriod &&
     hasValidDisplayOrder;
 
@@ -404,33 +411,48 @@ export default function NewVisualizationPage() {
             </div>
           )}
 
-          <div className="space-y-2">
-            <Label htmlFor="key">Data</Label>
-            {goalsLoading ? (
-              <div className="text-muted-foreground text-sm">
-                Loading goals...
-              </div>
-            ) : (
-              <Select
-                value={visualization.key}
-                onValueChange={(value) => {
-                  if (!value) return;
-                  updateVisualization({ key: value });
-                }}
-              >
-                <SelectTrigger id="key">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {keyOptions.map((option) => (
-                    <SelectItem key={option.value} value={option.value}>
-                      {option.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            )}
-          </div>
+          {combination?.options.streakRule ? (
+            <StreakRuleEditor
+              goals={goals}
+              value={visualization.options?.streakRule}
+              onChange={(streakRule) =>
+                updateVisualization({
+                  options: {
+                    ...visualization.options,
+                    streakRule,
+                  },
+                })
+              }
+            />
+          ) : (
+            <div className="space-y-2">
+              <Label htmlFor="key">Data</Label>
+              {goalsLoading ? (
+                <div className="text-muted-foreground text-sm">
+                  Loading goals...
+                </div>
+              ) : (
+                <Select
+                  value={visualization.key}
+                  onValueChange={(value) => {
+                    if (!value) return;
+                    updateVisualization({ key: value });
+                  }}
+                >
+                  <SelectTrigger id="key">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {keyOptions.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            </div>
+          )}
 
           {combination && (
             <div className="space-y-2">

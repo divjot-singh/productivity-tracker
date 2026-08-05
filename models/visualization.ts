@@ -24,9 +24,25 @@ export type StatEntryKey = "score" | "xp";
 
 export type VisualizationComparison = "previous-day" | "previous-period";
 
+export type StreakRuleOperator = "and" | "or";
+
+export type StreakConditionComparator = "eq" | "gt" | "gte" | "lt" | "lte";
+
+export interface StreakRuleCondition {
+  goalLabel: string;
+  comparator: StreakConditionComparator;
+  value: number | boolean | string;
+}
+
+export interface StreakRule {
+  operator: StreakRuleOperator;
+  conditions: StreakRuleCondition[];
+}
+
 export interface VisualizationOptions {
   comparison?: VisualizationComparison;
   greenIfDeltaPositive?: boolean;
+  streakRule?: StreakRule;
 }
 
 export type VisualizationAggregation =

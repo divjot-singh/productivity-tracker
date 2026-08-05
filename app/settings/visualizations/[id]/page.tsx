@@ -36,6 +36,8 @@ import {
 } from "@/models/visualization";
 import { toast } from "sonner";
 
+const INTERNAL_COMPOSITE_STREAK_KEY = "__composite_streak__";
+
 export default function VisualizationDetailPage() {
   const { user } = useAuth();
   const router = useRouter();
@@ -90,6 +92,8 @@ export default function VisualizationDetailPage() {
     if (!visualization) return [];
     return combination?.widgets ?? [visualization.widget];
   }, [combination, visualization]);
+
+  const isCompositeStreak = Boolean(visualization?.options?.streakRule);
 
   function updateVisualization(partial: Partial<VisualizationDefinition>) {
     setVisualization((previous) =>
@@ -149,7 +153,9 @@ export default function VisualizationDetailPage() {
         ...visualization,
         title: visualization.title.trim(),
         description: visualization.description?.trim() || undefined,
-        key: visualization.key.trim(),
+        key: isCompositeStreak
+          ? INTERNAL_COMPOSITE_STREAK_KEY
+          : visualization.key.trim(),
         options: normalizeVisualizationOptions(
           visualization.options,
           combination.options,
@@ -452,7 +458,11 @@ function ReadOnlyConfig({
         label="Executor"
         value={toTitleCase(visualization.executor)}
       />
-      <ReadOnlyRow label="Key" value={visualization.key} />
+      {visualization.options?.streakRule ? (
+        <ReadOnlyStreakRule value={visualization.options.streakRule} />
+      ) : (
+        <ReadOnlyRow label="Key" value={visualization.key} />
+      )}
       <ReadOnlyRow
         label="Aggregation"
         value={toTitleCase(visualization.aggregation)}
@@ -479,6 +489,36 @@ function ReadOnlyRow({
   );
 }
 
+function ReadOnlyStreakRule({
+  value,
+}: {
+  value: NonNullable<VisualizationDefinition["options"]>["streakRule"];
+}) {
+  if (!value) {
+    return null;
+  }
+
+  return (
+    <div className="space-y-2 rounded-2xl border p-4">
+      <div className="flex items-center justify-between">
+        <span className="text-muted-foreground text-sm">Streak rule</span>
+        <span className="font-medium">
+          {value.operator === "and" ? "All conditions" : "Any condition"}
+        </span>
+      </div>
+
+      <div className="space-y-2">
+        {value.conditions.map((condition, index) => (
+          <div key={`${condition.goalLabel}-${index}`} className="text-sm">
+            {condition.goalLabel} {formatComparator(condition.comparator)}{" "}
+            {String(condition.value)}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function toTitleCase(value: string) {
   return value
     .split("-")
@@ -492,4 +532,25 @@ function formatPeriod(period: VisualizationDefinition["period"]): string {
   }
 
   return `${period.value} day${period.value === 1 ? "" : "s"}`;
+}
+
+function formatComparator(
+  comparator: NonNullable<
+    NonNullable<VisualizationDefinition["options"]>["streakRule"]
+  >["conditions"][number]["comparator"],
+) {
+  switch (comparator) {
+    case "eq":
+      return "is equal to";
+    case "gt":
+      return "is greater than";
+    case "gte":
+      return "is greater than or equal to";
+    case "lt":
+      return "is less than";
+    case "lte":
+      return "is less than or equal to";
+    default:
+      return comparator;
+  }
 }
