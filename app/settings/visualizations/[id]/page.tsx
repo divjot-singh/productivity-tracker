@@ -316,480 +316,470 @@ export default function VisualizationDetailPage() {
     hasValidDisplayOrder;
 
   return (
-    <AppShell>
-      <div className="relative mx-auto w-full max-w-screen-sm px-4 pt-4 pb-28">
-        <div className="absolute top-10 left-0 z-10 flex w-full items-center justify-between px-6">
-          <button
-            onClick={handleCancel}
-            className="text-muted-foreground hover:text-foreground inline-flex items-center gap-1 text-sm transition-colors"
+    <div className="relative mx-auto w-full max-w-screen-sm px-4 pt-4 pb-28">
+      <div className="absolute top-10 left-0 z-10 flex w-full items-center justify-between px-6">
+        <button
+          onClick={handleCancel}
+          className="text-muted-foreground hover:text-foreground inline-flex items-center gap-1 text-sm transition-colors"
+        >
+          <ChevronLeft size={18} />
+          Back
+        </button>
+
+        {!isEditing && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setIsEditing(true)}
           >
-            <ChevronLeft size={18} />
-            Back
-          </button>
+            <Pencil className="mr-1.5 h-3.5 w-3.5" />
+            Edit
+          </Button>
+        )}
+      </div>
 
-          {!isEditing && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setIsEditing(true)}
-            >
-              <Pencil className="mr-1.5 h-3.5 w-3.5" />
-              Edit
-            </Button>
-          )}
-        </div>
+      <div className="bg-card relative mb-6 overflow-hidden rounded-3xl border">
+        <div className="from-primary/15 via-primary/5 to-background h-28 bg-gradient-to-r" />
 
-        <div className="bg-card relative mb-6 overflow-hidden rounded-3xl border">
-          <div className="from-primary/15 via-primary/5 to-background h-28 bg-gradient-to-r" />
-
-          <div className="-mt-10 px-6 pb-6 sm:px-8">
-            <div className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
-              <div className="flex items-center gap-5">
-                <div className="bg-background ring-background flex h-20 w-20 items-center justify-center rounded-3xl border shadow-sm ring-4">
-                  <span className="text-primary text-center text-xs leading-4 font-semibold uppercase">
-                    {widgetLabel}
-                  </span>
-                </div>
-
-                <div>
-                  <h1 className="text-3xl font-bold tracking-tight">
-                    {visualization.title}
-                  </h1>
-
-                  <p className="text-muted-foreground mt-2 max-w-2xl text-sm leading-6">
-                    {visualization.description || "No description provided."}
-                  </p>
-                </div>
+        <div className="-mt-10 px-6 pb-6 sm:px-8">
+          <div className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
+            <div className="flex items-center gap-5">
+              <div className="bg-background ring-background flex h-20 w-20 items-center justify-center rounded-3xl border shadow-sm ring-4">
+                <span className="text-primary text-center text-xs leading-4 font-semibold uppercase">
+                  {widgetLabel}
+                </span>
               </div>
 
-              <div className="flex flex-wrap gap-2">
-                <div className="bg-muted rounded-full px-4 py-2 text-sm font-medium">
-                  {toTitleCase(visualization.scope)}
-                </div>
+              <div>
+                <h1 className="text-3xl font-bold tracking-tight">
+                  {visualization.title}
+                </h1>
 
-                <div className="bg-primary/10 text-primary rounded-full px-4 py-2 text-sm font-medium">
-                  {toTitleCase(visualization.provider)} /{" "}
-                  {toTitleCase(visualization.executor)}
-                </div>
+                <p className="text-muted-foreground mt-2 max-w-2xl text-sm leading-6">
+                  {visualization.description || "No description provided."}
+                </p>
+              </div>
+            </div>
 
-                <div className="bg-secondary rounded-full px-4 py-2 text-sm font-medium">
-                  {widgetLabel}
-                </div>
+            <div className="flex flex-wrap gap-2">
+              <div className="bg-muted rounded-full px-4 py-2 text-sm font-medium">
+                {toTitleCase(visualization.scope)}
+              </div>
+
+              <div className="bg-primary/10 text-primary rounded-full px-4 py-2 text-sm font-medium">
+                {toTitleCase(visualization.provider)} /{" "}
+                {toTitleCase(visualization.executor)}
+              </div>
+
+              <div className="bg-secondary rounded-full px-4 py-2 text-sm font-medium">
+                {widgetLabel}
               </div>
             </div>
           </div>
         </div>
+      </div>
 
-        <div className="bg-card mb-6 rounded-3xl border p-6">
-          <h2 className="mb-4 text-lg font-semibold">Configuration</h2>
+      <div className="bg-card mb-6 rounded-3xl border p-6">
+        <h2 className="mb-4 text-lg font-semibold">Configuration</h2>
 
-          {isEditing ? (
-            <div className="space-y-6">
-              <div className="space-y-2">
-                <VisualizationFieldLabel topic="title" htmlFor="title">
-                  Title
-                </VisualizationFieldLabel>
-                <Input
-                  id="title"
-                  value={visualization.title}
-                  onChange={(e) =>
-                    updateVisualization({ title: e.target.value })
-                  }
-                />
-              </div>
-
-              <div className="space-y-2">
-                <VisualizationFieldLabel
-                  topic="description"
-                  htmlFor="description"
-                >
-                  Description
-                </VisualizationFieldLabel>
-                <Textarea
-                  id="description"
-                  value={visualization.description ?? ""}
-                  onChange={(e) =>
-                    updateVisualization({
-                      description:
-                        e.target.value === "" ? undefined : e.target.value,
-                    })
-                  }
-                  placeholder="What does this visualization show?"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <VisualizationFieldLabel topic="scope" htmlFor="scope">
-                    Scope
-                  </VisualizationFieldLabel>
-                  <div className="relative">
-                    <select
-                      id="scope"
-                      value={visualization.scope}
-                      onChange={(e) =>
-                        updateVisualization({
-                          scope: e.target.value as VisualizationScope,
-                        })
-                      }
-                      className={NATIVE_SELECT_CLASS}
-                    >
-                      {SCOPE_OPTIONS.map((scope) => (
-                        <option key={scope} value={scope}>
-                          {toTitleCase(scope)}
-                        </option>
-                      ))}
-                    </select>
-                    <ChevronDown className="text-muted-foreground pointer-events-none absolute top-1/2 right-4 h-4 w-4 -translate-y-1/2" />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <VisualizationFieldLabel topic="widget" htmlFor="widget">
-                    Widget
-                  </VisualizationFieldLabel>
-                  <div className="relative">
-                    <select
-                      id="widget"
-                      value={visualization.widget}
-                      onChange={(e) =>
-                        updateVisualization({
-                          widget: e.target.value as VisualizationWidget,
-                        })
-                      }
-                      className={NATIVE_SELECT_CLASS}
-                    >
-                      {widgetOptions.map((widget) => (
-                        <option key={widget} value={widget}>
-                          {toTitleCase(widget)}
-                        </option>
-                      ))}
-                    </select>
-                    <ChevronDown className="text-muted-foreground pointer-events-none absolute top-1/2 right-4 h-4 w-4 -translate-y-1/2" />
-                  </div>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <VisualizationFieldLabel
-                  topic="source"
-                  htmlFor="provider-executor"
-                >
-                  Source (derived)
-                </VisualizationFieldLabel>
-                <div
-                  id="provider-executor"
-                  className="bg-muted rounded-xl border px-3 py-2 text-sm font-medium"
-                >
-                  {toTitleCase(visualization.provider)} /{" "}
-                  {toTitleCase(visualization.executor)}
-                </div>
-              </div>
-
-              {!isCompositeStreak && (
-                <div className="space-y-2">
-                  <VisualizationFieldLabel topic="data" htmlFor="key">
-                    Data Key
-                  </VisualizationFieldLabel>
-                  {goalsLoading ? (
-                    <div className="text-muted-foreground text-sm">
-                      Loading goals...
-                    </div>
-                  ) : (
-                    <div className="relative">
-                      <select
-                        id="key"
-                        value={visualization.key}
-                        onChange={(e) => {
-                          const value = e.target.value;
-                          if (!value) return;
-                          updateVisualization({ key: value });
-                        }}
-                        className={NATIVE_SELECT_CLASS}
-                      >
-                        {keyOptions.length === 0 ? (
-                          <option value="" disabled>
-                            No options available
-                          </option>
-                        ) : (
-                          keyOptions.map((option) => (
-                            <option key={option.value} value={option.value}>
-                              {option.label}
-                            </option>
-                          ))
-                        )}
-                      </select>
-                      <ChevronDown className="text-muted-foreground pointer-events-none absolute top-1/2 right-4 h-4 w-4 -translate-y-1/2" />
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {combination && (
-                <div className="space-y-2">
-                  <VisualizationFieldLabel
-                    topic="aggregation"
-                    htmlFor="aggregation"
-                  >
-                    Aggregation
-                  </VisualizationFieldLabel>
-                  <div className="relative">
-                    <select
-                      id="aggregation"
-                      value={visualization.aggregation}
-                      onChange={(e) =>
-                        updateVisualization({
-                          aggregation: e.target
-                            .value as VisualizationAggregation,
-                        })
-                      }
-                      className={NATIVE_SELECT_CLASS}
-                    >
-                      {combination.aggregations.map((aggregation) => (
-                        <option key={aggregation} value={aggregation}>
-                          {toTitleCase(aggregation)}
-                        </option>
-                      ))}
-                    </select>
-                    <ChevronDown className="text-muted-foreground pointer-events-none absolute top-1/2 right-4 h-4 w-4 -translate-y-1/2" />
-                  </div>
-                </div>
-              )}
-
-              <PeriodEditor
-                period={visualization.period}
-                onChange={(period) => updateVisualization({ period })}
+        {isEditing ? (
+          <div className="space-y-6">
+            <div className="space-y-2">
+              <VisualizationFieldLabel topic="title" htmlFor="title">
+                Title
+              </VisualizationFieldLabel>
+              <Input
+                id="title"
+                value={visualization.title}
+                onChange={(e) => updateVisualization({ title: e.target.value })}
               />
+            </div>
 
-              {combination?.options.comparison && (
-                <div className="space-y-2">
-                  <VisualizationFieldLabel
-                    topic="comparison"
-                    htmlFor="comparison"
+            <div className="space-y-2">
+              <VisualizationFieldLabel
+                topic="description"
+                htmlFor="description"
+              >
+                Description
+              </VisualizationFieldLabel>
+              <Textarea
+                id="description"
+                value={visualization.description ?? ""}
+                onChange={(e) =>
+                  updateVisualization({
+                    description:
+                      e.target.value === "" ? undefined : e.target.value,
+                  })
+                }
+                placeholder="What does this visualization show?"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <VisualizationFieldLabel topic="scope" htmlFor="scope">
+                  Scope
+                </VisualizationFieldLabel>
+                <div className="relative">
+                  <select
+                    id="scope"
+                    value={visualization.scope}
+                    onChange={(e) =>
+                      updateVisualization({
+                        scope: e.target.value as VisualizationScope,
+                      })
+                    }
+                    className={NATIVE_SELECT_CLASS}
                   >
-                    Comparison
-                  </VisualizationFieldLabel>
+                    {SCOPE_OPTIONS.map((scope) => (
+                      <option key={scope} value={scope}>
+                        {toTitleCase(scope)}
+                      </option>
+                    ))}
+                  </select>
+                  <ChevronDown className="text-muted-foreground pointer-events-none absolute top-1/2 right-4 h-4 w-4 -translate-y-1/2" />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <VisualizationFieldLabel topic="widget" htmlFor="widget">
+                  Widget
+                </VisualizationFieldLabel>
+                <div className="relative">
+                  <select
+                    id="widget"
+                    value={visualization.widget}
+                    onChange={(e) =>
+                      updateVisualization({
+                        widget: e.target.value as VisualizationWidget,
+                      })
+                    }
+                    className={NATIVE_SELECT_CLASS}
+                  >
+                    {widgetOptions.map((widget) => (
+                      <option key={widget} value={widget}>
+                        {toTitleCase(widget)}
+                      </option>
+                    ))}
+                  </select>
+                  <ChevronDown className="text-muted-foreground pointer-events-none absolute top-1/2 right-4 h-4 w-4 -translate-y-1/2" />
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <VisualizationFieldLabel
+                topic="source"
+                htmlFor="provider-executor"
+              >
+                Source (derived)
+              </VisualizationFieldLabel>
+              <div
+                id="provider-executor"
+                className="bg-muted rounded-xl border px-3 py-2 text-sm font-medium"
+              >
+                {toTitleCase(visualization.provider)} /{" "}
+                {toTitleCase(visualization.executor)}
+              </div>
+            </div>
+
+            {!isCompositeStreak && (
+              <div className="space-y-2">
+                <VisualizationFieldLabel topic="data" htmlFor="key">
+                  Data Key
+                </VisualizationFieldLabel>
+                {goalsLoading ? (
+                  <div className="text-muted-foreground text-sm">
+                    Loading goals...
+                  </div>
+                ) : (
                   <div className="relative">
                     <select
-                      id="comparison"
-                      value={
-                        visualization.options?.comparison ?? "previous-day"
-                      }
-                      onChange={(e) =>
-                        updateVisualization({
-                          options: {
-                            ...visualization.options,
-                            comparison: e.target
-                              .value as VisualizationComparison,
-                          },
-                        })
-                      }
+                      id="key"
+                      value={visualization.key}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        if (!value) return;
+                        updateVisualization({ key: value });
+                      }}
                       className={NATIVE_SELECT_CLASS}
                     >
-                      <option value="previous-day">Previous day</option>
-                      <option value="previous-period">Previous period</option>
+                      {keyOptions.length === 0 ? (
+                        <option value="" disabled>
+                          No options available
+                        </option>
+                      ) : (
+                        keyOptions.map((option) => (
+                          <option key={option.value} value={option.value}>
+                            {option.label}
+                          </option>
+                        ))
+                      )}
                     </select>
                     <ChevronDown className="text-muted-foreground pointer-events-none absolute top-1/2 right-4 h-4 w-4 -translate-y-1/2" />
                   </div>
-                </div>
-              )}
+                )}
+              </div>
+            )}
 
-              {combination?.options.greenIfDeltaPositive && (
-                <div className="flex items-center justify-between">
-                  <VisualizationFieldLabel
-                    topic="greenIfDeltaPositive"
-                    htmlFor="green-if-delta-positive"
-                  >
-                    Green if delta positive
-                  </VisualizationFieldLabel>
-                  <Switch
-                    id="green-if-delta-positive"
-                    checked={
-                      visualization.options?.greenIfDeltaPositive ?? false
+            {combination && (
+              <div className="space-y-2">
+                <VisualizationFieldLabel
+                  topic="aggregation"
+                  htmlFor="aggregation"
+                >
+                  Aggregation
+                </VisualizationFieldLabel>
+                <div className="relative">
+                  <select
+                    id="aggregation"
+                    value={visualization.aggregation}
+                    onChange={(e) =>
+                      updateVisualization({
+                        aggregation: e.target.value as VisualizationAggregation,
+                      })
                     }
-                    onCheckedChange={(checked) =>
+                    className={NATIVE_SELECT_CLASS}
+                  >
+                    {combination.aggregations.map((aggregation) => (
+                      <option key={aggregation} value={aggregation}>
+                        {toTitleCase(aggregation)}
+                      </option>
+                    ))}
+                  </select>
+                  <ChevronDown className="text-muted-foreground pointer-events-none absolute top-1/2 right-4 h-4 w-4 -translate-y-1/2" />
+                </div>
+              </div>
+            )}
+
+            <PeriodEditor
+              period={visualization.period}
+              onChange={(period) => updateVisualization({ period })}
+            />
+
+            {combination?.options.comparison && (
+              <div className="space-y-2">
+                <VisualizationFieldLabel
+                  topic="comparison"
+                  htmlFor="comparison"
+                >
+                  Comparison
+                </VisualizationFieldLabel>
+                <div className="relative">
+                  <select
+                    id="comparison"
+                    value={visualization.options?.comparison ?? "previous-day"}
+                    onChange={(e) =>
                       updateVisualization({
                         options: {
                           ...visualization.options,
-                          greenIfDeltaPositive: checked,
+                          comparison: e.target.value as VisualizationComparison,
                         },
                       })
                     }
-                  />
+                    className={NATIVE_SELECT_CLASS}
+                  >
+                    <option value="previous-day">Previous day</option>
+                    <option value="previous-period">Previous period</option>
+                  </select>
+                  <ChevronDown className="text-muted-foreground pointer-events-none absolute top-1/2 right-4 h-4 w-4 -translate-y-1/2" />
                 </div>
-              )}
+              </div>
+            )}
 
-              {combination?.options.streakRule && (
-                <StreakRuleEditor
-                  goals={goals}
-                  value={visualization.options?.streakRule}
-                  onChange={(streakRule) =>
+            {combination?.options.greenIfDeltaPositive && (
+              <div className="flex items-center justify-between">
+                <VisualizationFieldLabel
+                  topic="greenIfDeltaPositive"
+                  htmlFor="green-if-delta-positive"
+                >
+                  Green if delta positive
+                </VisualizationFieldLabel>
+                <Switch
+                  id="green-if-delta-positive"
+                  checked={visualization.options?.greenIfDeltaPositive ?? false}
+                  onCheckedChange={(checked) =>
                     updateVisualization({
                       options: {
                         ...visualization.options,
-                        streakRule,
+                        greenIfDeltaPositive: checked,
                       },
                     })
                   }
                 />
-              )}
-
-              <div className="space-y-2">
-                <VisualizationFieldLabel
-                  topic="displayOrder"
-                  htmlFor="display-order"
-                >
-                  Display order
-                </VisualizationFieldLabel>
-                <Input
-                  id="display-order"
-                  type="number"
-                  min={1}
-                  value={visualization.displayOrder}
-                  onChange={(e) =>
-                    updateVisualization({
-                      displayOrder: Number(e.target.value),
-                    })
-                  }
-                />
               </div>
+            )}
 
-              <div className="space-y-2">
-                <p className="text-muted-foreground text-xs">
-                  Provider and executor are derived from your scope/widget/key
-                  selections and validated on save.
-                </p>
-              </div>
-            </div>
-          ) : (
-            <ReadOnlyConfig visualization={visualization} />
-          )}
-        </div>
-
-        <div className="bg-card mb-6 rounded-3xl border p-6">
-          <h2 className="mb-4 text-lg font-semibold">Visibility</h2>
-
-          <div className="flex items-center justify-between">
-            <div>
-              <div className="mb-1">
-                <VisualizationFieldLabel
-                  topic="visible"
-                  htmlFor="visibility-switch"
-                >
-                  Visibility
-                </VisualizationFieldLabel>
-              </div>
-
-              <p className="font-medium">
-                {visualization.visible ? "Visible" : "Hidden"}
-              </p>
-
-              <p className="text-muted-foreground text-sm">
-                {visualization.visible
-                  ? "This visualization appears on the dashboard."
-                  : "This visualization is hidden from the dashboard."}
-              </p>
-            </div>
-
-            {isEditing ? (
-              <Switch
-                id="visibility-switch"
-                checked={visualization.visible}
-                onCheckedChange={(checked) =>
-                  updateVisualization({ visible: checked })
+            {combination?.options.streakRule && (
+              <StreakRuleEditor
+                goals={goals}
+                value={visualization.options?.streakRule}
+                onChange={(streakRule) =>
+                  updateVisualization({
+                    options: {
+                      ...visualization.options,
+                      streakRule,
+                    },
+                  })
                 }
               />
-            ) : (
-              <Switch
-                id="visibility-switch"
-                checked={visualization.visible}
-                disabled
-              />
             )}
-          </div>
-        </div>
 
-        {!isEditing && (
-          <div className="bg-card border-destructive/20 rounded-3xl border p-6">
-            <h2 className="text-destructive mb-4 text-lg font-semibold">
-              Danger Zone
-            </h2>
-
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <p className="text-sm font-medium">Delete this visualization</p>
-
-                <p className="text-muted-foreground mt-1 text-sm">
-                  Permanently remove this visualization from your dashboard.
-                </p>
-              </div>
-
-              <Button
-                variant="destructive"
-                onClick={() => setIsDeleteDialogOpen(true)}
+            <div className="space-y-2">
+              <VisualizationFieldLabel
+                topic="displayOrder"
+                htmlFor="display-order"
               >
-                <Trash2 className="mr-1.5 h-4 w-4" />
-                Delete Visualization
-              </Button>
+                Display order
+              </VisualizationFieldLabel>
+              <Input
+                id="display-order"
+                type="number"
+                min={1}
+                value={visualization.displayOrder}
+                onChange={(e) =>
+                  updateVisualization({
+                    displayOrder: Number(e.target.value),
+                  })
+                }
+              />
+            </div>
+
+            <div className="space-y-2">
+              <p className="text-muted-foreground text-xs">
+                Provider and executor are derived from your scope/widget/key
+                selections and validated on save.
+              </p>
             </div>
           </div>
-        )}
-
-        <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-          <DialogContent showCloseButton={false}>
-            <DialogHeader>
-              <DialogTitle>Delete visualization?</DialogTitle>
-
-              <DialogDescription>
-                &ldquo;{visualization.title}&rdquo; will be permanently removed
-                from your dashboard. This action cannot be undone.
-              </DialogDescription>
-            </DialogHeader>
-
-            <DialogFooter>
-              <Button
-                variant="outline"
-                onClick={() => setIsDeleteDialogOpen(false)}
-                disabled={isDeleting}
-              >
-                Cancel
-              </Button>
-
-              <Button
-                variant="destructive"
-                onClick={handleDelete}
-                disabled={isDeleting}
-              >
-                {isDeleting ? "Deleting..." : "Delete"}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-
-        {isEditing && (
-          <div className="bg-background fixed inset-x-0 bottom-0 z-20 border-t p-4 lg:left-64">
-            <div className="mx-auto flex max-w-screen-sm gap-3">
-              <Button
-                variant="outline"
-                className="flex-1"
-                onClick={handleCancel}
-                disabled={saving}
-              >
-                Cancel
-              </Button>
-
-              <Button
-                className="flex-[2]"
-                onClick={handleSave}
-                disabled={saving || !hasChanges || !canSave}
-              >
-                {saving ? "Saving..." : "Save Changes"}
-              </Button>
-            </div>
-          </div>
+        ) : (
+          <ReadOnlyConfig visualization={visualization} />
         )}
       </div>
-    </AppShell>
+
+      <div className="bg-card mb-6 rounded-3xl border p-6">
+        <h2 className="mb-4 text-lg font-semibold">Visibility</h2>
+
+        <div className="flex items-center justify-between">
+          <div>
+            <div className="mb-1">
+              <VisualizationFieldLabel
+                topic="visible"
+                htmlFor="visibility-switch"
+              >
+                Visibility
+              </VisualizationFieldLabel>
+            </div>
+
+            <p className="font-medium">
+              {visualization.visible ? "Visible" : "Hidden"}
+            </p>
+
+            <p className="text-muted-foreground text-sm">
+              {visualization.visible
+                ? "This visualization appears on the dashboard."
+                : "This visualization is hidden from the dashboard."}
+            </p>
+          </div>
+
+          {isEditing ? (
+            <Switch
+              id="visibility-switch"
+              checked={visualization.visible}
+              onCheckedChange={(checked) =>
+                updateVisualization({ visible: checked })
+              }
+            />
+          ) : (
+            <Switch
+              id="visibility-switch"
+              checked={visualization.visible}
+              disabled
+            />
+          )}
+        </div>
+      </div>
+
+      {!isEditing && (
+        <div className="bg-card border-destructive/20 rounded-3xl border p-6">
+          <h2 className="text-destructive mb-4 text-lg font-semibold">
+            Danger Zone
+          </h2>
+
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-sm font-medium">Delete this visualization</p>
+
+              <p className="text-muted-foreground mt-1 text-sm">
+                Permanently remove this visualization from your dashboard.
+              </p>
+            </div>
+
+            <Button
+              variant="destructive"
+              onClick={() => setIsDeleteDialogOpen(true)}
+            >
+              <Trash2 className="mr-1.5 h-4 w-4" />
+              Delete Visualization
+            </Button>
+          </div>
+        </div>
+      )}
+
+      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <DialogContent showCloseButton={false}>
+          <DialogHeader>
+            <DialogTitle>Delete visualization?</DialogTitle>
+
+            <DialogDescription>
+              &ldquo;{visualization.title}&rdquo; will be permanently removed
+              from your dashboard. This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsDeleteDialogOpen(false)}
+              disabled={isDeleting}
+            >
+              Cancel
+            </Button>
+
+            <Button
+              variant="destructive"
+              onClick={handleDelete}
+              disabled={isDeleting}
+            >
+              {isDeleting ? "Deleting..." : "Delete"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {isEditing && (
+        <div className="bg-background fixed inset-x-0 bottom-0 z-20 border-t p-4 lg:left-64">
+          <div className="mx-auto flex max-w-screen-sm gap-3">
+            <Button
+              variant="outline"
+              className="flex-1"
+              onClick={handleCancel}
+              disabled={saving}
+            >
+              Cancel
+            </Button>
+
+            <Button
+              className="flex-[2]"
+              onClick={handleSave}
+              disabled={saving || !hasChanges || !canSave}
+            >
+              {saving ? "Saving..." : "Save Changes"}
+            </Button>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
 
