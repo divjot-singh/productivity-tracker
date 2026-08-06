@@ -7,6 +7,7 @@ interface TodayStatusBarProps {
   totalScore: number;
   totalWeights: number;
   totalXP: number;
+  isRefreshing?: boolean;
 }
 
 export default function TodayStatusBar({
@@ -14,6 +15,7 @@ export default function TodayStatusBar({
   totalScore,
   totalWeights,
   totalXP,
+  isRefreshing = false,
 }: TodayStatusBarProps) {
   const percentage = totalWeights > 0 ? (totalScore / totalWeights) * 100 : 0;
 
@@ -36,31 +38,49 @@ export default function TodayStatusBar({
         <div className="flex items-center gap-4 text-right">
           <div>
             <p className="text-muted-foreground text-xs">Life Score</p>
-            <p className="text-sm font-semibold">
-              {totalScore} / {totalWeights}
-            </p>
+            {isRefreshing ? (
+              <div className="bg-muted h-4 w-20 animate-pulse rounded" />
+            ) : (
+              <p className="text-sm font-semibold">
+                {totalScore} / {totalWeights}
+              </p>
+            )}
           </div>
 
           <div>
             <p className="text-muted-foreground text-xs">XP</p>
-            <p className="text-sm font-semibold">{totalXP}</p>
+            {isRefreshing ? (
+              <div className="bg-muted h-4 w-10 animate-pulse rounded" />
+            ) : (
+              <p className="text-sm font-semibold">{totalXP}</p>
+            )}
           </div>
         </div>
       </div>
       <div className="mt-2">
         <div className="bg-muted h-1.5 overflow-hidden rounded-full">
-          <div
-            className={cn(
-              "h-full rounded-full transition-all duration-300",
-              progressClass,
-            )}
-            style={{ width: `${visualPercentage}%` }}
-          />
+          {isRefreshing ? (
+            <div className="bg-muted-foreground/35 h-full w-1/3 animate-pulse rounded-full" />
+          ) : (
+            <div
+              className={cn(
+                "h-full rounded-full transition-all duration-300",
+                progressClass,
+              )}
+              style={{ width: `${visualPercentage}%` }}
+            />
+          )}
         </div>
 
-        <p className="text-muted-foreground mt-1 text-right text-xs">
-          {Math.round(percentage)}%
-        </p>
+        {isRefreshing ? (
+          <p className="text-muted-foreground mt-1 text-right text-xs">
+            Updating...
+          </p>
+        ) : (
+          <p className="text-muted-foreground mt-1 text-right text-xs">
+            {Math.round(percentage)}%
+          </p>
+        )}
       </div>
     </div>
   );

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState, useCallback } from "react";
+import { useEffect, useMemo, useState, useCallback, useRef } from "react";
 import Link from "next/link";
 import { format, parseISO, startOfMonth, endOfMonth } from "date-fns";
 
@@ -70,6 +70,14 @@ export default function TodayPage() {
   const [entryDates, setEntryDates] = useState<Set<string>>(new Set());
 
   const [currentEntryExists, setCurrentEntryExists] = useState(false);
+  const [isDateRefreshing, setIsDateRefreshing] = useState(false);
+
+  const selectedDateRef = useRef(selectedDate);
+  const requestIdRef = useRef(0);
+
+  useEffect(() => {
+    selectedDateRef.current = selectedDate;
+  }, [selectedDate]);
 
   const loadEntryDates = useCallback(
     async (date: string) => {
@@ -83,6 +91,10 @@ export default function TodayPage() {
           user,
           `/api/entries?from=${start}&to=${end}`,
         );
+
+        if (date !== selectedDateRef.current) {
+          return;
+        }
 
         setEntryDates(new Set(response.dates));
       } catch (err) {
@@ -102,6 +114,10 @@ export default function TodayPage() {
           `/api/entries?date=${date}`,
         );
 
+        if (date !== selectedDateRef.current) {
+          return;
+        }
+
         if (entry?.values) {
           const nextValues: EntryValues = getEmptyFormValues(currentMetrics);
 
@@ -120,6 +136,11 @@ export default function TodayPage() {
         }
       } catch (err) {
         console.error("Failed to load entry", err);
+
+        if (date !== selectedDateRef.current) {
+          return;
+        }
+
         setValues(getEmptyFormValues(currentMetrics));
         setCurrentEntryExists(false);
       }
@@ -131,8 +152,20 @@ export default function TodayPage() {
     async function loadAll() {
       if (!user) return;
 
-      await loadEntryForDate(selectedDate, metrics);
-      await loadEntryDates(selectedDate);
+      const requestId = ++requestIdRef.current;
+      setIsDateRefreshing(true);
+
+      await Promise.all([
+        loadEntryForDate(selectedDate, metrics),
+        loadEntryDates(selectedDate),
+      ]);
+
+      if (
+        requestId === requestIdRef.current &&
+        selectedDate === selectedDateRef.current
+      ) {
+        setIsDateRefreshing(false);
+      }
     }
 
     loadAll();
@@ -313,6 +346,7 @@ export default function TodayPage() {
             totalScore={scoreResult.totalScore}
             totalWeights={scoreResult.totalWeights}
             totalXP={scoreResult.totalXP}
+            isRefreshing={isDateRefreshing}
           />
 
           {/* Metrics - scroll */}
