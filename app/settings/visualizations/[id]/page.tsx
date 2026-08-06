@@ -6,7 +6,9 @@ import { ChevronLeft, Pencil, Trash2 } from "lucide-react";
 
 import AppShell from "@/components/layout/AppShell";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import {
   Select,
@@ -23,20 +25,35 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import StreakRuleEditor from "@/components/settings/StreakRuleEditor";
 import { useAuth } from "@/contexts/AuthContext";
 import { apiRequest } from "@/lib/api/client";
 import {
-  VISUALIZATION_COMBINATIONS,
   AllowedCombination,
+  getProviderScopes,
   normalizeVisualizationOptions,
+  VISUALIZATION_COMBINATIONS,
 } from "@/lib/visualizations/validation";
 import {
+  VisualizationAggregation,
+  VisualizationComparison,
   VisualizationDefinition,
+  VisualizationExecutorType,
+  VisualizationPeriod,
+  VisualizationProviderType,
+  VisualizationScope,
   VisualizationWidget,
 } from "@/models/visualization";
+import { MetricDefinition } from "@/models/metric";
 import { toast } from "sonner";
 
 const INTERNAL_COMPOSITE_STREAK_KEY = "__composite_streak__";
+const SCOPE_OPTIONS: VisualizationScope[] = ["global", "goal", "category"];
+
+interface ProviderExecutorOption {
+  provider: VisualizationProviderType;
+  executor: VisualizationExecutorType;
+}
 
 export default function VisualizationDetailPage() {
   const { user } = useAuth();
@@ -54,6 +71,8 @@ export default function VisualizationDetailPage() {
   const [isEditing, setIsEditing] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [goals, setGoals] = useState<MetricDefinition[]>([]);
+  const [goalsLoading, setGoalsLoading] = useState(true);
 
   useEffect(() => {
     async function load() {
@@ -79,6 +98,61 @@ export default function VisualizationDetailPage() {
     load();
   }, [id, user]);
 
+  useEffect(() => {
+    async function loadGoals() {
+      if (!user) return;
+
+      try {
+        setGoalsLoading(true);
+        const data = await apiRequest<MetricDefinition[]>(user, "/api/goals");
+        setGoals(data ?? []);
+      } catch (e) {
+        console.error(e);
+        toast.error("Failed to load goals");
+      } finally {
+        setGoalsLoading(false);
+      }
+    }
+
+    loadGoals();
+  }, [user]);
+
+  const widgetsByScope = useMemo(() => {
+    const map: Record<VisualizationScope, VisualizationWidget[]> = {
+      global: [],
+      goal: [],
+      category: [],
+    };
+
+    for (const [provider, executors] of Object.entries(
+      VISUALIZATION_COMBINATIONS,
+    ) as Array<
+      [
+        VisualizationProviderType,
+        (
+          | Partial<Record<VisualizationExecutorType, AllowedCombination>>
+          | undefined
+        ),
+      ]
+    >) {
+      const scopes = getProviderScopes(provider as VisualizationProviderType);
+
+      for (const [, combination] of Object.entries(executors ?? {}) as Array<
+        [VisualizationExecutorType, AllowedCombination | undefined]
+      >) {
+        for (const widget of combination?.widgets ?? []) {
+          for (const scope of scopes) {
+            if (!map[scope].includes(widget)) {
+              map[scope].push(widget);
+            }
+          }
+        }
+      }
+    }
+
+    return map;
+  }, []);
+
   const combination = useMemo<AllowedCombination | null>(() => {
     if (!visualization) return null;
     return (
@@ -90,14 +164,21 @@ export default function VisualizationDetailPage() {
 
   const widgetOptions = useMemo<VisualizationWidget[]>(() => {
     if (!visualization) return [];
-    return combination?.widgets ?? [visualization.widget];
-  }, [combination, visualization]);
+    return widgetsByScope[visualization.scope] ?? [visualization.widget];
+  }, [visualization, widgetsByScope]);
+
+  const keyOptions = useMemo(() => {
+    if (!visualization) return [];
+    return getKeyOptions(visualization.provider, goals);
+  }, [visualization, goals]);
 
   const isCompositeStreak = Boolean(visualization?.options?.streakRule);
 
   function updateVisualization(partial: Partial<VisualizationDefinition>) {
     setVisualization((previous) =>
-      previous ? { ...previous, ...partial } : previous,
+      previous
+        ? reconcileVisualization({ ...previous, ...partial }, previous, goals)
+        : previous,
     );
   }
 
@@ -225,6 +306,20 @@ export default function VisualizationDetailPage() {
   const hasChanges = JSON.stringify(visualization) !== JSON.stringify(original);
   const widgetLabel = toTitleCase(visualization.widget);
 
+  const hasValidPeriod =
+    visualization.period.type === "all" ||
+    (Number.isInteger(visualization.period.value) &&
+      visualization.period.value > 0);
+
+  const hasValidDisplayOrder =
+    Number.isFinite(visualization.displayOrder) &&
+    visualization.displayOrder > 0;
+
+  const canSave =
+    visualization.title.trim().length > 0 &&
+    hasValidPeriod &&
+    hasValidDisplayOrder;
+
   return (
     <AppShell>
       <div className="relative mx-auto w-full max-w-screen-sm px-4 pt-4 pb-28">
@@ -296,32 +391,235 @@ export default function VisualizationDetailPage() {
           {isEditing ? (
             <div className="space-y-6">
               <div className="space-y-2">
-                <Label htmlFor="widget">Widget</Label>
-                <Select
-                  value={visualization.widget}
-                  onValueChange={(value) =>
-                    updateVisualization({
-                      widget: value as VisualizationWidget,
-                    })
+                <Label htmlFor="title">Title</Label>
+                <Input
+                  id="title"
+                  value={visualization.title}
+                  onChange={(e) =>
+                    updateVisualization({ title: e.target.value })
                   }
-                >
-                  <SelectTrigger id="widget" className="w-full">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {widgetOptions.map((widget) => (
-                      <SelectItem key={widget} value={widget}>
-                        {toTitleCase(widget)}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                />
               </div>
 
-              <p className="text-muted-foreground text-sm">
-                Only the widget is editable here. The rest of the visualization
-                configuration is locked.
-              </p>
+              <div className="space-y-2">
+                <Label htmlFor="description">Description</Label>
+                <Textarea
+                  id="description"
+                  value={visualization.description ?? ""}
+                  onChange={(e) =>
+                    updateVisualization({
+                      description:
+                        e.target.value === "" ? undefined : e.target.value,
+                    })
+                  }
+                  placeholder="What does this visualization show?"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="scope">Scope</Label>
+                  <Select
+                    value={visualization.scope}
+                    onValueChange={(value) =>
+                      updateVisualization({
+                        scope: value as VisualizationScope,
+                      })
+                    }
+                  >
+                    <SelectTrigger id="scope" className="w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {SCOPE_OPTIONS.map((scope) => (
+                        <SelectItem key={scope} value={scope}>
+                          {toTitleCase(scope)}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="widget">Widget</Label>
+                  <Select
+                    value={visualization.widget}
+                    onValueChange={(value) =>
+                      updateVisualization({
+                        widget: value as VisualizationWidget,
+                      })
+                    }
+                  >
+                    <SelectTrigger id="widget" className="w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {widgetOptions.map((widget) => (
+                        <SelectItem key={widget} value={widget}>
+                          {toTitleCase(widget)}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="provider-executor">Source (derived)</Label>
+                <div
+                  id="provider-executor"
+                  className="bg-muted rounded-xl border px-3 py-2 text-sm font-medium"
+                >
+                  {toTitleCase(visualization.provider)} /{" "}
+                  {toTitleCase(visualization.executor)}
+                </div>
+              </div>
+
+              {!isCompositeStreak && (
+                <div className="space-y-2">
+                  <Label htmlFor="key">Data Key</Label>
+                  {goalsLoading ? (
+                    <div className="text-muted-foreground text-sm">
+                      Loading goals...
+                    </div>
+                  ) : (
+                    <Select
+                      value={visualization.key}
+                      onValueChange={(value) => {
+                        if (!value) return;
+                        updateVisualization({ key: value });
+                      }}
+                    >
+                      <SelectTrigger id="key" className="w-full">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {keyOptions.map((option) => (
+                          <SelectItem key={option.value} value={option.value}>
+                            {option.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                </div>
+              )}
+
+              {combination && (
+                <div className="space-y-2">
+                  <Label htmlFor="aggregation">Aggregation</Label>
+                  <Select
+                    value={visualization.aggregation}
+                    onValueChange={(value) =>
+                      updateVisualization({
+                        aggregation: value as VisualizationAggregation,
+                      })
+                    }
+                  >
+                    <SelectTrigger id="aggregation" className="w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {combination.aggregations.map((aggregation) => (
+                        <SelectItem key={aggregation} value={aggregation}>
+                          {toTitleCase(aggregation)}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
+              <PeriodEditor
+                period={visualization.period}
+                onChange={(period) => updateVisualization({ period })}
+              />
+
+              {combination?.options.comparison && (
+                <div className="space-y-2">
+                  <Label htmlFor="comparison">Comparison</Label>
+                  <Select
+                    value={visualization.options?.comparison ?? "previous-day"}
+                    onValueChange={(value) =>
+                      updateVisualization({
+                        options: {
+                          ...visualization.options,
+                          comparison: value as VisualizationComparison,
+                        },
+                      })
+                    }
+                  >
+                    <SelectTrigger id="comparison" className="w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="previous-day">Previous day</SelectItem>
+                      <SelectItem value="previous-period">
+                        Previous period
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
+              {combination?.options.greenIfDeltaPositive && (
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="green-if-delta-positive">
+                    Green if delta positive
+                  </Label>
+                  <Switch
+                    id="green-if-delta-positive"
+                    checked={
+                      visualization.options?.greenIfDeltaPositive ?? false
+                    }
+                    onCheckedChange={(checked) =>
+                      updateVisualization({
+                        options: {
+                          ...visualization.options,
+                          greenIfDeltaPositive: checked,
+                        },
+                      })
+                    }
+                  />
+                </div>
+              )}
+
+              {combination?.options.streakRule && (
+                <StreakRuleEditor
+                  goals={goals}
+                  value={visualization.options?.streakRule}
+                  onChange={(streakRule) =>
+                    updateVisualization({
+                      options: {
+                        ...visualization.options,
+                        streakRule,
+                      },
+                    })
+                  }
+                />
+              )}
+
+              <div className="space-y-2">
+                <Label htmlFor="display-order">Display order</Label>
+                <Input
+                  id="display-order"
+                  type="number"
+                  min={1}
+                  value={visualization.displayOrder}
+                  onChange={(e) =>
+                    updateVisualization({
+                      displayOrder: Number(e.target.value),
+                    })
+                  }
+                />
+              </div>
+
+              <div className="space-y-2">
+                <p className="text-muted-foreground text-xs">
+                  Provider and executor are derived from your scope/widget/key
+                  selections and validated on save.
+                </p>
+              </div>
             </div>
           ) : (
             <ReadOnlyConfig visualization={visualization} />
@@ -429,7 +727,7 @@ export default function VisualizationDetailPage() {
               <Button
                 className="flex-[2]"
                 onClick={handleSave}
-                disabled={saving || !hasChanges}
+                disabled={saving || !hasChanges || !canSave}
               >
                 {saving ? "Saving..." : "Save Changes"}
               </Button>
@@ -471,6 +769,284 @@ function ReadOnlyConfig({
       <ReadOnlyRow label="Display order" value={visualization.displayOrder} />
     </div>
   );
+}
+
+function PeriodEditor({
+  period,
+  onChange,
+}: {
+  period: VisualizationPeriod;
+  onChange: (period: VisualizationPeriod) => void;
+}) {
+  const isAll = period.type === "all";
+
+  return (
+    <div className="space-y-2">
+      <Label htmlFor="period">Period</Label>
+
+      <div className="flex items-center gap-3">
+        <Select
+          value={isAll ? "all" : "days"}
+          onValueChange={(value) =>
+            onChange(
+              value === "all"
+                ? { type: "all" }
+                : {
+                    type: "days",
+                    value: period.type === "days" ? period.value : 30,
+                  },
+            )
+          }
+        >
+          <SelectTrigger id="period" className="w-40">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="days">Last N days</SelectItem>
+            <SelectItem value="all">All time</SelectItem>
+          </SelectContent>
+        </Select>
+
+        {!isAll && (
+          <Input
+            type="number"
+            min={1}
+            value={period.value}
+            onChange={(e) =>
+              onChange({ type: "days", value: Number(e.target.value) })
+            }
+            className="w-28"
+          />
+        )}
+      </div>
+    </div>
+  );
+}
+
+function reconcileVisualization(
+  draft: VisualizationDefinition,
+  previous: VisualizationDefinition,
+  goals: MetricDefinition[],
+): VisualizationDefinition {
+  const widgetsForScope = getWidgetsForScope(draft.scope);
+
+  if (
+    widgetsForScope.length > 0 &&
+    !widgetsForScope.includes(draft.widget as VisualizationWidget)
+  ) {
+    draft.widget = widgetsForScope[0];
+  }
+
+  const candidates = getCompatibleProviderExecutorCandidates(
+    draft,
+    previous,
+    goals,
+  );
+
+  const active =
+    candidates.find(
+      (candidate) =>
+        candidate.provider === previous.provider &&
+        candidate.executor === previous.executor,
+    ) ?? candidates[0];
+
+  if (!active) {
+    return draft;
+  }
+
+  const combination =
+    VISUALIZATION_COMBINATIONS[active.provider]?.[active.executor];
+
+  if (!combination) {
+    return draft;
+  }
+
+  let aggregation = draft.aggregation;
+
+  if (!combination.aggregations.includes(aggregation)) {
+    aggregation = combination.aggregations[0] ?? previous.aggregation;
+  }
+
+  const isComposite = Boolean(draft.options?.streakRule);
+
+  const normalizedKey = isComposite
+    ? INTERNAL_COMPOSITE_STREAK_KEY
+    : ensureValidKey(draft.key, active.provider, goals);
+
+  const options = normalizeVisualizationOptions(
+    draft.options,
+    combination.options,
+  );
+
+  return {
+    ...draft,
+    provider: active.provider,
+    executor: active.executor,
+    aggregation,
+    key: normalizedKey,
+    options,
+  };
+}
+
+function getCompatibleProviderExecutorCandidates(
+  draft: VisualizationDefinition,
+  previous: VisualizationDefinition,
+  goals: MetricDefinition[],
+): ProviderExecutorOption[] {
+  const candidates = getProviderExecutorOptionsFor(draft.scope, draft.widget);
+  const isComposite = Boolean(draft.options?.streakRule);
+
+  const keyCompatibleCandidates = candidates.filter((candidate) => {
+    const combination =
+      VISUALIZATION_COMBINATIONS[candidate.provider]?.[candidate.executor];
+
+    if (!combination) {
+      return false;
+    }
+
+    if (isComposite && !combination.options.streakRule) {
+      return false;
+    }
+
+    if (!combination.aggregations.includes(draft.aggregation)) {
+      if (
+        candidate.provider === previous.provider &&
+        candidate.executor === previous.executor
+      ) {
+        return true;
+      }
+
+      return false;
+    }
+
+    if (isComposite) {
+      return true;
+    }
+
+    return isKeyAllowedForProvider(draft.key, candidate.provider, goals);
+  });
+
+  if (keyCompatibleCandidates.length > 0) {
+    return keyCompatibleCandidates;
+  }
+
+  return candidates;
+}
+
+function getProviderExecutorOptionsFor(
+  scope: VisualizationScope,
+  widget: VisualizationWidget,
+): ProviderExecutorOption[] {
+  const options: ProviderExecutorOption[] = [];
+
+  for (const [provider, executors] of Object.entries(
+    VISUALIZATION_COMBINATIONS,
+  ) as Array<
+    [
+      VisualizationProviderType,
+      (
+        | Partial<Record<VisualizationExecutorType, AllowedCombination>>
+        | undefined
+      ),
+    ]
+  >) {
+    if (
+      !getProviderScopes(provider as VisualizationProviderType).includes(scope)
+    ) {
+      continue;
+    }
+
+    for (const [executor, combination] of Object.entries(
+      executors ?? {},
+    ) as Array<[VisualizationExecutorType, AllowedCombination | undefined]>) {
+      if (combination?.widgets.includes(widget)) {
+        options.push({
+          provider: provider as VisualizationProviderType,
+          executor,
+        });
+      }
+    }
+  }
+
+  return options;
+}
+
+function getWidgetsForScope(scope: VisualizationScope): VisualizationWidget[] {
+  const widgets: VisualizationWidget[] = [];
+
+  for (const [provider, executors] of Object.entries(
+    VISUALIZATION_COMBINATIONS,
+  ) as Array<
+    [
+      VisualizationProviderType,
+      (
+        | Partial<Record<VisualizationExecutorType, AllowedCombination>>
+        | undefined
+      ),
+    ]
+  >) {
+    if (
+      !getProviderScopes(provider as VisualizationProviderType).includes(scope)
+    ) {
+      continue;
+    }
+
+    for (const [, combination] of Object.entries(executors ?? {}) as Array<
+      [VisualizationExecutorType, AllowedCombination | undefined]
+    >) {
+      for (const widget of combination?.widgets ?? []) {
+        if (!widgets.includes(widget)) {
+          widgets.push(widget);
+        }
+      }
+    }
+  }
+
+  return widgets;
+}
+
+function getKeyOptions(
+  provider: VisualizationProviderType,
+  goals: MetricDefinition[],
+): Array<{ value: string; label: string }> {
+  if (provider === "entry") {
+    return [
+      { value: "score", label: "Life score" },
+      { value: "xp", label: "XP" },
+    ];
+  }
+
+  if (provider === "category") {
+    return [{ value: "all", label: "All categories" }];
+  }
+
+  return goals.map((goal) => ({
+    value: goal.label,
+    label: goal.label,
+  }));
+}
+
+function ensureValidKey(
+  key: string,
+  provider: VisualizationProviderType,
+  goals: MetricDefinition[],
+): string {
+  const options = getKeyOptions(provider, goals);
+
+  if (options.some((option) => option.value === key)) {
+    return key;
+  }
+
+  return options[0]?.value ?? "";
+}
+
+function isKeyAllowedForProvider(
+  key: string,
+  provider: VisualizationProviderType,
+  goals: MetricDefinition[],
+): boolean {
+  const options = getKeyOptions(provider, goals);
+  return options.some((option) => option.value === key);
 }
 
 function ReadOnlyRow({

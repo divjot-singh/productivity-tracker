@@ -249,6 +249,10 @@ function VisualizationRow({
             value={formatPeriod(visualization.period)}
           />
           <SummaryItem
+            label="Display order"
+            value={visualization.displayOrder}
+          />
+          <SummaryItem
             label="State"
             value={
               <span className="inline-flex items-center gap-1.5">

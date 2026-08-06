@@ -21,13 +21,7 @@ interface RouteContext {
   }>;
 }
 
-const LOCKED_FIELDS: Array<keyof VisualizationDefinition> = [
-  "id",
-  "scope",
-  "provider",
-  "executor",
-  "key",
-];
+const LOCKED_FIELDS: Array<keyof VisualizationDefinition> = ["id"];
 
 export async function GET(request: NextRequest, { params }: RouteContext) {
   try {
