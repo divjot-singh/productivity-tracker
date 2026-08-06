@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { ChevronLeft, Pencil, Trash2 } from "lucide-react";
+import { ChevronDown, ChevronLeft, Pencil, Trash2 } from "lucide-react";
 
 import AppShell from "@/components/layout/AppShell";
 import { Button } from "@/components/ui/button";
@@ -10,13 +10,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import {
   Dialog,
   DialogContent,
@@ -49,6 +42,8 @@ import { toast } from "sonner";
 
 const INTERNAL_COMPOSITE_STREAK_KEY = "__composite_streak__";
 const SCOPE_OPTIONS: VisualizationScope[] = ["global", "goal", "category"];
+const NATIVE_SELECT_CLASS =
+  "border-input bg-background text-foreground focus:ring-primary/40 h-12 w-full appearance-none rounded-[10px] border px-4 pr-12 text-lg transition outline-none focus:ring-1";
 
 interface ProviderExecutorOption {
   provider: VisualizationProviderType;
@@ -419,48 +414,48 @@ export default function VisualizationDetailPage() {
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="scope">Scope</Label>
-                  <Select
-                    value={visualization.scope}
-                    onValueChange={(value) =>
-                      updateVisualization({
-                        scope: value as VisualizationScope,
-                      })
-                    }
-                  >
-                    <SelectTrigger id="scope" className="w-full">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
+                  <div className="relative">
+                    <select
+                      id="scope"
+                      value={visualization.scope}
+                      onChange={(e) =>
+                        updateVisualization({
+                          scope: e.target.value as VisualizationScope,
+                        })
+                      }
+                      className={NATIVE_SELECT_CLASS}
+                    >
                       {SCOPE_OPTIONS.map((scope) => (
-                        <SelectItem key={scope} value={scope}>
+                        <option key={scope} value={scope}>
                           {toTitleCase(scope)}
-                        </SelectItem>
+                        </option>
                       ))}
-                    </SelectContent>
-                  </Select>
+                    </select>
+                    <ChevronDown className="text-muted-foreground pointer-events-none absolute top-1/2 right-4 h-4 w-4 -translate-y-1/2" />
+                  </div>
                 </div>
 
                 <div className="space-y-2">
                   <Label htmlFor="widget">Widget</Label>
-                  <Select
-                    value={visualization.widget}
-                    onValueChange={(value) =>
-                      updateVisualization({
-                        widget: value as VisualizationWidget,
-                      })
-                    }
-                  >
-                    <SelectTrigger id="widget" className="w-full">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
+                  <div className="relative">
+                    <select
+                      id="widget"
+                      value={visualization.widget}
+                      onChange={(e) =>
+                        updateVisualization({
+                          widget: e.target.value as VisualizationWidget,
+                        })
+                      }
+                      className={NATIVE_SELECT_CLASS}
+                    >
                       {widgetOptions.map((widget) => (
-                        <SelectItem key={widget} value={widget}>
+                        <option key={widget} value={widget}>
                           {toTitleCase(widget)}
-                        </SelectItem>
+                        </option>
                       ))}
-                    </SelectContent>
-                  </Select>
+                    </select>
+                    <ChevronDown className="text-muted-foreground pointer-events-none absolute top-1/2 right-4 h-4 w-4 -translate-y-1/2" />
+                  </div>
                 </div>
               </div>
 
@@ -483,24 +478,31 @@ export default function VisualizationDetailPage() {
                       Loading goals...
                     </div>
                   ) : (
-                    <Select
-                      value={visualization.key}
-                      onValueChange={(value) => {
-                        if (!value) return;
-                        updateVisualization({ key: value });
-                      }}
-                    >
-                      <SelectTrigger id="key" className="w-full">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {keyOptions.map((option) => (
-                          <SelectItem key={option.value} value={option.value}>
-                            {option.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <div className="relative">
+                      <select
+                        id="key"
+                        value={visualization.key}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          if (!value) return;
+                          updateVisualization({ key: value });
+                        }}
+                        className={NATIVE_SELECT_CLASS}
+                      >
+                        {keyOptions.length === 0 ? (
+                          <option value="" disabled>
+                            No options available
+                          </option>
+                        ) : (
+                          keyOptions.map((option) => (
+                            <option key={option.value} value={option.value}>
+                              {option.label}
+                            </option>
+                          ))
+                        )}
+                      </select>
+                      <ChevronDown className="text-muted-foreground pointer-events-none absolute top-1/2 right-4 h-4 w-4 -translate-y-1/2" />
+                    </div>
                   )}
                 </div>
               )}
@@ -508,25 +510,26 @@ export default function VisualizationDetailPage() {
               {combination && (
                 <div className="space-y-2">
                   <Label htmlFor="aggregation">Aggregation</Label>
-                  <Select
-                    value={visualization.aggregation}
-                    onValueChange={(value) =>
-                      updateVisualization({
-                        aggregation: value as VisualizationAggregation,
-                      })
-                    }
-                  >
-                    <SelectTrigger id="aggregation" className="w-full">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
+                  <div className="relative">
+                    <select
+                      id="aggregation"
+                      value={visualization.aggregation}
+                      onChange={(e) =>
+                        updateVisualization({
+                          aggregation: e.target
+                            .value as VisualizationAggregation,
+                        })
+                      }
+                      className={NATIVE_SELECT_CLASS}
+                    >
                       {combination.aggregations.map((aggregation) => (
-                        <SelectItem key={aggregation} value={aggregation}>
+                        <option key={aggregation} value={aggregation}>
                           {toTitleCase(aggregation)}
-                        </SelectItem>
+                        </option>
                       ))}
-                    </SelectContent>
-                  </Select>
+                    </select>
+                    <ChevronDown className="text-muted-foreground pointer-events-none absolute top-1/2 right-4 h-4 w-4 -translate-y-1/2" />
+                  </div>
                 </div>
               )}
 
@@ -538,27 +541,28 @@ export default function VisualizationDetailPage() {
               {combination?.options.comparison && (
                 <div className="space-y-2">
                   <Label htmlFor="comparison">Comparison</Label>
-                  <Select
-                    value={visualization.options?.comparison ?? "previous-day"}
-                    onValueChange={(value) =>
-                      updateVisualization({
-                        options: {
-                          ...visualization.options,
-                          comparison: value as VisualizationComparison,
-                        },
-                      })
-                    }
-                  >
-                    <SelectTrigger id="comparison" className="w-full">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="previous-day">Previous day</SelectItem>
-                      <SelectItem value="previous-period">
-                        Previous period
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <div className="relative">
+                    <select
+                      id="comparison"
+                      value={
+                        visualization.options?.comparison ?? "previous-day"
+                      }
+                      onChange={(e) =>
+                        updateVisualization({
+                          options: {
+                            ...visualization.options,
+                            comparison: e.target
+                              .value as VisualizationComparison,
+                          },
+                        })
+                      }
+                      className={NATIVE_SELECT_CLASS}
+                    >
+                      <option value="previous-day">Previous day</option>
+                      <option value="previous-period">Previous period</option>
+                    </select>
+                    <ChevronDown className="text-muted-foreground pointer-events-none absolute top-1/2 right-4 h-4 w-4 -translate-y-1/2" />
+                  </div>
                 </div>
               )}
 
@@ -785,27 +789,27 @@ function PeriodEditor({
       <Label htmlFor="period">Period</Label>
 
       <div className="flex items-center gap-3">
-        <Select
-          value={isAll ? "all" : "days"}
-          onValueChange={(value) =>
-            onChange(
-              value === "all"
-                ? { type: "all" }
-                : {
-                    type: "days",
-                    value: period.type === "days" ? period.value : 30,
-                  },
-            )
-          }
-        >
-          <SelectTrigger id="period" className="w-40">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="days">Last N days</SelectItem>
-            <SelectItem value="all">All time</SelectItem>
-          </SelectContent>
-        </Select>
+        <div className="relative w-40">
+          <select
+            id="period"
+            value={isAll ? "all" : "days"}
+            onChange={(e) =>
+              onChange(
+                e.target.value === "all"
+                  ? { type: "all" }
+                  : {
+                      type: "days",
+                      value: period.type === "days" ? period.value : 30,
+                    },
+              )
+            }
+            className={NATIVE_SELECT_CLASS}
+          >
+            <option value="days">Last N days</option>
+            <option value="all">All time</option>
+          </select>
+          <ChevronDown className="text-muted-foreground pointer-events-none absolute top-1/2 right-4 h-4 w-4 -translate-y-1/2" />
+        </div>
 
         {!isAll && (
           <Input
