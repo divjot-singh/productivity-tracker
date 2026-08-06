@@ -18,7 +18,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import StreakRuleEditor from "@/components/settings/StreakRuleEditor";
-import { useAuth } from "@/contexts/AuthContext";
+import { useRequireAuth } from "@/lib/hooks/useRequireAuth";
 import { apiRequest } from "@/lib/api/client";
 import {
   AllowedCombination,
@@ -51,7 +51,7 @@ interface ProviderExecutorOption {
 }
 
 export default function VisualizationDetailPage() {
-  const { user } = useAuth();
+  const { user } = useRequireAuth();
   const router = useRouter();
   const { id } = useParams<{ id: string }>();
 

@@ -3,12 +3,18 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 
-import { useAuth } from "@/contexts/AuthContext";
+import { useRequireAuth } from "@/lib/hooks/useRequireAuth";
 import { apiRequest } from "@/lib/api/client";
 import { ICONS } from "@/lib/metric-icons";
 
 import { MetricDefinition } from "@/models/metric";
-import { ChevronLeft, type LucideIcon, Pencil, Trash2 } from "lucide-react";
+import {
+  ChevronDown,
+  ChevronLeft,
+  type LucideIcon,
+  Pencil,
+  Trash2,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -31,8 +37,11 @@ import TimeRangeConfig from "@/components/settings/configs/TimeRangeConfig";
 import OptionsConfig from "@/components/settings/configs/OptionConfig";
 import BooleanConfig from "@/components/settings/configs/BooleanConfig";
 
+const NATIVE_SELECT_CLASS =
+  "border-input bg-background text-foreground focus:ring-primary/40 h-12 w-full appearance-none rounded-[10px] border px-4 pr-12 text-lg transition outline-none focus:ring-1";
+
 export default function GoalDetails() {
-  const { user } = useAuth();
+  const { user } = useRequireAuth();
   const router = useRouter();
 
   const { id } = useParams<{ id: string }>();
@@ -260,6 +269,103 @@ export default function GoalDetails() {
                     unit: e.target.value === "" ? undefined : e.target.value,
                   })
                 }
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label>Target</Label>
+
+              {goal.type === "boolean" ? (
+                <div className="relative">
+                  <select
+                    value={String(goal.target)}
+                    onChange={(e) =>
+                      updateGoal({ target: e.target.value === "true" })
+                    }
+                    className={NATIVE_SELECT_CLASS}
+                  >
+                    <option value="true">True</option>
+                    <option value="false">False</option>
+                  </select>
+                  <ChevronDown className="text-muted-foreground pointer-events-none absolute top-1/2 right-4 h-4 w-4 -translate-y-1/2" />
+                </div>
+              ) : goal.type === "time" ? (
+                <Input
+                  type="time"
+                  value={String(goal.target)}
+                  onChange={(e) => updateGoal({ target: e.target.value })}
+                />
+              ) : (
+                <Input
+                  type="number"
+                  value={String(goal.target)}
+                  onChange={(e) =>
+                    updateGoal({ target: Number(e.target.value) })
+                  }
+                />
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label>Default Value</Label>
+
+              {goal.type === "boolean" ? (
+                <div className="relative">
+                  <select
+                    value={String(goal.defaultValue)}
+                    onChange={(e) =>
+                      updateGoal({
+                        defaultValue: e.target.value === "true",
+                      })
+                    }
+                    className={NATIVE_SELECT_CLASS}
+                  >
+                    <option value="true">True</option>
+                    <option value="false">False</option>
+                  </select>
+                  <ChevronDown className="text-muted-foreground pointer-events-none absolute top-1/2 right-4 h-4 w-4 -translate-y-1/2" />
+                </div>
+              ) : goal.type === "time" ? (
+                <Input
+                  type="time"
+                  value={String(goal.defaultValue)}
+                  onChange={(e) => updateGoal({ defaultValue: e.target.value })}
+                />
+              ) : (
+                <Input
+                  type="number"
+                  value={String(goal.defaultValue)}
+                  onChange={(e) =>
+                    updateGoal({ defaultValue: Number(e.target.value) })
+                  }
+                />
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label>Bonus Rate</Label>
+
+              <p className="text-muted-foreground text-xs">
+                Additional score allowed beyond the base weight.
+              </p>
+
+              <Input
+                type="number"
+                step="0.0001"
+                min="0"
+                value={goal.scoring.bonusRate ?? ""}
+                onChange={(e) =>
+                  updateGoal({
+                    scoring: {
+                      ...goal.scoring,
+                      bonusRate:
+                        e.target.value === ""
+                          ? undefined
+                          : Number(e.target.value),
+                    },
+                  })
+                }
+                placeholder="0.0002"
               />
             </div>
 

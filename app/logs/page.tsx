@@ -7,7 +7,7 @@ import { ChevronDown, CalendarDays } from "lucide-react";
 import AppShell from "@/components/layout/AppShell";
 import { buttonVariants } from "@/components/ui/button";
 
-import { useAuth } from "@/contexts/AuthContext";
+import { useRequireAuth } from "@/lib/hooks/useRequireAuth";
 import { toast } from "sonner";
 
 import { DailyEntry } from "@/models/entry";
@@ -25,7 +25,7 @@ function formatEntryDate(date: string) {
 }
 
 export default function LogsPage() {
-  const { user } = useAuth();
+  const { user } = useRequireAuth();
 
   const [entries, setEntries] = useState<DailyEntry[]>([]);
 

@@ -9,7 +9,7 @@ import PageHeader from "@/components/common/PageHeader";
 import DashboardVisualizationRenderer from "@/components/dashboard/visualization-renderer";
 import { buttonVariants } from "@/components/ui/button";
 
-import { useAuth } from "@/contexts/AuthContext";
+import { useRequireAuth } from "@/lib/hooks/useRequireAuth";
 import { apiRequest } from "@/lib/api/client";
 import { getOnboardingSkipped } from "@/lib/onboarding";
 import { cn } from "@/lib/utils";
@@ -17,7 +17,7 @@ import { MetricDefinition } from "@/models/metric";
 import { VisualizationResponse } from "@/models/visualization";
 
 export default function Dashboard() {
-  const { user, loading } = useAuth();
+  const { user, loading } = useRequireAuth();
   const router = useRouter();
 
   const [visualizations, setVisualizations] = useState<VisualizationResponse[]>(
@@ -27,12 +27,6 @@ export default function Dashboard() {
   const [loadingDashboard, setLoadingDashboard] = useState(false);
 
   const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!loading && !user) {
-      router.replace("/login");
-    }
-  }, [loading, user, router]);
 
   useEffect(() => {
     async function load() {

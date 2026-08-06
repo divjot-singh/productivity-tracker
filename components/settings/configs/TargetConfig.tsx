@@ -1,8 +1,5 @@
 "use client";
 
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-
 import { MetricDefinition } from "@/models/metric";
 import ScoringExplanationInput from "./ScoringExplanationInput";
 
@@ -24,58 +21,6 @@ export default function TargetConfig({ goal, updateGoal }: Props) {
       </div>
 
       <ScoringExplanationInput goal={goal} updateGoal={updateGoal} />
-
-      <div className="space-y-2">
-        <Label>Target</Label>
-
-        <Input
-          type="number"
-          value={String(goal.target)}
-          onChange={(e) =>
-            updateGoal({
-              target: Number(e.target.value),
-            })
-          }
-        />
-      </div>
-
-      <div className="space-y-2">
-        <Label>Default Value</Label>
-
-        <Input
-          type="number"
-          value={String(goal.defaultValue)}
-          onChange={(e) =>
-            updateGoal({
-              defaultValue: Number(e.target.value),
-            })
-          }
-        />
-      </div>
-
-      <div className="space-y-2">
-        <Label>Bonus Rate</Label>
-
-        <p className="text-muted-foreground text-xs">
-          Additional score earned for exceeding the target.
-        </p>
-
-        <Input
-          type="number"
-          step="0.0001"
-          min="0"
-          value={goal.scoring.bonusRate ?? 0}
-          onChange={(e) =>
-            updateGoal({
-              scoring: {
-                ...goal.scoring,
-                bonusRate: Number(e.target.value),
-              },
-            })
-          }
-          placeholder="0.0002"
-        />
-      </div>
     </div>
   );
 }

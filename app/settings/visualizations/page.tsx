@@ -21,7 +21,7 @@ import {
 import AppShell from "@/components/layout/AppShell";
 import SettingsSubNav from "@/components/settings/SettingsSubNav";
 import { buttonVariants } from "@/components/ui/button";
-import { useAuth } from "@/contexts/AuthContext";
+import { useRequireAuth } from "@/lib/hooks/useRequireAuth";
 import { apiRequest } from "@/lib/api/client";
 import { cn } from "@/lib/utils";
 import {
@@ -60,7 +60,7 @@ const WIDGET_ICONS: Record<VisualizationWidget, typeof Goal> = {
 };
 
 export default function VisualizationsPage() {
-  const { user } = useAuth();
+  const { user } = useRequireAuth();
   const [visualizations, setVisualizations] = useState<
     VisualizationDefinition[]
   >([]);

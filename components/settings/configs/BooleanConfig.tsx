@@ -1,4 +1,5 @@
 import { MetricDefinition } from "@/models/metric";
+import ScoringExplanationInput from "./ScoringExplanationInput";
 
 interface Props {
   goal: MetricDefinition;
@@ -16,6 +17,8 @@ export default function BooleanConfig({ goal, updateGoal }: Props) {
           This goal is either completed or not completed.
         </p>
       </div>
+
+      <ScoringExplanationInput goal={goal} updateGoal={updateGoal} />
 
       <div className="bg-muted/40 rounded-xl border p-5">
         <p className="font-medium">No additional configuration required.</p>

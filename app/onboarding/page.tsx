@@ -7,7 +7,7 @@ import { CheckCircle2, ChevronLeft } from "lucide-react";
 import AppShell from "@/components/layout/AppShell";
 import GoalBuilder from "@/components/settings/GoalBuilder";
 import { Button } from "@/components/ui/button";
-import { useAuth } from "@/contexts/AuthContext";
+import { useRequireAuth } from "@/lib/hooks/useRequireAuth";
 import { apiRequest } from "@/lib/api/client";
 import { GoalTemplate } from "@/lib/goals/templates";
 import { setOnboardingSkipped } from "@/lib/onboarding";
@@ -18,7 +18,7 @@ type OnboardingMode = "choose" | "templates" | "custom";
 
 export default function OnboardingPage() {
   const router = useRouter();
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading } = useRequireAuth();
 
   const [mode, setMode] = useState<OnboardingMode>("choose");
   const [templates, setTemplates] = useState<GoalTemplate[]>([]);
@@ -32,7 +32,6 @@ export default function OnboardingPage() {
     }
 
     if (!user) {
-      router.replace("/login");
       return;
     }
 

@@ -9,7 +9,7 @@ import MetricInput, { EntryFormValue } from "@/components/today/MetricInput";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
-import { useAuth } from "@/contexts/AuthContext";
+import { useRequireAuth } from "@/lib/hooks/useRequireAuth";
 
 import { MetricDefinition, MetricValue } from "@/models/metric";
 
@@ -47,7 +47,7 @@ interface ExistingEntry {
 }
 
 export default function TodayPage() {
-  const { user } = useAuth();
+  const { user } = useRequireAuth();
 
   const [metrics, setMetrics] = useState<MetricDefinition[]>([]);
 

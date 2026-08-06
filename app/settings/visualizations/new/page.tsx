@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
-import { useAuth } from "@/contexts/AuthContext";
+import { useRequireAuth } from "@/lib/hooks/useRequireAuth";
 import { apiRequest } from "@/lib/api/client";
 import StreakRuleEditor from "@/components/settings/StreakRuleEditor";
 import VisualizationFieldLabel from "@/components/settings/VisualizationFieldLabel";
@@ -45,7 +45,7 @@ interface ProviderExecutorOption {
 }
 
 export default function NewVisualizationPage() {
-  const { user } = useAuth();
+  const { user } = useRequireAuth();
   const router = useRouter();
 
   const [goals, setGoals] = useState<MetricDefinition[]>([]);

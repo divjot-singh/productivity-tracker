@@ -5,7 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import AppShell from "@/components/layout/AppShell";
 import Section from "@/components/ui/section";
 
-import { useAuth } from "@/contexts/AuthContext";
+import { useRequireAuth } from "@/lib/hooks/useRequireAuth";
 import { MetricDefinition } from "@/models/metric";
 import QuickActions from "@/components/settings/QuickActions";
 import SettingsSubNav from "@/components/settings/SettingsSubNav";
@@ -13,7 +13,7 @@ import { toast } from "sonner";
 import { apiRequest } from "@/lib/api/client";
 
 export default function SettingsPage() {
-  const { user } = useAuth();
+  const { user } = useRequireAuth();
 
   const [metrics, setMetrics] = useState<MetricDefinition[]>([]);
 

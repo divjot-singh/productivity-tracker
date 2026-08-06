@@ -1,12 +1,12 @@
 "use client";
 
-import { useAuth } from "@/contexts/AuthContext";
+import { useRequireAuth } from "@/lib/hooks/useRequireAuth";
 import { SeederService } from "@/services/SeederService";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
 export default function DevSettings() {
-  const { user } = useAuth();
+  const { user } = useRequireAuth();
 
   if (process.env.NODE_ENV !== "development") {
     return null;
