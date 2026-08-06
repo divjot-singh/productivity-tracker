@@ -10,6 +10,7 @@ import {
   VisualizationScope,
   VisualizationWidget,
 } from "@/models/visualization";
+import { normalizeVisualizationKey } from "./utils";
 
 export interface AllowedCombination {
   widgets: VisualizationWidget[];
@@ -255,7 +256,9 @@ export function validateVisualizationDefinition(
     context?.goalLabels?.length &&
     !definition.options?.streakRule &&
     !context.goalLabels.some(
-      (label) => label.toLowerCase() === definition.key.toLowerCase(),
+      (label) =>
+        normalizeVisualizationKey(label) ===
+        normalizeVisualizationKey(definition.key),
     )
   ) {
     errors.push(

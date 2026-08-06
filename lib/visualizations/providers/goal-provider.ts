@@ -1,4 +1,5 @@
 import { GoalProviderData, VisualizationProvider } from "./provider-types";
+import { normalizeVisualizationKey } from "../utils";
 
 export const goalProvider: VisualizationProvider<GoalProviderData> = {
   async getData({ visualization, goals, entries }) {
@@ -6,11 +7,13 @@ export const goalProvider: VisualizationProvider<GoalProviderData> = {
 
     if (visualization.executor === "streak" && streakRule) {
       const goalMap = new Map(
-        goals.map((goal) => [goal.label.toLowerCase(), goal]),
+        goals.map((goal) => [normalizeVisualizationKey(goal.label), goal]),
       );
 
       const ruleGoals = streakRule.conditions.map((condition) => {
-        const goal = goalMap.get(condition.goalLabel.toLowerCase());
+        const goal = goalMap.get(
+          normalizeVisualizationKey(condition.goalLabel),
+        );
 
         if (!goal) {
           throw new Error(
@@ -61,8 +64,10 @@ export const goalProvider: VisualizationProvider<GoalProviderData> = {
       };
     }
 
+    const normalizedKey = normalizeVisualizationKey(visualization.key);
+
     const goal = goals.find(
-      (item) => item.label.toLowerCase() === visualization.key.toLowerCase(),
+      (item) => normalizeVisualizationKey(item.label) === normalizedKey,
     );
 
     if (!goal) {

@@ -1,6 +1,10 @@
 import { DailyEntry } from "@/models/entry";
 import { VisualizationPeriod } from "@/models/visualization";
 
+export function normalizeVisualizationKey(value: string): string {
+  return value.trim().toLowerCase();
+}
+
 export function filterEntriesByPeriod(
   entries: DailyEntry[],
   period: VisualizationPeriod,

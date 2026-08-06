@@ -1,11 +1,13 @@
 import { MetricHistoryData, VisualizationProvider } from "./provider-types";
+import { normalizeVisualizationKey } from "../utils";
 
 export const metricHistoryProvider: VisualizationProvider<MetricHistoryData> = {
   async getData({ visualization, goals, entries }) {
     const metricId = visualization.key;
+    const normalizedKey = normalizeVisualizationKey(visualization.key);
 
     const goal = goals.find(
-      (item) => item.label.toLowerCase() === visualization.key.toLowerCase(),
+      (item) => normalizeVisualizationKey(item.label) === normalizedKey,
     );
 
     if (!goal) {
