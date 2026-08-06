@@ -12,6 +12,7 @@ import { ChevronLeft, type LucideIcon, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import {
   Dialog,
@@ -213,6 +214,23 @@ export default function GoalDetails() {
 
         {isEditing ? (
           <div className="space-y-6">
+            <div className="space-y-2">
+              <Label>Description</Label>
+
+              <Textarea
+                value={goal.description ?? ""}
+                onChange={(e) =>
+                  updateGoal({
+                    description:
+                      e.target.value.trim().length === 0
+                        ? undefined
+                        : e.target.value,
+                  })
+                }
+                placeholder="Describe this goal"
+              />
+            </div>
+
             <div className="space-y-2">
               <Label>Icon</Label>
               <IconSelector

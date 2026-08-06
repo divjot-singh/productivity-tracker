@@ -7,12 +7,12 @@ import { ChevronDown, ChevronLeft } from "lucide-react";
 import AppShell from "@/components/layout/AppShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { useAuth } from "@/contexts/AuthContext";
 import { apiRequest } from "@/lib/api/client";
 import StreakRuleEditor from "@/components/settings/StreakRuleEditor";
+import VisualizationFieldLabel from "@/components/settings/VisualizationFieldLabel";
 import {
   AllowedCombination,
   VISUALIZATION_COMBINATIONS,
@@ -311,7 +311,9 @@ export default function NewVisualizationPage() {
 
         <div className="space-y-6">
           <div className="space-y-2">
-            <Label htmlFor="title">Title</Label>
+            <VisualizationFieldLabel topic="title" htmlFor="title">
+              Title
+            </VisualizationFieldLabel>
             <Input
               id="title"
               value={visualization.title}
@@ -321,7 +323,9 @@ export default function NewVisualizationPage() {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="description">Description</Label>
+            <VisualizationFieldLabel topic="description" htmlFor="description">
+              Description
+            </VisualizationFieldLabel>
             <Textarea
               id="description"
               value={visualization.description ?? ""}
@@ -337,7 +341,9 @@ export default function NewVisualizationPage() {
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="widget">Widget</Label>
+              <VisualizationFieldLabel topic="widget" htmlFor="widget">
+                Widget
+              </VisualizationFieldLabel>
               <div className="relative">
                 <select
                   id="widget"
@@ -358,7 +364,9 @@ export default function NewVisualizationPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="scope">Scope</Label>
+              <VisualizationFieldLabel topic="scope" htmlFor="scope">
+                Scope
+              </VisualizationFieldLabel>
               <div className="relative">
                 <select
                   id="scope"
@@ -381,7 +389,12 @@ export default function NewVisualizationPage() {
 
           {providerExecutorOptions.length > 1 && (
             <div className="space-y-2">
-              <Label htmlFor="provider-executor">Source</Label>
+              <VisualizationFieldLabel
+                topic="source"
+                htmlFor="provider-executor"
+              >
+                Source
+              </VisualizationFieldLabel>
               <div className="relative">
                 <select
                   id="provider-executor"
@@ -423,7 +436,9 @@ export default function NewVisualizationPage() {
             />
           ) : (
             <div className="space-y-2">
-              <Label htmlFor="key">Data</Label>
+              <VisualizationFieldLabel topic="data" htmlFor="key">
+                Data
+              </VisualizationFieldLabel>
               {goalsLoading ? (
                 <div className="text-muted-foreground text-sm">
                   Loading goals...
@@ -460,7 +475,12 @@ export default function NewVisualizationPage() {
 
           {combination && (
             <div className="space-y-2">
-              <Label htmlFor="aggregation">Aggregation</Label>
+              <VisualizationFieldLabel
+                topic="aggregation"
+                htmlFor="aggregation"
+              >
+                Aggregation
+              </VisualizationFieldLabel>
               <div className="relative">
                 <select
                   id="aggregation"
@@ -490,7 +510,9 @@ export default function NewVisualizationPage() {
 
           {combination?.options.comparison && (
             <div className="space-y-2">
-              <Label htmlFor="comparison">Comparison</Label>
+              <VisualizationFieldLabel topic="comparison" htmlFor="comparison">
+                Comparison
+              </VisualizationFieldLabel>
               <div className="relative">
                 <select
                   id="comparison"
@@ -515,9 +537,12 @@ export default function NewVisualizationPage() {
 
           {combination?.options.greenIfDeltaPositive && (
             <div className="flex items-center justify-between">
-              <Label htmlFor="green-if-delta-positive">
+              <VisualizationFieldLabel
+                topic="greenIfDeltaPositive"
+                htmlFor="green-if-delta-positive"
+              >
                 Green if delta positive
-              </Label>
+              </VisualizationFieldLabel>
               <Switch
                 id="green-if-delta-positive"
                 checked={visualization.options?.greenIfDeltaPositive ?? false}
@@ -535,7 +560,9 @@ export default function NewVisualizationPage() {
 
           <div className="flex items-center justify-between">
             <div>
-              <Label htmlFor="visible">Visible</Label>
+              <VisualizationFieldLabel topic="visible" htmlFor="visible">
+                Visible
+              </VisualizationFieldLabel>
               <p className="text-muted-foreground text-sm">Show on dashboard</p>
             </div>
             <Switch
@@ -548,7 +575,12 @@ export default function NewVisualizationPage() {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="display-order">Display order</Label>
+            <VisualizationFieldLabel
+              topic="displayOrder"
+              htmlFor="display-order"
+            >
+              Display order
+            </VisualizationFieldLabel>
             <Input
               id="display-order"
               type="number"
@@ -602,7 +634,9 @@ function PeriodEditor({
 
   return (
     <div className="space-y-2">
-      <Label htmlFor="period">Period</Label>
+      <VisualizationFieldLabel topic="period" htmlFor="period">
+        Period
+      </VisualizationFieldLabel>
 
       <div className="flex items-center gap-3">
         <div className="relative w-40">

@@ -35,6 +35,18 @@ Identify the task first, then read only the relevant document(s).
 
 - `dashboard-remaining-work.md`
 
+## V3 Implementation Plan
+
+**File**
+
+- `v3-implementation-plan.md`
+
+**Read when**
+
+- implementing onboarding flow
+- adding goal-template setup
+- adding empty-state onboarding fallbacks
+
 **Read when**
 
 - implementing dashboard widgets

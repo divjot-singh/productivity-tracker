@@ -110,13 +110,6 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
       immutableViolations.push("label");
     }
 
-    if (
-      "description" in body &&
-      body.description !== existingGoal.description
-    ) {
-      immutableViolations.push("description");
-    }
-
     if ("category" in body && body.category !== existingGoal.category) {
       immutableViolations.push("category");
     }

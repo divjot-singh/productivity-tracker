@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState, useCallback } from "react";
+import Link from "next/link";
 import { format, parseISO, startOfMonth, endOfMonth } from "date-fns";
 
 import AppShell from "@/components/layout/AppShell";
@@ -17,11 +18,13 @@ import { apiRequest } from "@/lib/api/client";
 import TodayStatusBar from "@/components/today/TodayStatusBar";
 import DateSelector from "@/components/today/DateSelector";
 import ReviewEntrySheet from "@/components/today/ReviewEntrySheet";
+import { buttonVariants } from "@/components/ui/button";
 import {
   getEmptyFormValues,
   hasEntryValues,
   normalizeEntryValues,
 } from "@/lib/today/utils";
+import { cn } from "@/lib/utils";
 
 import {
   AlertDialog,
@@ -254,6 +257,29 @@ export default function TodayPage() {
     return (
       <AppShell>
         <div className="p-6 text-sm text-red-400">{error}</div>
+      </AppShell>
+    );
+  }
+
+  if (metrics.length === 0) {
+    return (
+      <AppShell>
+        <div className="mx-auto w-full max-w-screen-sm px-4 pt-4 pb-28">
+          <div className="bg-card rounded-2xl border p-8 text-center">
+            <h1 className="text-xl font-semibold">No goals yet</h1>
+
+            <p className="text-muted-foreground mt-2 text-sm">
+              Create at least one goal to start logging daily entries.
+            </p>
+
+            <Link
+              href="/settings/add"
+              className={cn(buttonVariants({ size: "sm" }), "mt-4")}
+            >
+              Create goals
+            </Link>
+          </div>
+        </div>
       </AppShell>
     );
   }

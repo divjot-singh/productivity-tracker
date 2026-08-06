@@ -1,14 +1,19 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 import AppShell from "@/components/layout/AppShell";
 import PageHeader from "@/components/common/PageHeader";
 import DashboardVisualizationRenderer from "@/components/dashboard/visualization-renderer";
+import { buttonVariants } from "@/components/ui/button";
 
 import { useAuth } from "@/contexts/AuthContext";
 import { apiRequest } from "@/lib/api/client";
+import { getOnboardingSkipped } from "@/lib/onboarding";
+import { cn } from "@/lib/utils";
+import { MetricDefinition } from "@/models/metric";
 import { VisualizationResponse } from "@/models/visualization";
 
 export default function Dashboard() {
@@ -39,6 +44,13 @@ export default function Dashboard() {
         setLoadingDashboard(true);
         setError(null);
 
+        const goals = await apiRequest<MetricDefinition[]>(user, "/api/goals");
+
+        if (goals.length === 0 && !getOnboardingSkipped()) {
+          router.replace("/onboarding");
+          return;
+        }
+
         const response = await apiRequest<VisualizationResponse[]>(
           user,
           "/api/dashboard",
@@ -54,7 +66,7 @@ export default function Dashboard() {
     }
 
     load();
-  }, [user]);
+  }, [router, user]);
 
   if (loading || loadingDashboard || !user) {
     return (
@@ -92,6 +104,19 @@ export default function Dashboard() {
       {error ? (
         <div className="border-destructive text-destructive mt-6 rounded-xl border p-4">
           {error}
+        </div>
+      ) : visualizations.length === 0 ? (
+        <div className="bg-card mt-6 rounded-2xl border p-8 text-center">
+          <p className="text-muted-foreground text-sm">
+            No visualizations yet.
+          </p>
+
+          <Link
+            href="/settings/visualizations/new"
+            className={cn(buttonVariants({ size: "sm" }), "mt-4")}
+          >
+            Create visualization
+          </Link>
         </div>
       ) : (
         <div className="mt-6 grid min-w-0 gap-4 pb-26 sm:gap-6 xl:grid-cols-2">

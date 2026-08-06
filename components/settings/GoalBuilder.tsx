@@ -54,7 +54,15 @@ const STEPS = [
   "Review",
 ];
 
-export default function GoalBuilder() {
+interface GoalBuilderProps {
+  redirectPath?: string;
+  onSuccess?: () => void;
+}
+
+export default function GoalBuilder({
+  redirectPath = "/settings",
+  onSuccess,
+}: GoalBuilderProps) {
   const { user } = useAuth();
 
   const router = useRouter();
@@ -171,7 +179,9 @@ export default function GoalBuilder() {
         body: goal,
       });
 
-      router.push("/settings");
+      onSuccess?.();
+
+      router.push(redirectPath);
 
       router.refresh();
     } catch (error) {

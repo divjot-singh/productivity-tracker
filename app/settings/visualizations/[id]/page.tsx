@@ -7,7 +7,6 @@ import { ChevronDown, ChevronLeft, Pencil, Trash2 } from "lucide-react";
 import AppShell from "@/components/layout/AppShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import {
@@ -39,6 +38,7 @@ import {
 } from "@/models/visualization";
 import { MetricDefinition } from "@/models/metric";
 import { toast } from "sonner";
+import VisualizationFieldLabel from "@/components/settings/VisualizationFieldLabel";
 
 const INTERNAL_COMPOSITE_STREAK_KEY = "__composite_streak__";
 const SCOPE_OPTIONS: VisualizationScope[] = ["global", "goal", "category"];
@@ -386,7 +386,9 @@ export default function VisualizationDetailPage() {
           {isEditing ? (
             <div className="space-y-6">
               <div className="space-y-2">
-                <Label htmlFor="title">Title</Label>
+                <VisualizationFieldLabel topic="title" htmlFor="title">
+                  Title
+                </VisualizationFieldLabel>
                 <Input
                   id="title"
                   value={visualization.title}
@@ -397,7 +399,12 @@ export default function VisualizationDetailPage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="description">Description</Label>
+                <VisualizationFieldLabel
+                  topic="description"
+                  htmlFor="description"
+                >
+                  Description
+                </VisualizationFieldLabel>
                 <Textarea
                   id="description"
                   value={visualization.description ?? ""}
@@ -413,7 +420,9 @@ export default function VisualizationDetailPage() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="scope">Scope</Label>
+                  <VisualizationFieldLabel topic="scope" htmlFor="scope">
+                    Scope
+                  </VisualizationFieldLabel>
                   <div className="relative">
                     <select
                       id="scope"
@@ -436,7 +445,9 @@ export default function VisualizationDetailPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="widget">Widget</Label>
+                  <VisualizationFieldLabel topic="widget" htmlFor="widget">
+                    Widget
+                  </VisualizationFieldLabel>
                   <div className="relative">
                     <select
                       id="widget"
@@ -460,7 +471,12 @@ export default function VisualizationDetailPage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="provider-executor">Source (derived)</Label>
+                <VisualizationFieldLabel
+                  topic="source"
+                  htmlFor="provider-executor"
+                >
+                  Source (derived)
+                </VisualizationFieldLabel>
                 <div
                   id="provider-executor"
                   className="bg-muted rounded-xl border px-3 py-2 text-sm font-medium"
@@ -472,7 +488,9 @@ export default function VisualizationDetailPage() {
 
               {!isCompositeStreak && (
                 <div className="space-y-2">
-                  <Label htmlFor="key">Data Key</Label>
+                  <VisualizationFieldLabel topic="data" htmlFor="key">
+                    Data Key
+                  </VisualizationFieldLabel>
                   {goalsLoading ? (
                     <div className="text-muted-foreground text-sm">
                       Loading goals...
@@ -509,7 +527,12 @@ export default function VisualizationDetailPage() {
 
               {combination && (
                 <div className="space-y-2">
-                  <Label htmlFor="aggregation">Aggregation</Label>
+                  <VisualizationFieldLabel
+                    topic="aggregation"
+                    htmlFor="aggregation"
+                  >
+                    Aggregation
+                  </VisualizationFieldLabel>
                   <div className="relative">
                     <select
                       id="aggregation"
@@ -540,7 +563,12 @@ export default function VisualizationDetailPage() {
 
               {combination?.options.comparison && (
                 <div className="space-y-2">
-                  <Label htmlFor="comparison">Comparison</Label>
+                  <VisualizationFieldLabel
+                    topic="comparison"
+                    htmlFor="comparison"
+                  >
+                    Comparison
+                  </VisualizationFieldLabel>
                   <div className="relative">
                     <select
                       id="comparison"
@@ -568,9 +596,12 @@ export default function VisualizationDetailPage() {
 
               {combination?.options.greenIfDeltaPositive && (
                 <div className="flex items-center justify-between">
-                  <Label htmlFor="green-if-delta-positive">
+                  <VisualizationFieldLabel
+                    topic="greenIfDeltaPositive"
+                    htmlFor="green-if-delta-positive"
+                  >
                     Green if delta positive
-                  </Label>
+                  </VisualizationFieldLabel>
                   <Switch
                     id="green-if-delta-positive"
                     checked={
@@ -604,7 +635,12 @@ export default function VisualizationDetailPage() {
               )}
 
               <div className="space-y-2">
-                <Label htmlFor="display-order">Display order</Label>
+                <VisualizationFieldLabel
+                  topic="displayOrder"
+                  htmlFor="display-order"
+                >
+                  Display order
+                </VisualizationFieldLabel>
                 <Input
                   id="display-order"
                   type="number"
@@ -635,6 +671,15 @@ export default function VisualizationDetailPage() {
 
           <div className="flex items-center justify-between">
             <div>
+              <div className="mb-1">
+                <VisualizationFieldLabel
+                  topic="visible"
+                  htmlFor="visibility-switch"
+                >
+                  Visibility
+                </VisualizationFieldLabel>
+              </div>
+
               <p className="font-medium">
                 {visualization.visible ? "Visible" : "Hidden"}
               </p>
@@ -648,13 +693,18 @@ export default function VisualizationDetailPage() {
 
             {isEditing ? (
               <Switch
+                id="visibility-switch"
                 checked={visualization.visible}
                 onCheckedChange={(checked) =>
                   updateVisualization({ visible: checked })
                 }
               />
             ) : (
-              <Switch checked={visualization.visible} disabled />
+              <Switch
+                id="visibility-switch"
+                checked={visualization.visible}
+                disabled
+              />
             )}
           </div>
         </div>
@@ -786,7 +836,9 @@ function PeriodEditor({
 
   return (
     <div className="space-y-2">
-      <Label htmlFor="period">Period</Label>
+      <VisualizationFieldLabel topic="period" htmlFor="period">
+        Period
+      </VisualizationFieldLabel>
 
       <div className="flex items-center gap-3">
         <div className="relative w-40">

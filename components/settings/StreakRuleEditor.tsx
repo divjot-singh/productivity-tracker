@@ -1,6 +1,8 @@
 "use client";
 
+import Link from "next/link";
 import { Plus, Trash2 } from "lucide-react";
+import { CircleHelp } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -103,7 +105,16 @@ export default function StreakRuleEditor({
     <div className="space-y-4 rounded-2xl border p-4">
       <div className="flex items-center justify-between gap-3">
         <div>
-          <Label htmlFor="use-streak-rule">Composite streak rule</Label>
+          <div className="flex items-center gap-1.5">
+            <Label htmlFor="use-streak-rule">Composite streak rule</Label>
+            <Link
+              href="/settings/visualizations/help#streakRule"
+              aria-label="Learn about streak rule"
+              className="text-muted-foreground hover:text-foreground inline-flex items-center"
+            >
+              <CircleHelp className="h-4 w-4" />
+            </Link>
+          </div>
           <p className="text-muted-foreground text-sm">
             Combine multiple goals with AND or OR.
           </p>
