@@ -33,7 +33,6 @@ export default function GoalWeightBreakdownChart({
       label: metric.label,
       weight: Number(metric.weight) || 0,
     }))
-    .filter((item) => item.weight > 0)
     .sort((a, b) => b.weight - a.weight);
 
   const totalWeight = data.reduce((sum, item) => sum + item.weight, 0);
