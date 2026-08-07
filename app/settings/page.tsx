@@ -1,9 +1,11 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 
 import AppShell from "@/components/layout/AppShell";
 import Section from "@/components/ui/section";
+import { buttonVariants } from "@/components/ui/button";
 
 import { useRequireAuth } from "@/lib/hooks/useRequireAuth";
 import { MetricDefinition } from "@/models/metric";
@@ -11,6 +13,8 @@ import QuickActions from "@/components/settings/QuickActions";
 import SettingsSubNav from "@/components/settings/SettingsSubNav";
 import { toast } from "sonner";
 import { apiRequest } from "@/lib/api/client";
+import { cn } from "@/lib/utils";
+import { ChevronRight } from "lucide-react";
 
 export default function SettingsPage() {
   const { user } = useRequireAuth();
@@ -79,6 +83,17 @@ export default function SettingsPage() {
         <SettingsSubNav />
 
         <QuickActions />
+
+        <Link
+          href="/settings/weight-breakdown"
+          className={cn(
+            buttonVariants({ variant: "outline", size: "sm" }),
+            "mb-6 w-full py-1",
+          )}
+        >
+          See breakdown
+          <ChevronRight size={18} />
+        </Link>
 
         <div className="space-y-8">
           {Object.entries(grouped).map(([category, values]) => (
