@@ -151,7 +151,6 @@ export class Orchestrator {
     console.log("Raw Documents Fetched:", {
       entries: rawDocs.entries.length,
       goals: rawDocs.goals.length,
-      other: rawDocs.other?.length || 0,
     });
     console.log("Normalized Documents:", normalizedDocs.length);
     console.log("Ranked Documents:", rankedDocs.length);
