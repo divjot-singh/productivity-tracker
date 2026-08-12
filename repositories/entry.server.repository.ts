@@ -66,13 +66,26 @@ export async function entryExists(uid: string, date: string) {
   return snapshot.exists;
 }
 
-export async function getEntries(uid: string): Promise<DailyEntry[]> {
-  const snapshot = await adminDb
+export async function getEntries(
+  uid: string,
+  dateTo?: string,
+  dateFrom?: string,
+): Promise<DailyEntry[]> {
+  let query = adminDb
     .collection("users")
     .doc(uid)
     .collection("entries")
-    .orderBy("date", "desc")
-    .get();
+    .orderBy("date", "desc");
+
+  if (dateFrom) {
+    query = query.where("date", ">=", dateFrom);
+  }
+
+  if (dateTo) {
+    query = query.where("date", "<=", dateTo);
+  }
+
+  const snapshot = await query.get();
 
   return snapshot.docs.map((doc) => ({
     id: doc.id,
