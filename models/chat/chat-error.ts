@@ -1,5 +1,9 @@
 export type ChatErrorCode =
-  "validation_error" | "unauthorized" | "forbidden" | "internal_error";
+  | "validation_error"
+  | "unauthorized"
+  | "forbidden"
+  | "rate_limited"
+  | "internal_error";
 
 export interface ChatErrorBody {
   code: ChatErrorCode;

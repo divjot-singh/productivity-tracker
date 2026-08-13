@@ -37,6 +37,15 @@ import {
   maybeUpdateConversationSummary,
 } from "@/chat/conversation-context";
 import { createModelProvider } from "@/chat/model-provider";
+import {
+  detectPromptInjection,
+  enforceUserRateLimit,
+  getChatMetrics,
+  getRequestId,
+  logChatEvent,
+  recordChatLatency,
+  recordChatMetric,
+} from "@/chat/safety";
 import { getServerUser } from "@/lib/server-auth";
 import { ChatStoredMessageKind } from "@/models/chat/chat-history";
 import { ChatApiError, toChatErrorResponse } from "@/models/chat/chat-error";
@@ -174,22 +183,42 @@ function isChatRequestBody(value: unknown): value is ChatRequest {
 }
 
 export async function POST(request: NextRequest) {
+  const requestId = getRequestId();
+  const startTime = Date.now();
+
   try {
     const user = await getServerUser(request);
 
     if (!user) {
+      recordChatMetric("unauthorizedRequests");
       throw new ChatApiError(401, "unauthorized", "Unauthorized");
     }
+
+    recordChatMetric("totalRequests");
+    enforceUserRateLimit(user.uid);
 
     let body: unknown;
     try {
       body = await request.json();
     } catch {
+      recordChatMetric("validationErrors");
       throw new ChatApiError(400, "validation_error", "Invalid JSON body");
     }
 
     if (!isChatRequestBody(body)) {
+      recordChatMetric("validationErrors");
       throw new ChatApiError(400, "validation_error", "Invalid request body");
+    }
+
+    const promptInjectionMessage = detectPromptInjection(body.message);
+    if (promptInjectionMessage) {
+      recordChatMetric("validationErrors");
+      throw new ChatApiError(
+        400,
+        "validation_error",
+        "Invalid request body",
+        promptInjectionMessage,
+      );
     }
 
     const conversationId = body.conversationId || crypto.randomUUID();
@@ -247,9 +276,57 @@ export async function POST(request: NextRequest) {
       modelProvider,
     );
 
+    if ("answer" in response) {
+      recordChatMetric("successfulResponses");
+    } else if ("clarificationQuestion" in response) {
+      recordChatMetric("clarificationResponses");
+    } else {
+      recordChatMetric("refusalResponses");
+    }
+
+    recordChatLatency(Date.now() - startTime);
+    logChatEvent("chat_request_completed", {
+      requestId,
+      userId: user.uid,
+      conversationId,
+      messageLength: body.message.length,
+      responseType:
+        "answer" in response
+          ? "answer"
+          : "clarification" in response
+            ? "clarification"
+            : "refusal",
+      latencyMs: Date.now() - startTime,
+      metrics: getChatMetrics(),
+    });
+
     return NextResponse.json(response, { status: 200 });
   } catch (error) {
-    console.error(error);
+    recordChatMetric("failedRequests");
+    recordChatLatency(Date.now() - startTime);
+
+    if (error instanceof ChatApiError) {
+      if (error.code === "unauthorized") {
+        recordChatMetric("unauthorizedRequests");
+      }
+      if (error.code === "forbidden") {
+        recordChatMetric("forbiddenRequests");
+      }
+      if (error.code === "validation_error") {
+        recordChatMetric("validationErrors");
+      }
+      if (error.code === "rate_limited") {
+        recordChatMetric("rateLimitedRequests");
+      }
+    }
+
+    console.error("Chat request failed", {
+      requestId,
+      error,
+      latencyMs: Date.now() - startTime,
+      metrics: getChatMetrics(),
+    });
+
     const { status, body } = toChatErrorResponse(error);
     return NextResponse.json(body, { status });
   }

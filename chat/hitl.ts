@@ -72,16 +72,38 @@ export class Hitl {
   }
 
   detectCrossUserIntent(message: string): boolean {
-    // Simple heuristic: look for phrases indicating other users
-    const crossUserKeywords = [
-      "another user",
-      "someone else's",
-      "other user's",
-      "user id",
+    const text = message.toLowerCase();
+
+    const crossUserPatterns = [
+      /another\s+user['’]s?\s+(logs?|entries?|history|data)/i,
+      /someone\s+else['’]s?\s+(logs?|entries?|history|data)/i,
+      /other\s+user['’]s?\s+(logs?|entries?|history|data)/i,
+      /show\s+([a-z0-9_-]+)['’]s?\s+(logs?|entries?|history|data)/i,
+      /give\s+me\s+([a-z0-9_-]+)['’]s?\s+(logs?|entries?|history|data)/i,
+      /view\s+([a-z0-9_-]+)['’]s?\s+(logs?|entries?|history|data)/i,
+      /what\s+did\s+([a-z0-9_-]+)\s+do/i,
+      /user\s+id\s*[:=]/i,
+      /malvika['’]s\s+(logs?|entries?|history|data)/i,
     ];
-    return crossUserKeywords.some((keyword) =>
-      message.toLowerCase().includes(keyword),
-    );
+
+    return crossUserPatterns.some((pattern) => pattern.test(text));
+  }
+
+  detectPromptInjectionIntent(message: string): boolean {
+    const text = message.toLowerCase();
+
+    const injectionPatterns = [
+      /ignore\s+(all|previous|prior|system|developer)\s+instructions/i,
+      /reveal\s+(the\s+)?(system|developer|hidden)\s+prompt/i,
+      /act\s+as\s+(an?\s+)?(admin|developer|system|root)/i,
+      /dump\s+(all|every|entire)\s+(data|records|entries|logs|database)/i,
+      /override\s+(the\s+)?(system|developer)\s+instructions/i,
+      /bypass\s+(the\s+)?(rules|policy|guardrails)/i,
+      /show\s+me\s+your\s+(system|internal)\s+instructions/i,
+      /<\s*(system|developer)\s*>/i,
+    ];
+
+    return injectionPatterns.some((pattern) => pattern.test(text));
   }
 
   detectAmbiguousIntent(message: string): boolean {
@@ -106,6 +128,15 @@ export class Hitl {
       return {
         kind: "refuse",
         payload: { refusalReason: "Action requests are not allowed." },
+      };
+    }
+    if (this.detectPromptInjectionIntent(message)) {
+      return {
+        kind: "refuse",
+        payload: {
+          refusalReason:
+            "Request appears to attempt prompt override or data exfiltration.",
+        },
       };
     }
     if (this.detectCrossUserIntent(message)) {

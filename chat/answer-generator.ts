@@ -157,6 +157,15 @@ export class AnswerGenerator {
           "Insufficient evidence to answer your question. Please provide more context or clarify.",
       };
     }
+
+    const topScore = Math.max(...topDocs.map((doc) => doc.score ?? 0));
+    if (topScore < 0.25 || topDocs.length < 2) {
+      return {
+        refusalReason:
+          "I don’t have enough relevant evidence to answer that confidently. Please provide more specific context or narrow the timeframe.",
+      };
+    }
+
     const citations = this.buildEvidenceCitations(topDocs);
     const prompt = this.buildGroundedPrompt(
       message,
@@ -189,7 +198,6 @@ export class AnswerGenerator {
     console.log(modelOutput);
     console.log("=== END CHAT CONTEXT ===\n");
 
-    const topScore = Math.max(...topDocs.map((doc) => doc.score ?? 0));
     const confidence = this.mapModelOutputToConfidence(modelOutput, topScore);
 
     return {
