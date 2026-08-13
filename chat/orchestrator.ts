@@ -41,7 +41,7 @@ import { createResolverHelpers } from "./resolvers/helpers";
 import { createDeterministicResolverRegistry } from "./resolvers/registry";
 import type { ResolverRegistry } from "./resolvers/types";
 
-const TOP_K_EVIDENCE = 20; // number of top evidence docs to consider for answer generation
+const TOP_K_EVIDENCE = 100; // number of top evidence docs to consider for answer generation
 
 export class Orchestrator {
   private readonly resolverRegistry: ResolverRegistry;

@@ -623,11 +623,6 @@ export default function ChatPage() {
   const visibleMessages = activeConversationId ? activeMessages : draftMessages;
 
   function handleClose() {
-    if (window.history.length > 1) {
-      router.back();
-      return;
-    }
-
     router.replace("/dashboard");
   }
 

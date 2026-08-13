@@ -176,8 +176,9 @@ export class Fetcher {
     if (betweenMatch) {
       const resolveDate = (str: string): Date | null => {
         const s = str.trim().toLowerCase();
-        if (s === "today" || s === "now") return now;
-        if (s === "yesterday") return this.subtractDays(now, 1);
+        if (s === "today" || s === "now" || /\btoday\b/.test(s)) return now;
+        if (s === "yesterday" || /\byesterday\b/.test(s))
+          return this.subtractDays(now, 1);
         return this.parseNaturalDate(s, now);
       };
       const a = resolveDate(betweenMatch[1]);
@@ -201,13 +202,44 @@ export class Fetcher {
     }
 
     if (/\btoday\b/.test(text)) {
+      // If both "today" and "yesterday" appear, return 2-day range
+      if (/\byesterday\b/.test(text)) {
+        return {
+          dateFrom: this.toYyyyMmDd(this.subtractDays(now, 1)),
+          dateTo: this.toYyyyMmDd(now),
+        };
+      }
+      // If "today" + a specific date appear together, return range from that date to today
+      const otherDate = this.parseNaturalDate(text, now);
+      if (otherDate) {
+        const todayStr = this.toYyyyMmDd(now);
+        const otherStr = this.toYyyyMmDd(otherDate);
+        if (otherStr !== todayStr) {
+          const [from, to] =
+            otherStr < todayStr ? [otherStr, todayStr] : [todayStr, otherStr];
+          return { dateFrom: from, dateTo: to };
+        }
+      }
       const today = this.toYyyyMmDd(now);
       return { dateFrom: today, dateTo: today };
     }
 
     if (/\byesterday\b/.test(text)) {
-      const yesterday = this.toYyyyMmDd(this.subtractDays(now, 1));
-      return { dateFrom: yesterday, dateTo: yesterday };
+      const yesterdayDate = this.subtractDays(now, 1);
+      const yesterdayStr = this.toYyyyMmDd(yesterdayDate);
+      // If yesterday + a specific date appear together, return range between them
+      const otherDate = this.parseNaturalDate(text, now);
+      if (otherDate) {
+        const otherStr = this.toYyyyMmDd(otherDate);
+        if (otherStr !== yesterdayStr) {
+          const [from, to] =
+            otherStr < yesterdayStr
+              ? [otherStr, yesterdayStr]
+              : [yesterdayStr, otherStr];
+          return { dateFrom: from, dateTo: to };
+        }
+      }
+      return { dateFrom: yesterdayStr, dateTo: yesterdayStr };
     }
 
     // Named weekday: "last monday", "this wednesday", "last friday"
