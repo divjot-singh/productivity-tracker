@@ -1,7 +1,15 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { MessageSquareText, PanelLeft, Plus, Send, X, Copy, RotateCcw } from "lucide-react";
+import {
+  MessageSquareText,
+  PanelLeft,
+  Plus,
+  Send,
+  X,
+  Copy,
+  RotateCcw,
+} from "lucide-react";
 import { useRouter, usePathname } from "next/navigation";
 import { User } from "firebase/auth";
 import { Button } from "@/components/ui/button";
@@ -194,10 +202,26 @@ function renderAssistantContent(content: string) {
     const h2 = /^##\s+(.+)$/.exec(line);
     const h3 = /^###\s+(.+)$/.exec(line);
     const h4 = /^####\s+(.+)$/.exec(line);
-    if (h4) { blocks.push({ kind: "h4", text: h4[1] }); i++; continue; }
-    if (h3) { blocks.push({ kind: "h3", text: h3[1] }); i++; continue; }
-    if (h2) { blocks.push({ kind: "h2", text: h2[1] }); i++; continue; }
-    if (h1) { blocks.push({ kind: "h1", text: h1[1] }); i++; continue; }
+    if (h4) {
+      blocks.push({ kind: "h4", text: h4[1] });
+      i++;
+      continue;
+    }
+    if (h3) {
+      blocks.push({ kind: "h3", text: h3[1] });
+      i++;
+      continue;
+    }
+    if (h2) {
+      blocks.push({ kind: "h2", text: h2[1] });
+      i++;
+      continue;
+    }
+    if (h1) {
+      blocks.push({ kind: "h1", text: h1[1] });
+      i++;
+      continue;
+    }
 
     // unordered list — collect consecutive list items
     if (/^\s*[-*]\s+/.test(line)) {
@@ -317,7 +341,7 @@ function renderAssistantContent(content: string) {
 
     if (block.kind === "h1") {
       return (
-        <h2 key={`h1-${blockIndex}`} className="text-base font-bold leading-6">
+        <h2 key={`h1-${blockIndex}`} className="text-base leading-6 font-bold">
           {renderInlineMarkdown(block.text)}
         </h2>
       );
@@ -325,7 +349,7 @@ function renderAssistantContent(content: string) {
 
     if (block.kind === "h2") {
       return (
-        <h3 key={`h2-${blockIndex}`} className="text-sm font-bold leading-6">
+        <h3 key={`h2-${blockIndex}`} className="text-sm leading-6 font-bold">
           {renderInlineMarkdown(block.text)}
         </h3>
       );
@@ -333,7 +357,10 @@ function renderAssistantContent(content: string) {
 
     if (block.kind === "h3") {
       return (
-        <h4 key={`h3-${blockIndex}`} className="text-sm font-semibold leading-6">
+        <h4
+          key={`h3-${blockIndex}`}
+          className="text-sm leading-6 font-semibold"
+        >
           {renderInlineMarkdown(block.text)}
         </h4>
       );
@@ -341,7 +368,10 @@ function renderAssistantContent(content: string) {
 
     if (block.kind === "h4") {
       return (
-        <h5 key={`h4-${blockIndex}`} className="text-sm font-medium leading-6 text-muted-foreground">
+        <h5
+          key={`h4-${blockIndex}`}
+          className="text-muted-foreground text-sm leading-6 font-medium"
+        >
           {renderInlineMarkdown(block.text)}
         </h5>
       );
@@ -444,7 +474,7 @@ async function sendChatStream(
   onStreamEvent?: (event: AssistantStreamEvent) => void,
 ): Promise<ChatStreamResult> {
   const token = await user.getIdToken();
-  const response = await fetch("/api/chat/stream", {
+  const response = await fetch("/api/chat/mcp", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -1098,7 +1128,7 @@ export default function ChatPage() {
                       message.role === "user" ? "justify-end" : "justify-start"
                     }`}
                   >
-                    <div className="flex min-w-0 max-w-[85%] flex-col gap-1">
+                    <div className="flex max-w-[85%] min-w-0 flex-col gap-1">
                       <div
                         className={`min-w-0 overflow-hidden rounded-3xl px-4 py-3 text-sm shadow-sm ${
                           message.role === "user"
@@ -1125,7 +1155,9 @@ export default function ChatPage() {
 
                       <div
                         className={`flex gap-2 px-1 ${
-                          message.role === "user" ? "justify-end" : "justify-start"
+                          message.role === "user"
+                            ? "justify-end"
+                            : "justify-start"
                         }`}
                       >
                         <Button
