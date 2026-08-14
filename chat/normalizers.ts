@@ -89,7 +89,7 @@ export class Normalizer {
     if (typeof value === "number") {
       if (typeof goal.target === "number" && goal.target !== 0) {
         const ratio = value / goal.target;
-        return Math.max(0, Math.min(1, ratio));
+        return Math.max(0, ratio);
       }
       return null;
     }
@@ -456,6 +456,10 @@ export class Normalizer {
     for (const [metricId, value] of Object.entries(entry.values)) {
       const goal = this.resolveGoal(metricId, goalById);
       const key = goal ? goal.label : `metric-${metricId}`;
+      const score =
+        entry.breakdown?.find((b) => b.metricId === metricId)?.score ?? 0;
+      const bonus =
+        entry.breakdown?.find((b) => b.metricId === metricId)?.bonus ?? 0;
 
       if (!goal) {
         goals.push(`- ${key}: ${String(value)}`);
@@ -468,7 +472,7 @@ export class Normalizer {
       const unit = goal.unit ? ` ${goal.unit}` : "";
 
       goals.push(
-        `- ${key}: ${String(value)}${unit} (target: ${String(goal.target)}, completion: ${completionPercent})`,
+        `- ${key}: ${String(value)}${unit} (target: ${String(goal.target)}, completion: ${completionPercent}, score: ${score}, bonus: ${bonus})`,
       );
     }
 
