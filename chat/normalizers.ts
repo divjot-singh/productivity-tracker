@@ -472,7 +472,7 @@ export class Normalizer {
       const unit = goal.unit ? ` ${goal.unit}` : "";
 
       goals.push(
-        `- ${key}: ${String(value)}${unit} (target: ${String(goal.target)}, completion: ${completionPercent}, score: ${score}, bonus: ${bonus})`,
+        `- ${key}: ${String(value)}${unit} (target: ${String(goal.target)}, completion: ${completionPercent}, score: ${score}, bonus: ${bonus} weight ${goal.weight})`,
       );
     }
 
