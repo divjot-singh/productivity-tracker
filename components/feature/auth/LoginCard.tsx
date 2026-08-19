@@ -15,7 +15,7 @@ export default function LoginCard({
 }: LoginCardProps) {
   return (
     <Card className="w-full max-w-md border-zinc-700/70 bg-zinc-900/80 shadow-[0_22px_70px_-20px_rgba(0,0,0,0.8)] backdrop-blur-sm">
-      <CardContent className="space-y-8 p-8">
+      <CardContent className="space-y-6 p-6 sm:space-y-7 sm:p-8">
         <div className="space-y-4 text-center">
           <BrandLogo
             size={52}
@@ -23,9 +23,7 @@ export default function LoginCard({
             textClassName="text-xl font-semibold tracking-tight"
           />
 
-          <p className="text-sm text-zinc-300">
-            Build consistency. One focused day at a time.
-          </p>
+          <p className="text-sm text-zinc-300">Ready when you are.</p>
         </div>
 
         <Button
@@ -33,11 +31,11 @@ export default function LoginCard({
           onClick={onLogin}
           disabled={loading}
         >
-          {loading ? "Signing in..." : "Continue with Google"}
+          {loading ? "Signing in..." : "Jump in with Google"}
         </Button>
 
         <p className="text-center text-xs text-zinc-400">
-          Secure sign in using your Google account.
+          Sign in to continue.
         </p>
       </CardContent>
     </Card>
