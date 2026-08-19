@@ -63,15 +63,22 @@ export default function LoginPage() {
 
   if (authLoading) {
     return (
-      <main className="flex min-h-dvh items-center justify-center bg-zinc-950">
-        Loading...
+      <main className="relative flex min-h-dvh items-center justify-center overflow-hidden bg-zinc-950">
+        <div className="absolute -top-16 -left-16 h-72 w-72 rounded-full bg-emerald-600/20 blur-3xl" />
+        <div className="absolute -right-20 bottom-0 h-72 w-72 rounded-full bg-cyan-500/10 blur-3xl" />
+        <p className="relative text-sm text-zinc-300">Loading...</p>
       </main>
     );
   }
 
   return (
-    <main className="flex min-h-dvh items-center justify-center bg-zinc-950 px-4">
-      <LoginCard onLogin={handleLogin} loading={loading} />
+    <main className="relative flex min-h-dvh items-center justify-center overflow-hidden bg-zinc-950 px-4">
+      <div className="absolute -top-16 -left-16 h-72 w-72 rounded-full bg-emerald-600/20 blur-3xl" />
+      <div className="absolute -right-20 bottom-0 h-72 w-72 rounded-full bg-cyan-500/10 blur-3xl" />
+
+      <div className="relative z-10 w-full max-w-md">
+        <LoginCard onLogin={handleLogin} loading={loading} />
+      </div>
     </main>
   );
 }

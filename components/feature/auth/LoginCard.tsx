@@ -1,5 +1,6 @@
 "use client";
 
+import BrandLogo from "@/components/common/BrandLogo";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 
@@ -13,27 +14,29 @@ export default function LoginCard({
   loading = false,
 }: LoginCardProps) {
   return (
-    <Card className="bg-card w-full max-w-screen-sm border-zinc-800 shadow-2xl">
+    <Card className="w-full max-w-md border-zinc-700/70 bg-zinc-900/80 shadow-[0_22px_70px_-20px_rgba(0,0,0,0.8)] backdrop-blur-sm">
       <CardContent className="space-y-8 p-8">
-        <div className="space-y-2 text-center">
-          <h1 className="text-foreground text-3xl font-bold tracking-tight">
-            Productivity Tracker
-          </h1>
+        <div className="space-y-4 text-center">
+          <BrandLogo
+            size={52}
+            className="justify-center"
+            textClassName="text-xl font-semibold tracking-tight"
+          />
 
-          <p className="text-muted-foreground text-sm">
-            Build consistency. One day at a time.
+          <p className="text-sm text-zinc-300">
+            Build consistency. One focused day at a time.
           </p>
         </div>
 
         <Button
-          className="h-11 w-full bg-emerald-600 hover:bg-emerald-500"
+          className="h-11 w-full bg-emerald-600 text-white hover:bg-emerald-500"
           onClick={onLogin}
           disabled={loading}
         >
           {loading ? "Signing in..." : "Continue with Google"}
         </Button>
 
-        <p className="text-primary text-center text-xs">
+        <p className="text-center text-xs text-zinc-400">
           Secure sign in using your Google account.
         </p>
       </CardContent>

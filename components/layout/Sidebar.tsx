@@ -1,4 +1,5 @@
 import Link from "next/link";
+import BrandLogo from "@/components/common/BrandLogo";
 
 const items = [
   {
@@ -23,7 +24,7 @@ export default function Sidebar() {
   return (
     <aside className="w-64 border-r border-zinc-800 bg-zinc-950">
       <div className="border-b border-zinc-800 p-6">
-        <h2 className="font-semibold">Productivity Tracker</h2>
+        <BrandLogo size={30} textClassName="text-sm font-semibold" />
       </div>
 
       <nav className="space-y-2 p-4">

@@ -12,6 +12,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import BrandLogo from "@/components/common/BrandLogo";
 
 import { useAuth } from "@/contexts/AuthContext";
 import { logout } from "@/lib/auth";
@@ -35,7 +36,7 @@ export default function TopBar() {
 
   return (
     <header className="bg-background fixed top-0 right-0 left-0 z-50 flex h-16 items-center justify-between border-b border-zinc-800 px-8">
-      <h1 className="text-xl font-semibold">Productivity Tracker</h1>
+      <BrandLogo size={30} textClassName="text-base font-semibold" />
 
       <DropdownMenu>
         <DropdownMenuTrigger>
