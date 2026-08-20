@@ -14,23 +14,63 @@ export const streakExecutor: VisualizationExecutor = {
     let current = 0;
     let longest = 0;
     let active = 0;
+    let activeStartIndex = -1;
+    let bestStartIndex = -1;
+    let bestEndIndex = -1;
 
-    values.forEach((item) => {
+    values.forEach((item, index) => {
       if (isSuccess(item, providerData)) {
+        if (active === 0) {
+          activeStartIndex = index;
+        }
+
         active += 1;
-        longest = Math.max(longest, active);
+
+        if (active > longest) {
+          longest = active;
+          bestStartIndex = activeStartIndex;
+          bestEndIndex = index;
+        }
       } else {
         active = 0;
+        activeStartIndex = -1;
       }
     });
+
+    let currentStartIndex = -1;
+    let currentEndIndex = -1;
 
     for (let index = values.length - 1; index >= 0; index -= 1) {
       if (!isSuccess(values[index], providerData)) {
         break;
       }
 
+      if (currentEndIndex === -1) {
+        currentEndIndex = index;
+      }
+
+      currentStartIndex = index;
       current += 1;
     }
+
+    const currentRange =
+      currentStartIndex >= 0 && currentEndIndex >= 0
+        ? formatDateRange(
+            values[currentStartIndex]?.date,
+            values[currentEndIndex]?.date,
+          )
+        : "-";
+
+    const bestRange =
+      bestStartIndex >= 0 && bestEndIndex >= 0
+        ? formatDateRange(
+            values[bestStartIndex]?.date,
+            values[bestEndIndex]?.date,
+          )
+        : "-";
+
+    const isCurrentBest =
+      current > 0 && longest > 0 && currentRange === bestRange;
 
     return {
       id: visualization.id,
@@ -38,11 +78,17 @@ export const streakExecutor: VisualizationExecutor = {
       widget: visualization.widget,
       subtitle:
         longest > 0
-          ? `Best streak: ${longest} day${longest === 1 ? "" : "s"}`
+          ? `Best streak: ${longest} day${longest === 1 ? "" : "s"} (${bestRange})`
           : visualization.description,
       data: {
         value: current,
         unit: current === 1 ? "day" : "days",
+        streak: {
+          currentRange,
+          bestRange,
+          bestValue: longest,
+          isCurrentBest,
+        },
       },
     };
   },
@@ -78,4 +124,23 @@ function isSuccess(
   }
 
   return false;
+}
+
+function formatDateRange(startDate?: string, endDate?: string) {
+  if (!startDate || !endDate) {
+    return "-";
+  }
+
+  if (startDate === endDate) {
+    return formatShortDate(startDate);
+  }
+
+  return `${formatShortDate(startDate)} - ${formatShortDate(endDate)}`;
+}
+
+function formatShortDate(date: string) {
+  return new Date(date).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+  });
 }

@@ -31,6 +31,14 @@ interface ChartTooltipContentProps {
   }>;
 }
 
+interface AverageReferenceLabelProps {
+  value?: string;
+  viewBox?: {
+    x?: number;
+    y?: number;
+  };
+}
+
 export function VisualizationCard({
   title,
   subtitle,
@@ -194,6 +202,105 @@ export function getSeriesColor(index: number) {
   ];
 
   return colors[index % colors.length];
+}
+
+export function getAverageValue(data: TrendChartData, datasetIndex = 0) {
+  if (data.valueKind === "boolean") {
+    return undefined;
+  }
+
+  const dataset = data.datasets[datasetIndex];
+
+  if (!dataset) {
+    return undefined;
+  }
+
+  const values = dataset.data.filter((value) => Number.isFinite(value));
+
+  if (!values.length) {
+    return undefined;
+  }
+
+  return values.reduce((sum, value) => sum + value, 0) / values.length;
+}
+
+export function AverageReferenceLabel({
+  value,
+  viewBox,
+}: AverageReferenceLabelProps) {
+  if (!value) {
+    return null;
+  }
+
+  const lines = wrapLabelLines(value, 12, 3);
+  const lineHeight = 11;
+  const boxWidth = 78;
+  const boxHeight = lines.length * lineHeight + 6;
+  const x = (viewBox?.x ?? 0) + 6;
+  const y = Math.max((viewBox?.y ?? 0) - boxHeight - 6, 6);
+
+  return (
+    <g pointerEvents="none">
+      <rect
+        x={x - 4}
+        y={y - 2}
+        width={boxWidth}
+        height={boxHeight}
+        rx={4}
+        fill="var(--card)"
+        fillOpacity={0.88}
+      />
+
+      {lines.map((line, index) => (
+        <text
+          key={`${line}-${index}`}
+          x={x}
+          y={y + lineHeight + index * lineHeight}
+          fill="var(--chart-2)"
+          fontSize={11}
+          fontWeight={600}
+          textAnchor="start"
+        >
+          {line}
+        </text>
+      ))}
+    </g>
+  );
+}
+
+function wrapLabelLines(text: string, maxChars: number, maxLines: number) {
+  const words = text.split(/\s+/).filter(Boolean);
+
+  if (!words.length) {
+    return [text];
+  }
+
+  const lines: string[] = [];
+  let current = "";
+
+  for (const word of words) {
+    const candidate = current ? `${current} ${word}` : word;
+
+    if (candidate.length <= maxChars || !current) {
+      current = candidate;
+      continue;
+    }
+
+    lines.push(current);
+
+    if (lines.length >= maxLines - 1) {
+      lines.push(word);
+      return lines;
+    }
+
+    current = word;
+  }
+
+  if (current) {
+    lines.push(current);
+  }
+
+  return lines.slice(0, maxLines);
 }
 
 export function formatCompactNumber(value: number | string | undefined) {

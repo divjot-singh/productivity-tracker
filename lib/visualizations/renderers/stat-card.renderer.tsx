@@ -7,7 +7,7 @@ import { formatCompactNumber, VisualizationCard } from "./rendering-utils";
 export default function StatCardRenderer({
   visualization,
 }: VisualizationRendererProps<StatCardData>) {
-  const { value, unit, comparison } = visualization.data;
+  const { value, unit, comparison, streak } = visualization.data;
 
   return (
     <VisualizationCard
@@ -35,13 +35,36 @@ export default function StatCardRenderer({
         ) : null
       }
     >
-      <div className="flex items-end gap-2">
-        <span className="text-4xl font-bold tracking-tight sm:text-5xl">
-          {typeof value === "number" ? formatCompactNumber(value) : value}
-        </span>
+      <div className="flex flex-col flex-wrap items-start gap-x-3 gap-y-2">
+        <div className="flex items-end gap-2">
+          <span className="text-4xl font-bold tracking-tight sm:text-5xl">
+            {typeof value === "number" ? formatCompactNumber(value) : value}
+          </span>
 
-        {unit ? (
-          <span className="text-muted-foreground mb-1 text-sm">{unit}</span>
+          {unit ? (
+            <span className="text-muted-foreground mb-1 text-sm">{unit}</span>
+          ) : null}
+        </div>
+
+        {streak && typeof value === "number" && value > 0 ? (
+          <div className="flex flex-wrap items-center gap-2">
+            <div
+              className={cn(
+                "bg-background/40 text-muted-foreground rounded-full border px-2.5 py-1 text-xs font-medium",
+                streak.isCurrentBest
+                  ? "border-primary/60 text-primary"
+                  : "border-white/50",
+              )}
+            >
+              Current: {streak.currentRange}
+            </div>
+
+            {streak.isCurrentBest ? (
+              <div className="bg-primary/15 text-primary border-primary/30 rounded-full border px-2 py-1 text-[11px] font-semibold tracking-wide uppercase">
+                Current Best
+              </div>
+            ) : null}
+          </div>
         ) : null}
       </div>
     </VisualizationCard>

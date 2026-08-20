@@ -12,6 +12,13 @@ export interface StatCardData {
   unit?: string;
 
   comparison?: ComparisonData;
+
+  streak?: {
+    currentRange: string;
+    bestRange: string;
+    bestValue: number;
+    isCurrentBest: boolean;
+  };
 }
 
 export interface ProgressBarData {

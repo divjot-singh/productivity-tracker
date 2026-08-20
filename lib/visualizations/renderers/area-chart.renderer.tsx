@@ -4,6 +4,7 @@ import {
   AreaChart,
   Area,
   CartesianGrid,
+  ReferenceLine,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -13,10 +14,12 @@ import {
 import { TrendChartData } from "../types";
 import { VisualizationRendererProps } from "./renderer-types";
 import {
+  AverageReferenceLabel,
   buildTrendRows,
   ChartTooltipContent,
   formatAxisValue,
   formatXAxisLabel,
+  getAverageValue,
   getChartDomain,
   getDatasetKey,
   getSeriesColor,
@@ -29,6 +32,11 @@ export default function AreaChartRenderer({
   const { data } = visualization;
   const chartData = buildTrendRows(data);
   const domain = getChartDomain(data);
+  const averageValue = getAverageValue(data);
+  const averageLabel =
+    typeof averageValue === "number"
+      ? `Avg ${formatAxisValue(averageValue, data)}`
+      : "";
 
   return (
     <VisualizationCard
@@ -94,6 +102,16 @@ export default function AreaChartRenderer({
             />
 
             <Tooltip content={<ChartTooltipContent data={data} />} />
+
+            {typeof averageValue === "number" ? (
+              <ReferenceLine
+                y={averageValue}
+                stroke="var(--chart-2)"
+                strokeDasharray="4 4"
+                strokeOpacity={0.9}
+                label={<AverageReferenceLabel value={averageLabel} />}
+              />
+            ) : null}
 
             {data.datasets.map((dataset, index) => (
               <Area
