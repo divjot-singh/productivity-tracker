@@ -1,0 +1,784 @@
+{
+  "exercises": [
+    {
+      "id": "db_bench_press",
+      "name": "Dumbbell Bench Press",
+      "categories": ["push", "chest"],
+      "muscleGroups": ["chest", "triceps", "front_delts"],
+      "equipment": "dumbbell",
+      "type": "compound",
+      "description": "Primary horizontal pressing movement for chest strength and development.",
+      "notes": [
+        "Keep shoulder blades stable and retracted.",
+        "Use a controlled eccentric.",
+        "Maintain a comfortable but full range of motion.",
+        "Primary strength movement."
+      ],
+      "tracking": {
+        "weight": true,
+        "reps": true,
+        "effort": true
+      },
+      "weightTracking": {
+        "unit": "kg",
+        "mode": "total"
+      },
+      "progression": {
+        "repRange": {
+          "min": 5,
+          "max": 8
+        },
+        "strategy": "ascending_weight"
+      },
+      "currentWeight": null,
+      "targetWeight": null,
+      "active": true
+    },
+    {
+      "id": "incline_db_press",
+      "name": "Incline Dumbbell Press",
+      "categories": ["push", "chest"],
+      "muscleGroups": ["upper_chest", "triceps", "front_delts"],
+      "equipment": "dumbbell",
+      "type": "compound",
+      "description": "Incline pressing movement emphasizing the upper chest while also training the triceps and front delts.",
+      "notes": [
+        "Use a moderate incline rather than an excessively steep angle.",
+        "Keep shoulder blades stable.",
+        "Control the dumbbells throughout the movement."
+      ],
+      "tracking": {
+        "weight": true,
+        "reps": true,
+        "effort": true
+      },
+      "weightTracking": {
+        "unit": "kg",
+        "mode": "per_hand"
+      },
+      "progression": {
+        "repRange": {
+          "min": 6,
+          "max": 10
+        },
+        "strategy": "ascending_weight"
+      },
+      "currentWeight": null,
+      "targetWeight": null,
+      "active": true
+    },
+    {
+      "id": "db_shoulder_press",
+      "name": "Dumbbell Shoulder Press",
+      "categories": ["push", "shoulders"],
+      "muscleGroups": ["front_delts", "side_delts", "triceps"],
+      "equipment": "dumbbell",
+      "type": "compound",
+      "description": "Primary vertical pressing movement for shoulder and triceps strength.",
+      "notes": [
+        "Avoid excessive lower-back arching.",
+        "Keep the movement controlled.",
+        "Use a comfortable range of motion based on shoulder mobility."
+      ],
+      "tracking": {
+        "weight": true,
+        "reps": true,
+        "effort": true
+      },
+      "weightTracking": {
+        "unit": "kg",
+        "mode": "per_hand"
+      },
+      "progression": {
+        "repRange": {
+          "min": 6,
+          "max": 10
+        },
+        "strategy": "ascending_weight"
+      },
+      "currentWeight": null,
+      "targetWeight": null,
+      "active": true
+    },
+    {
+      "id": "lateral_raise",
+      "name": "Lateral Raise",
+      "categories": ["push", "shoulders"],
+      "muscleGroups": ["side_delts"],
+      "equipment": "dumbbell_or_cable",
+      "type": "isolation",
+      "description": "Isolation movement emphasizing the lateral deltoids for shoulder width.",
+      "notes": [
+        "Use controlled movement rather than swinging.",
+        "Lead with the elbows.",
+        "Cable and dumbbell variations can be alternated."
+      ],
+      "tracking": {
+        "weight": true,
+        "reps": true,
+        "effort": true
+      },
+      "weightTracking": {
+        "unit": "kg",
+        "mode": "per_hand_or_stack"
+      },
+      "progression": {
+        "repRange": {
+          "min": 10,
+          "max": 15
+        },
+        "strategy": "descending_weight"
+      },
+      "currentWeight": null,
+      "targetWeight": null,
+      "active": true
+    },
+    {
+      "id": "triceps_pushdown",
+      "name": "Triceps Cable Pushdown",
+      "categories": ["push", "triceps", "arms"],
+      "muscleGroups": ["triceps"],
+      "equipment": "cable",
+      "type": "isolation",
+      "description": "Cable isolation movement for the triceps.",
+      "notes": [
+        "Keep elbows relatively stationary.",
+        "Control both the lowering and extension phases.",
+        "Avoid using body momentum."
+      ],
+      "tracking": {
+        "weight": true,
+        "reps": true,
+        "effort": true
+      },
+      "weightTracking": {
+        "unit": "kg",
+        "mode": "stack"
+      },
+      "progression": {
+        "repRange": {
+          "min": 10,
+          "max": 15
+        },
+        "strategy": "ascending_weight"
+      },
+      "currentWeight": null,
+      "targetWeight": null,
+      "active": true
+    },
+    {
+      "id": "pec_fly",
+      "name": "Seated Pec Fly",
+      "categories": ["push", "chest"],
+      "muscleGroups": ["chest"],
+      "equipment": "machine",
+      "type": "isolation",
+      "description": "Chest isolation movement emphasizing horizontal shoulder adduction.",
+      "notes": [
+        "Use a controlled stretch.",
+        "Do not excessively force the shoulder into the stretched position.",
+        "Focus on bringing the upper arms together rather than moving the hands."
+      ],
+      "tracking": {
+        "weight": true,
+        "reps": true,
+        "effort": true
+      },
+      "weightTracking": {
+        "unit": "kg",
+        "mode": "stack"
+      },
+      "progression": {
+        "repRange": {
+          "min": 10,
+          "max": 15
+        },
+        "strategy": "ascending_weight"
+      },
+      "currentWeight": null,
+      "targetWeight": null,
+      "active": true
+    },
+    {
+      "id": "deadlift",
+      "name": "Deadlift",
+      "categories": ["pull", "back", "posterior_chain", "functional"],
+      "muscleGroups": [
+        "glutes",
+        "hamstrings",
+        "erectors",
+        "traps",
+        "lats",
+        "grip"
+      ],
+      "equipment": "barbell",
+      "type": "compound",
+      "description": "Primary heavy hip-hinge movement for posterior-chain and full-body strength.",
+      "notes": [
+        "Treat the first sets as preparation rather than fatigue-producing work.",
+        "Keep the bar close to the body.",
+        "Brace the trunk before initiating the lift.",
+        "Do not force a heavy attempt on a bad day.",
+        "Use a controlled top set rather than testing a maximum every session."
+      ],
+      "tracking": {
+        "weight": true,
+        "reps": true,
+        "effort": true
+      },
+      "weightTracking": {
+        "unit": "kg",
+        "mode": "total"
+      },
+      "progression": {
+        "repRange": {
+          "min": 2,
+          "max": 5
+        },
+        "strategy": "ascending_weight"
+      },
+      "currentWeight": null,
+      "targetWeight": null,
+      "active": true
+    },
+    {
+      "id": "lat_pulldown",
+      "name": "Lat Pulldown",
+      "categories": ["pull", "back"],
+      "muscleGroups": ["lats", "biceps", "upper_back"],
+      "equipment": "cable_machine",
+      "type": "compound",
+      "description": "Vertical pulling movement emphasizing the lats and upper back.",
+      "notes": [
+        "Avoid excessive swinging.",
+        "Pull toward the upper chest.",
+        "Focus on driving the elbows down."
+      ],
+      "tracking": {
+        "weight": true,
+        "reps": true,
+        "effort": true
+      },
+      "weightTracking": {
+        "unit": "kg",
+        "mode": "stack"
+      },
+      "progression": {
+        "repRange": {
+          "min": 8,
+          "max": 12
+        },
+        "strategy": "ascending_weight"
+      },
+      "currentWeight": null,
+      "targetWeight": null,
+      "active": true
+    },
+    {
+      "id": "seated_cable_row",
+      "name": "Seated Cable Row",
+      "categories": ["pull", "back"],
+      "muscleGroups": ["mid_back", "rhomboids", "lats", "biceps"],
+      "equipment": "cable",
+      "type": "compound",
+      "description": "Horizontal pulling movement for the mid-back and lats.",
+      "notes": [
+        "Maintain a stable torso.",
+        "Pull through the elbows.",
+        "Avoid excessive momentum."
+      ],
+      "tracking": {
+        "weight": true,
+        "reps": true,
+        "effort": true
+      },
+      "weightTracking": {
+        "unit": "kg",
+        "mode": "stack"
+      },
+      "progression": {
+        "repRange": {
+          "min": 8,
+          "max": 12
+        },
+        "strategy": "ascending_weight"
+      },
+      "currentWeight": null,
+      "targetWeight": null,
+      "active": true
+    },
+    {
+      "id": "face_pull",
+      "name": "Face Pull",
+      "categories": ["pull", "shoulders", "rear_delts"],
+      "muscleGroups": ["rear_delts", "external_rotators", "upper_back"],
+      "equipment": "cable",
+      "type": "isolation",
+      "description": "Upper-back and rear-delt movement that also trains external shoulder rotation and scapular control.",
+      "notes": [
+        "Pull toward the face or forehead.",
+        "Externally rotate the shoulders near the end of the movement.",
+        "Use controlled weight rather than chasing load."
+      ],
+      "tracking": {
+        "weight": true,
+        "reps": true,
+        "effort": true
+      },
+      "weightTracking": {
+        "unit": "kg",
+        "mode": "stack"
+      },
+      "progression": {
+        "repRange": {
+          "min": 12,
+          "max": 15
+        },
+        "strategy": "ascending_weight"
+      },
+      "currentWeight": null,
+      "targetWeight": null,
+      "active": true
+    },
+    {
+      "id": "reverse_fly",
+      "name": "Reverse Fly",
+      "categories": ["pull", "shoulders", "rear_delts"],
+      "muscleGroups": ["rear_delts", "upper_back"],
+      "equipment": "dumbbell_or_machine",
+      "type": "isolation",
+      "description": "Rear-delt isolation movement supporting shoulder balance and upper-back development.",
+      "notes": [
+        "Use light enough weight to maintain control.",
+        "Avoid turning the movement into a row.",
+        "Focus on the rear delts rather than moving maximum weight."
+      ],
+      "tracking": {
+        "weight": true,
+        "reps": true,
+        "effort": true
+      },
+      "weightTracking": {
+        "unit": "kg",
+        "mode": "per_hand_or_machine"
+      },
+      "progression": {
+        "repRange": {
+          "min": 12,
+          "max": 15
+        },
+        "strategy": "descending_weight"
+      },
+      "currentWeight": null,
+      "targetWeight": null,
+      "active": true
+    },
+    {
+      "id": "incline_db_curl",
+      "name": "Incline Dumbbell Curl",
+      "categories": ["pull", "biceps", "arms"],
+      "muscleGroups": ["biceps"],
+      "equipment": "dumbbell",
+      "type": "isolation",
+      "description": "Biceps isolation exercise performed with the shoulders positioned behind the torso.",
+      "notes": [
+        "Allow a controlled stretch at the bottom.",
+        "Avoid swinging.",
+        "Use full controlled elbow flexion."
+      ],
+      "tracking": {
+        "weight": true,
+        "reps": true,
+        "effort": true
+      },
+      "weightTracking": {
+        "unit": "kg",
+        "mode": "per_hand"
+      },
+      "progression": {
+        "repRange": {
+          "min": 8,
+          "max": 12
+        },
+        "strategy": "ascending_weight"
+      },
+      "currentWeight": null,
+      "targetWeight": null,
+      "active": true
+    },
+    {
+      "id": "barbell_squat",
+      "name": "Barbell Squat",
+      "categories": ["legs", "quads", "glutes", "strength"],
+      "muscleGroups": ["quadriceps", "glutes", "hamstrings", "core"],
+      "equipment": "barbell",
+      "type": "compound",
+      "description": "Primary lower-body strength movement emphasizing the quadriceps and glutes.",
+      "notes": [
+        "Brace before each rep.",
+        "Maintain controlled depth appropriate to your mobility.",
+        "Keep the knee and foot tracking stable.",
+        "Do not turn every session into a maximum attempt."
+      ],
+      "tracking": {
+        "weight": true,
+        "reps": true,
+        "effort": true
+      },
+      "weightTracking": {
+        "unit": "kg",
+        "mode": "total"
+      },
+      "progression": {
+        "repRange": {
+          "min": 5,
+          "max": 8
+        },
+        "strategy": "ascending_weight"
+      },
+      "currentWeight": null,
+      "targetWeight": null,
+      "active": true
+    },
+    {
+      "id": "romanian_deadlift",
+      "name": "Romanian Deadlift",
+      "categories": ["legs", "hamstrings", "glutes", "posterior_chain"],
+      "muscleGroups": ["hamstrings", "glutes", "erectors"],
+      "equipment": "barbell_or_dumbbell",
+      "type": "compound",
+      "description": "Hip-hinge movement emphasizing the hamstrings and glutes through a loaded stretch.",
+      "notes": [
+        "Push the hips backward rather than squatting down.",
+        "Maintain a neutral spine.",
+        "Stop the descent when hamstring mobility limits further range without losing position.",
+        "Use controlled eccentric movement."
+      ],
+      "tracking": {
+        "weight": true,
+        "reps": true,
+        "effort": true
+      },
+      "weightTracking": {
+        "unit": "kg",
+        "mode": "total"
+      },
+      "progression": {
+        "repRange": {
+          "min": 6,
+          "max": 10
+        },
+        "strategy": "ascending_weight"
+      },
+      "currentWeight": null,
+      "targetWeight": null,
+      "active": true
+    },
+    {
+      "id": "bulgarian_split_squat",
+      "name": "Bulgarian Split Squat",
+      "categories": ["legs", "quads", "glutes", "unilateral"],
+      "muscleGroups": ["quadriceps", "glutes", "hamstrings", "core"],
+      "equipment": "dumbbell_or_bodyweight",
+      "type": "compound",
+      "description": "Unilateral lower-body movement improving leg strength, balance and hip stability.",
+      "notes": [
+        "Keep the front foot stable.",
+        "Use a controlled descent.",
+        "Start with a manageable load because unilateral work can be very demanding.",
+        "Prioritize balance and range of motion."
+      ],
+      "tracking": {
+        "weight": true,
+        "reps": true,
+        "effort": true
+      },
+      "weightTracking": {
+        "unit": "kg",
+        "mode": "per_hand_or_total"
+      },
+      "progression": {
+        "repRange": {
+          "min": 8,
+          "max": 12
+        },
+        "strategy": "ascending_weight"
+      },
+      "currentWeight": null,
+      "targetWeight": null,
+      "active": true
+    },
+    {
+      "id": "hamstring_curl",
+      "name": "Hamstring Curl",
+      "categories": ["legs", "hamstrings"],
+      "muscleGroups": ["hamstrings"],
+      "equipment": "machine",
+      "type": "isolation",
+      "description": "Knee-flexion exercise directly targeting the hamstrings.",
+      "notes": [
+        "Use a controlled eccentric.",
+        "Avoid lifting the hips excessively.",
+        "Focus on squeezing the hamstrings."
+      ],
+      "tracking": {
+        "weight": true,
+        "reps": true,
+        "effort": true
+      },
+      "weightTracking": {
+        "unit": "kg",
+        "mode": "stack"
+      },
+      "progression": {
+        "repRange": {
+          "min": 10,
+          "max": 15
+        },
+        "strategy": "ascending_weight"
+      },
+      "currentWeight": null,
+      "targetWeight": null,
+      "active": true
+    },
+    {
+      "id": "leg_extension",
+      "name": "Leg Extension",
+      "categories": ["legs", "quads"],
+      "muscleGroups": ["quadriceps"],
+      "equipment": "machine",
+      "type": "isolation",
+      "description": "Knee-extension exercise directly targeting the quadriceps.",
+      "notes": [
+        "Use controlled movement.",
+        "Avoid using momentum.",
+        "Use a comfortable range of motion."
+      ],
+      "tracking": {
+        "weight": true,
+        "reps": true,
+        "effort": true
+      },
+      "weightTracking": {
+        "unit": "kg",
+        "mode": "stack"
+      },
+      "progression": {
+        "repRange": {
+          "min": 10,
+          "max": 15
+        },
+        "strategy": "ascending_weight"
+      },
+      "currentWeight": null,
+      "targetWeight": null,
+      "active": true
+    },
+    {
+      "id": "calf_raise",
+      "name": "Calf Raise",
+      "categories": ["legs", "calves"],
+      "muscleGroups": ["gastrocnemius", "soleus"],
+      "equipment": "machine_or_bodyweight",
+      "type": "isolation",
+      "description": "Calf isolation movement performed through a controlled ankle range of motion.",
+      "notes": [
+        "Use a full comfortable range of motion.",
+        "Pause briefly at the stretched and contracted positions.",
+        "Avoid bouncing."
+      ],
+      "tracking": {
+        "weight": true,
+        "reps": true,
+        "effort": true
+      },
+      "weightTracking": {
+        "unit": "kg",
+        "mode": "machine_or_total"
+      },
+      "progression": {
+        "repRange": {
+          "min": 10,
+          "max": 15
+        },
+        "strategy": "ascending_weight"
+      },
+      "currentWeight": null,
+      "targetWeight": null,
+      "active": true
+    },
+    {
+      "id": "pallof_press",
+      "name": "Pallof Press",
+      "categories": ["core", "functional"],
+      "muscleGroups": ["obliques", "deep_core", "shoulders"],
+      "equipment": "cable_or_band",
+      "type": "core",
+      "description": "Anti-rotation core exercise that develops trunk stability.",
+      "notes": [
+        "Keep the torso facing forward.",
+        "Resist rotation rather than moving through the torso.",
+        "Use controlled repetitions."
+      ],
+      "tracking": {
+        "weight": true,
+        "reps": true,
+        "effort": true
+      },
+      "weightTracking": {
+        "unit": "kg",
+        "mode": "stack"
+      },
+      "progression": {
+        "repRange": {
+          "min": 10,
+          "max": 12
+        },
+        "strategy": "ascending_weight"
+      },
+      "currentWeight": null,
+      "targetWeight": null,
+      "active": true
+    },
+    {
+      "id": "hanging_knee_raise",
+      "name": "Hanging Knee Raise",
+      "categories": ["core", "functional"],
+      "muscleGroups": ["abdominals", "hip_flexors"],
+      "equipment": "bodyweight",
+      "type": "core",
+      "description": "Core exercise emphasizing abdominal control and hip flexion.",
+      "notes": [
+        "Avoid excessive swinging.",
+        "Control the lowering phase.",
+        "Focus on curling the pelvis upward rather than simply lifting the knees."
+      ],
+      "tracking": {
+        "weight": false,
+        "reps": true,
+        "effort": true
+      },
+      "weightTracking": {
+        "unit": "kg",
+        "mode": "bodyweight"
+      },
+      "progression": {
+        "repRange": {
+          "min": 8,
+          "max": 15
+        },
+        "strategy": "rep_progression"
+      },
+      "currentWeight": null,
+      "targetWeight": null,
+      "active": true
+    },
+    {
+      "id": "cable_crunch",
+      "name": "Cable Crunch",
+      "categories": ["core", "abs"],
+      "muscleGroups": ["abdominals"],
+      "equipment": "cable",
+      "type": "core",
+      "description": "Loaded abdominal flexion exercise for progressive core strength.",
+      "notes": [
+        "Move through the spine rather than simply pulling the rope downward.",
+        "Control the eccentric.",
+        "Avoid using the hips to generate momentum."
+      ],
+      "tracking": {
+        "weight": true,
+        "reps": true,
+        "effort": true
+      },
+      "weightTracking": {
+        "unit": "kg",
+        "mode": "stack"
+      },
+      "progression": {
+        "repRange": {
+          "min": 10,
+          "max": 15
+        },
+        "strategy": "ascending_weight"
+      },
+      "currentWeight": null,
+      "targetWeight": null,
+      "active": true
+    },
+    {
+      "id": "farmers_carry",
+      "name": "Farmer's Carry",
+      "categories": ["functional", "core", "grip", "traps"],
+      "muscleGroups": ["grip", "traps", "core", "forearms"],
+      "equipment": "dumbbell_or_kettlebell",
+      "type": "functional",
+      "description": "Loaded carry developing grip, trunk stability, posture and general work capacity.",
+      "notes": [
+        "Walk with controlled steps.",
+        "Keep the torso upright.",
+        "Avoid excessive leaning.",
+        "Increase distance or load gradually."
+      ],
+      "tracking": {
+        "weight": true,
+        "reps": false,
+        "effort": true,
+        "duration": true,
+        "distance": true
+      },
+      "weightTracking": {
+        "unit": "kg",
+        "mode": "per_hand"
+      },
+      "progression": {
+        "repRange": null,
+        "strategy": "load_or_distance_progression"
+      },
+      "currentWeight": null,
+      "targetWeight": null,
+      "active": true
+    },
+    {
+      "id": "clean_and_press",
+      "name": "Clean and Press",
+      "categories": ["functional", "full_body", "shoulders"],
+      "muscleGroups": [
+        "legs",
+        "glutes",
+        "traps",
+        "shoulders",
+        "triceps",
+        "core"
+      ],
+      "equipment": "barbell_or_dumbbell",
+      "type": "functional",
+      "description": "Explosive full-body movement combining a clean with an overhead press.",
+      "notes": [
+        "Treat this as a skill and power movement rather than a fatigue exercise.",
+        "Use a light to moderate load while learning the movement.",
+        "Perform the clean with controlled technique.",
+        "Do not perform heavy repetitions after significant lower-back fatigue."
+      ],
+      "tracking": {
+        "weight": true,
+        "reps": true,
+        "effort": true
+      },
+      "weightTracking": {
+        "unit": "kg",
+        "mode": "total"
+      },
+      "progression": {
+        "repRange": {
+          "min": 3,
+          "max": 5
+        },
+        "strategy": "ascending_weight"
+      },
+      "currentWeight": null,
+      "targetWeight": null,
+      "active": true
+    }
+  ]
+}

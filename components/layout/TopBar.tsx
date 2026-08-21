@@ -1,6 +1,6 @@
 "use client";
 
-import { LogOut, Settings } from "lucide-react";
+import { Dumbbell, LogOut, Settings } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -60,6 +60,11 @@ export default function TopBar() {
           <DropdownMenuItem onClick={() => router.push("/settings")}>
             <Settings className="mr-2 h-4 w-4" />
             Settings
+          </DropdownMenuItem>
+
+          <DropdownMenuItem onClick={() => router.push("/workouts")}>
+            <Dumbbell className="mr-2 h-4 w-4" />
+            Workouts
           </DropdownMenuItem>
 
           <DropdownMenuSeparator />

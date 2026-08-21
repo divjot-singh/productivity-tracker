@@ -7,6 +7,10 @@ const items = [
     href: "/dashboard",
   },
   {
+    title: "Workouts",
+    href: "/workouts",
+  },
+  {
     title: "Today's Entry",
     href: "/today",
   },
