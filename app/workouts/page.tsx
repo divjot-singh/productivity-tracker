@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { ArrowDown, ArrowUp, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
@@ -79,7 +79,7 @@ function getTargetProgress(topWeight: number, targetWeight: number) {
   return Math.min(100, Math.round((topWeight / targetWeight) * 100));
 }
 
-export default function WorkoutsLogPage() {
+function WorkoutsLogPageContent() {
   const { user } = useRequireAuth();
   const searchParams = useSearchParams();
 
@@ -824,5 +824,17 @@ export default function WorkoutsLogPage() {
         </>
       )}
     </div>
+  );
+}
+
+export default function WorkoutsLogPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="text-muted-foreground p-6 text-sm">Loading workout...</div>
+      }
+    >
+      <WorkoutsLogPageContent />
+    </Suspense>
   );
 }
