@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { ArrowDown, ArrowUp, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
+import DateSelector from "@/components/today/DateSelector";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import Link from "next/link";
@@ -93,6 +94,7 @@ function WorkoutsLogPageContent() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [hasSavedWorkout, setHasSavedWorkout] = useState(false);
+  const [workoutDates, setWorkoutDates] = useState<Set<string>>(new Set());
   const [exerciseDetails, setExerciseDetails] = useState<{
     name: string;
     description?: string;
@@ -155,6 +157,26 @@ function WorkoutsLogPageContent() {
 
     load();
   }, [selectedDate, user]);
+
+  useEffect(() => {
+    async function loadWorkoutDates() {
+      if (!user) {
+        return;
+      }
+
+      try {
+        const workouts = await apiRequest<WorkoutEntry[]>(
+          user,
+          "/api/workouts",
+        );
+        setWorkoutDates(new Set(workouts.map((item) => item.date)));
+      } catch (error) {
+        console.error(error);
+      }
+    }
+
+    loadWorkoutDates();
+  }, [user]);
 
   const exerciseMap = useMemo(() => {
     return new Map(exercises.map((exercise) => [exercise.id, exercise]));
@@ -365,6 +387,7 @@ function WorkoutsLogPageContent() {
       });
 
       setHasSavedWorkout(true);
+      setWorkoutDates((prev) => new Set(prev).add(selectedDate));
       toast.success("Workout saved");
     } catch (error) {
       console.error(error);
@@ -388,6 +411,11 @@ function WorkoutsLogPageContent() {
 
       setWorkout(createEmptyWorkout(selectedDate));
       setHasSavedWorkout(false);
+      setWorkoutDates((prev) => {
+        const next = new Set(prev);
+        next.delete(selectedDate);
+        return next;
+      });
       toast.success("Workout deleted");
     } catch (error) {
       console.error(error);
@@ -404,7 +432,7 @@ function WorkoutsLogPageContent() {
   const selectedCombinationId = workout.combinationIds[0] ?? "";
 
   return (
-    <div className="flex h-[calc(100dvh-14.5rem)] min-h-0 flex-col overflow-hidden pb-[env(safe-area-inset-bottom)]">
+    <div className="flex h-[calc(100dvh-14.5rem)] min-h-0 flex-col overflow-hidden">
       {loading ? (
         <div className="text-muted-foreground p-6 text-sm">
           Loading workout...
@@ -416,10 +444,11 @@ function WorkoutsLogPageContent() {
               <div className="grid gap-3 sm:grid-cols-2">
                 <div className="space-y-2">
                   <Label>Date</Label>
-                  <Input
-                    type="date"
-                    value={selectedDate}
-                    onChange={(e) => setSelectedDate(e.target.value)}
+                  <DateSelector
+                    selectedDate={selectedDate}
+                    hasEntry={hasSavedWorkout}
+                    entryDates={workoutDates}
+                    onChange={setSelectedDate}
                   />
                 </div>
 
@@ -831,7 +860,9 @@ export default function WorkoutsLogPage() {
   return (
     <Suspense
       fallback={
-        <div className="text-muted-foreground p-6 text-sm">Loading workout...</div>
+        <div className="text-muted-foreground p-6 text-sm">
+          Loading workout...
+        </div>
       }
     >
       <WorkoutsLogPageContent />

@@ -164,7 +164,7 @@ export default function WorkoutsProgressPage() {
   }, [dateQuery, selectedCombinationId, selectedExerciseId, sortBy, workouts]);
 
   return (
-    <div className="space-y-6 pb-4">
+    <div className="space-y-6 pb-17">
       <div>
         <h2 className="text-xl font-semibold tracking-tight">Progress</h2>
         <p className="text-muted-foreground mt-1 text-sm">

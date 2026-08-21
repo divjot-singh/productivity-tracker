@@ -174,7 +174,7 @@ export default function CombinationDetailPage() {
   }
 
   return (
-    <div className="pb-4">
+    <div className="pb-17">
       <div className="mb-6 flex items-center justify-between">
         <button
           onClick={() => router.back()}

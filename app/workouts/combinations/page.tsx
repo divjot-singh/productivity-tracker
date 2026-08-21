@@ -56,7 +56,7 @@ export default function WorkoutCombinationsPage() {
   }, [exercises]);
 
   return (
-    <div className="space-y-6 pb-4">
+    <div className="space-y-6 pb-17">
       <div>
         <h2 className="text-xl font-semibold tracking-tight">Combinations</h2>
         <p className="text-muted-foreground mt-1 text-sm">

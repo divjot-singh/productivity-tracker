@@ -81,7 +81,7 @@ export default function NewExercisePage() {
   }
 
   return (
-    <div className="pb-4">
+    <div className="pb-17">
       <button
         onClick={() => router.back()}
         className="text-muted-foreground hover:text-foreground mb-6 inline-flex items-center gap-1 text-sm transition-colors"
