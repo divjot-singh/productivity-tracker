@@ -34,6 +34,7 @@ export function buildVisualization(
     goals,
     entries,
     exercises: [],
+    combinations: [],
     workouts: [],
   });
 
