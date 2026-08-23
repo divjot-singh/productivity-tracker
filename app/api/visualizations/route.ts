@@ -8,6 +8,7 @@ import {
   normalizeVisualizationOptions,
   validateVisualizationDefinition,
 } from "@/lib/visualizations/validation";
+import { getExercises } from "@/repositories/exercises.server.repository";
 import { getGoals } from "@/repositories/goals.server.repository";
 import {
   createVisualization,
@@ -46,8 +47,12 @@ export async function POST(request: NextRequest) {
 
     const body = (await request.json()) as Partial<VisualizationDefinition>;
 
-    const goals = await getGoals(user.uid);
+    const [goals, exercises] = await Promise.all([
+      getGoals(user.uid),
+      getExercises(user.uid, { includeInactive: true }),
+    ]);
     const goalLabels = goals.map((goal) => goal.label);
+    const exerciseIds = exercises.map((exercise) => exercise.id);
 
     const scope = body.scope!;
 
@@ -88,6 +93,7 @@ export async function POST(request: NextRequest) {
 
     const errors = validateVisualizationDefinition(definition, {
       goalLabels,
+      exerciseIds,
     });
 
     if (errors.length > 0) {

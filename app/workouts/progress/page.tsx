@@ -40,6 +40,10 @@ function getTargetProgress(topWeight: number, targetWeight: number) {
   return Math.min(100, Math.round((topWeight / targetWeight) * 100));
 }
 
+function getWarmupSetCount(exerciseEntry: WorkoutExerciseEntry) {
+  return exerciseEntry.sets.filter((setEntry) => setEntry.isWarmup).length;
+}
+
 export default function WorkoutsProgressPage() {
   const { user } = useRequireAuth();
 
@@ -163,6 +167,46 @@ export default function WorkoutsProgressPage() {
     });
   }, [dateQuery, selectedCombinationId, selectedExerciseId, sortBy, workouts]);
 
+  const overallSummary = useMemo(() => {
+    return filteredWorkouts.reduce(
+      (summary, workout) => {
+        const totalSets = workout.exercises.reduce(
+          (sum, exercise) => sum + exercise.sets.length,
+          0,
+        );
+        const warmupSets = workout.exercises.reduce(
+          (sum, exercise) => sum + getWarmupSetCount(exercise),
+          0,
+        );
+        const volume = workout.exercises.reduce(
+          (exerciseSum, exercise) =>
+            exerciseSum +
+            exercise.sets.reduce((setSum, setEntry) => {
+              if (setEntry.weight === null || setEntry.reps === null) {
+                return setSum;
+              }
+
+              return setSum + setEntry.weight * setEntry.reps;
+            }, 0),
+          0,
+        );
+
+        return {
+          workouts: summary.workouts + 1,
+          sets: summary.sets + totalSets,
+          warmupSets: summary.warmupSets + warmupSets,
+          volume: summary.volume + volume,
+        };
+      },
+      {
+        workouts: 0,
+        sets: 0,
+        warmupSets: 0,
+        volume: 0,
+      },
+    );
+  }, [filteredWorkouts]);
+
   return (
     <div className="space-y-6 pb-17">
       <div>
@@ -185,6 +229,29 @@ export default function WorkoutsProgressPage() {
         </div>
       ) : (
         <div className="space-y-4">
+          <div className="grid gap-2 sm:grid-cols-4">
+            <div className="bg-card rounded-2xl border px-3 py-2.5">
+              <p className="text-muted-foreground text-xs">Workouts</p>
+              <p className="text-sm font-semibold">{overallSummary.workouts}</p>
+            </div>
+            <div className="bg-card rounded-2xl border px-3 py-2.5">
+              <p className="text-muted-foreground text-xs">Sets</p>
+              <p className="text-sm font-semibold">{overallSummary.sets}</p>
+            </div>
+            <div className="bg-card rounded-2xl border px-3 py-2.5">
+              <p className="text-muted-foreground text-xs">Warm-up sets</p>
+              <p className="text-sm font-semibold">
+                {overallSummary.warmupSets}
+              </p>
+            </div>
+            <div className="bg-card rounded-2xl border px-3 py-2.5">
+              <p className="text-muted-foreground text-xs">Volume</p>
+              <p className="text-sm font-semibold">
+                {Math.round(overallSummary.volume)}
+              </p>
+            </div>
+          </div>
+
           <div className="bg-card rounded-2xl border p-4">
             <div className="grid gap-3 sm:grid-cols-4">
               <input
@@ -346,6 +413,9 @@ export default function WorkoutsProgressPage() {
                           Boolean(exercise?.description) || Boolean(notes);
                         const weightUnit =
                           exercise?.weightTracking.unit ?? "kg";
+                        const warmupSets = getWarmupSetCount(exerciseEntry);
+                        const workingSets =
+                          exerciseEntry.sets.length - warmupSets;
 
                         return (
                           <div
@@ -354,6 +424,11 @@ export default function WorkoutsProgressPage() {
                           >
                             <p className="text-sm font-medium">
                               {exercise?.name ?? exerciseEntry.exerciseId}
+                            </p>
+                            <p className="text-muted-foreground mt-1 text-[11px]">
+                              {workingSets} working set
+                              {workingSets === 1 ? "" : "s"} • {warmupSets}{" "}
+                              warm-up set{warmupSets === 1 ? "" : "s"}
                             </p>
                             {hasExerciseDetails ? (
                               <Button

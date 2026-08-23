@@ -95,12 +95,16 @@ export default function WorkoutDateInsightsPage() {
     }
 
     let totalSets = 0;
+    let warmupSets = 0;
     let totalVolume = 0;
     let effortSum = 0;
     let effortCount = 0;
 
     for (const exerciseEntry of workout.exercises) {
       totalSets += exerciseEntry.sets.length;
+      warmupSets += exerciseEntry.sets.filter(
+        (setEntry) => setEntry.isWarmup,
+      ).length;
 
       for (const setEntry of exerciseEntry.sets) {
         totalVolume += getSetVolume(setEntry);
@@ -113,6 +117,7 @@ export default function WorkoutDateInsightsPage() {
 
     return {
       totalSets,
+      warmupSets,
       totalVolume,
       avgEffort: effortCount > 0 ? effortSum / effortCount : null,
     };
@@ -184,6 +189,10 @@ export default function WorkoutDateInsightsPage() {
           </div>
         </div>
 
+        <p className="text-muted-foreground mt-2 text-xs">
+          Warm-up sets included: {summary.warmupSets}
+        </p>
+
         {summary.avgEffort !== null ? (
           <p className="text-muted-foreground mt-3 text-xs">
             Average effort: {summary.avgEffort.toFixed(1)} / 5
@@ -243,6 +252,11 @@ export default function WorkoutDateInsightsPage() {
                   >
                     <p className="text-sm font-medium">Set {setIndex + 1}</p>
                     <div className="text-muted-foreground flex items-center gap-3 text-xs">
+                      {setEntry.isWarmup ? (
+                        <span>Warm-up</span>
+                      ) : (
+                        <span>Working</span>
+                      )}
                       <span>{setEntry.weight ?? "-"} kg</span>
                       <ChevronRight className="h-3 w-3" />
                       <span>{setEntry.reps ?? "-"} reps</span>

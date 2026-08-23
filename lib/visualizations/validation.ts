@@ -10,6 +10,7 @@ import {
   VisualizationScope,
   VisualizationWidget,
 } from "@/models/visualization";
+import { parseExerciseVisualizationKey } from "./exercise-keys";
 import { normalizeVisualizationKey } from "./utils";
 
 export interface AllowedCombination {
@@ -33,7 +34,7 @@ export const VISUALIZATION_COMBINATIONS: Partial<
     stat: {
       widgets: ["stat-card"],
       keys: ["score", "xp"],
-      aggregations: ["latest", "sum", "average", "count"],
+      aggregations: ["latest", "max", "sum", "average", "count"],
       options: { comparison: true },
     },
     trend: {
@@ -59,7 +60,7 @@ export const VISUALIZATION_COMBINATIONS: Partial<
     stat: {
       widgets: ["stat-card"],
       keys: "*",
-      aggregations: ["latest", "sum", "average", "count"],
+      aggregations: ["latest", "max", "sum", "average", "count"],
       options: { comparison: true },
     },
     trend: {
@@ -121,10 +122,61 @@ export const VISUALIZATION_COMBINATIONS: Partial<
       options: {},
     },
   },
+  exercise: {
+    stat: {
+      widgets: ["stat-card"],
+      keys: "*",
+      aggregations: ["latest", "max", "sum", "average", "count"],
+      options: { comparison: true },
+    },
+    trend: {
+      widgets: ["line-chart", "bar-chart", "area-chart", "radar-chart"],
+      keys: "*",
+      aggregations: ["daily"],
+      options: {},
+    },
+    progress: {
+      widgets: ["progress-bar", "progress-ring"],
+      keys: "*",
+      aggregations: ["latest", "max"],
+      options: {},
+    },
+    streak: {
+      widgets: ["stat-card"],
+      keys: "*",
+      aggregations: ["streak"],
+      options: {},
+    },
+    leaderboard: {
+      widgets: ["leaderboard"],
+      keys: "*",
+      aggregations: ["max"],
+      options: {},
+    },
+    heatmap: {
+      widgets: ["heatmap"],
+      keys: "*",
+      aggregations: ["daily"],
+      options: {},
+    },
+    timeline: {
+      widgets: ["timeline"],
+      keys: "*",
+      aggregations: ["daily"],
+      options: { greenIfDeltaPositive: true },
+    },
+    insight: {
+      widgets: ["insight-card"],
+      keys: "*",
+      aggregations: ["average"],
+      options: {},
+    },
+  },
 };
 
 export interface ValidationContext {
   goalLabels?: string[];
+  exerciseIds?: string[];
 }
 
 const PROVIDER_SCOPE_MAP: Record<
@@ -135,6 +187,7 @@ const PROVIDER_SCOPE_MAP: Record<
   metric: ["goal"],
   goal: ["goal"],
   category: ["category"],
+  exercise: ["goal"],
 };
 
 const COMPARISON_VALUES: VisualizationOptions["comparison"][] = [
@@ -251,19 +304,37 @@ export function validateVisualizationDefinition(
     );
   }
 
-  if (
-    combination.keys === "*" &&
-    context?.goalLabels?.length &&
-    !definition.options?.streakRule &&
-    !context.goalLabels.some(
-      (label) =>
-        normalizeVisualizationKey(label) ===
-        normalizeVisualizationKey(definition.key),
-    )
-  ) {
-    errors.push(
-      `Key '${definition.key}' does not match any existing goal label.`,
-    );
+  if (combination.keys === "*" && !definition.options?.streakRule) {
+    if (
+      (definition.provider === "metric" || definition.provider === "goal") &&
+      context?.goalLabels?.length &&
+      !context.goalLabels.some(
+        (label) =>
+          normalizeVisualizationKey(label) ===
+          normalizeVisualizationKey(definition.key),
+      )
+    ) {
+      errors.push(
+        `Key '${definition.key}' does not match any existing goal label.`,
+      );
+    }
+
+    if (definition.provider === "exercise") {
+      const parsedKey = parseExerciseVisualizationKey(definition.key);
+
+      if (!parsedKey) {
+        errors.push(
+          `Key '${definition.key}' is not a valid exercise visualization key.`,
+        );
+      } else if (
+        context?.exerciseIds?.length &&
+        !context.exerciseIds.includes(parsedKey.exerciseId)
+      ) {
+        errors.push(
+          `Exercise '${parsedKey.exerciseId}' referenced in key does not exist.`,
+        );
+      }
+    }
   }
 
   if (!combination.aggregations.includes(definition.aggregation)) {

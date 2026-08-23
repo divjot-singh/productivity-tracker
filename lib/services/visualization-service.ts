@@ -1,6 +1,11 @@
 import { DailyEntry } from "@/models/entry";
 import { MetricDefinition } from "@/models/metric";
 import {
+  ExerciseDefinition,
+  WorkoutCombination,
+  WorkoutEntry,
+} from "@/models/workout";
+import {
   VisualizationDefinition,
   VisualizationResponse,
 } from "@/models/visualization";
@@ -19,6 +24,9 @@ export class VisualizationService {
     definitions: VisualizationDefinition[],
     goals: MetricDefinition[],
     entries: DailyEntry[],
+    workouts: WorkoutEntry[],
+    exercises: ExerciseDefinition[],
+    combinations: WorkoutCombination[],
   ): Promise<VisualizationResponse[]> {
     const responses = await Promise.all(
       definitions
@@ -42,6 +50,9 @@ export class VisualizationService {
             visualization: definition,
             goals,
             entries: filteredEntries,
+            workouts,
+            exercises,
+            combinations,
           };
 
           const data = await provider.getData(context);

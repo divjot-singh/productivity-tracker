@@ -2,6 +2,12 @@ import { DailyEntry } from "@/models/entry";
 import { MetricDefinition } from "@/models/metric";
 import { VisualizationDefinition } from "@/models/visualization";
 import { EntryValue } from "@/models/entry";
+import {
+  ExerciseDefinition,
+  WorkoutCombination,
+  WorkoutEntry,
+} from "@/models/workout";
+import { ExerciseVisualizationMetricKey } from "@/lib/visualizations/exercise-keys";
 
 export interface DataPoint {
   date: string;
@@ -121,12 +127,38 @@ export interface CategoryProviderData {
   items?: LeaderboardItem[];
 }
 
+/* -------------------------------------------------------------------------- */
+/*                                  EXERCISE                                  */
+/* -------------------------------------------------------------------------- */
+
+export interface ExerciseHistoryData {
+  id: string;
+
+  label: string;
+
+  metric: ExerciseVisualizationMetricKey;
+
+  target?: number | null;
+
+  valueKind: "number";
+
+  unit?: string;
+
+  values: StatValuePoint[];
+}
+
 export interface ProviderContext {
   visualization: VisualizationDefinition;
 
   goals: MetricDefinition[];
 
   entries: DailyEntry[];
+
+  exercises: ExerciseDefinition[];
+
+  combinations: WorkoutCombination[];
+
+  workouts: WorkoutEntry[];
 }
 
 export interface VisualizationProvider<T> {

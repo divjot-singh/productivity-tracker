@@ -4,6 +4,7 @@ import { entryProvider } from "./entry-provider";
 import { metricHistoryProvider } from "./metric-history-provider";
 import { categoryProvider } from "./category-provider";
 import { goalProvider } from "./goal-provider";
+import { exerciseProvider } from "./exercise-provider";
 
 export const providerRegistry: Record<
   VisualizationProviderType,
@@ -13,4 +14,5 @@ export const providerRegistry: Record<
   metric: metricHistoryProvider,
   goal: goalProvider,
   category: categoryProvider,
+  exercise: exerciseProvider,
 };

@@ -8,6 +8,7 @@ import {
   validateVisualizationDefinition,
   VISUALIZATION_COMBINATIONS,
 } from "@/lib/visualizations/validation";
+import { getExercises } from "@/repositories/exercises.server.repository";
 import { getGoals } from "@/repositories/goals.server.repository";
 import {
   deleteVisualization,
@@ -115,10 +116,17 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
       );
     }
 
-    const goals = await getGoals(user.uid);
+    const [goals, exercises] = await Promise.all([
+      getGoals(user.uid),
+      getExercises(user.uid, { includeInactive: true }),
+    ]);
     const goalLabels = goals.map((goal) => goal.label);
+    const exerciseIds = exercises.map((exercise) => exercise.id);
 
-    const errors = validateVisualizationDefinition(updated, { goalLabels });
+    const errors = validateVisualizationDefinition(updated, {
+      goalLabels,
+      exerciseIds,
+    });
 
     if (errors.length > 0) {
       return NextResponse.json({ error: errors.join(" ") }, { status: 400 });

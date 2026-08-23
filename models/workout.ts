@@ -52,6 +52,8 @@ export interface WorkoutCombination {
   id: string;
   name: string;
   description?: string;
+  coachingNotes?: string;
+  warmupGuidance?: string;
   exerciseIds: string[];
   active: boolean;
 }
@@ -60,6 +62,7 @@ export interface WorkoutSetEntry {
   weight: number | null;
   reps: number | null;
   effort: 1 | 2 | 3 | 4 | 5 | null;
+  isWarmup: boolean;
 }
 
 export interface WorkoutExerciseEntry {

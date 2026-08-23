@@ -9,6 +9,8 @@ export interface ComparisonData {
 export interface StatCardData {
   value: number | string;
 
+  valueDate?: string;
+
   unit?: string;
 
   comparison?: ComparisonData;
@@ -72,6 +74,7 @@ export interface LeaderboardData {
     score?: number;
     weight?: number;
     percentage?: number;
+    unit?: string;
   }[];
 }
 

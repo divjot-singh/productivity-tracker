@@ -169,6 +169,8 @@ export function normalizeCombinationPayload(
     id: createWorkoutId(idSource),
     name,
     description: value.description?.trim() || undefined,
+    coachingNotes: value.coachingNotes?.trim() || undefined,
+    warmupGuidance: value.warmupGuidance?.trim() || undefined,
     exerciseIds: normalizeStringArray(value.exerciseIds),
     active: value.active ?? true,
   };
@@ -226,6 +228,7 @@ export function normalizeWorkoutSet(
     weight: Number.isFinite(weight) ? weight : null,
     reps: Number.isFinite(reps) ? reps : null,
     effort,
+    isWarmup: Boolean(value?.isWarmup ?? false),
   };
 }
 

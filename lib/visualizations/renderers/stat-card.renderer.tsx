@@ -7,7 +7,7 @@ import { formatCompactNumber, VisualizationCard } from "./rendering-utils";
 export default function StatCardRenderer({
   visualization,
 }: VisualizationRendererProps<StatCardData>) {
-  const { value, unit, comparison, streak } = visualization.data;
+  const { value, valueDate, unit, comparison, streak } = visualization.data;
 
   return (
     <VisualizationCard
@@ -45,6 +45,10 @@ export default function StatCardRenderer({
             <span className="text-muted-foreground mb-1 text-sm">{unit}</span>
           ) : null}
         </div>
+
+        {valueDate ? (
+          <p className="text-muted-foreground text-xs">On {valueDate}</p>
+        ) : null}
 
         {streak && typeof value === "number" && value > 0 ? (
           <div className="flex flex-wrap items-center gap-2">

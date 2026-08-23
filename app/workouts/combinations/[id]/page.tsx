@@ -230,6 +230,34 @@ export default function CombinationDetailPage() {
         </div>
 
         <div className="space-y-2">
+          <Label>Coaching Notes</Label>
+          <Textarea
+            disabled={!isEditing}
+            value={combination.coachingNotes ?? ""}
+            onChange={(e) =>
+              setCombination((prev) =>
+                prev ? { ...prev, coachingNotes: e.target.value } : prev,
+              )
+            }
+            placeholder="Execution cues for this day"
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label>Warm-up Guidance</Label>
+          <Textarea
+            disabled={!isEditing}
+            value={combination.warmupGuidance ?? ""}
+            onChange={(e) =>
+              setCombination((prev) =>
+                prev ? { ...prev, warmupGuidance: e.target.value } : prev,
+              )
+            }
+            placeholder="How to warm up before the first working sets"
+          />
+        </div>
+
+        <div className="space-y-2">
           <Label>Exercises</Label>
 
           {isEditing ? (

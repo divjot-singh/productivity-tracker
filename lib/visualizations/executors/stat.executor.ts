@@ -7,11 +7,28 @@ export const statExecutor: VisualizationExecutor = {
     const { values, unit } = data as ProviderData;
 
     let value: number | string = "-";
+    let valueDate: string | undefined;
 
     switch (visualization.aggregation) {
       case "latest":
         value = values.at(-1)?.value ?? "-";
+        valueDate = values.at(-1)?.date;
         break;
+
+      case "max": {
+        if (values.length === 0) {
+          value = "-";
+          break;
+        }
+
+        const best = values.reduce((currentMax, item) =>
+          item.value > currentMax.value ? item : currentMax,
+        );
+
+        value = best.value;
+        valueDate = best.date;
+        break;
+      }
 
       case "sum":
         value = values.reduce((sum, item) => sum + item.value, 0);
@@ -104,9 +121,18 @@ export const statExecutor: VisualizationExecutor = {
       subtitle: visualization.description,
       data: {
         value,
+        valueDate: valueDate ? formatDate(valueDate) : undefined,
         unit,
         comparison,
       },
     };
   },
 };
+
+function formatDate(value: string) {
+  return new Date(value).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+}

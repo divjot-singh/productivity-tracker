@@ -37,6 +37,8 @@ import {
   VisualizationWidget,
 } from "@/models/visualization";
 import { MetricDefinition } from "@/models/metric";
+import { ExerciseDefinition, WorkoutCombination } from "@/models/workout";
+import { getExerciseVisualizationKeyOptions } from "@/lib/visualizations/exercise-keys";
 import { toast } from "sonner";
 import VisualizationFieldLabel from "@/components/settings/VisualizationFieldLabel";
 
@@ -68,6 +70,10 @@ export default function VisualizationDetailPage() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [goals, setGoals] = useState<MetricDefinition[]>([]);
   const [goalsLoading, setGoalsLoading] = useState(true);
+  const [exercises, setExercises] = useState<ExerciseDefinition[]>([]);
+  const [combinations, setCombinations] = useState<WorkoutCombination[]>([]);
+  const [exercisesLoading, setExercisesLoading] = useState(true);
+  const [combinationsLoading, setCombinationsLoading] = useState(true);
 
   useEffect(() => {
     async function load() {
@@ -94,22 +100,38 @@ export default function VisualizationDetailPage() {
   }, [id, user]);
 
   useEffect(() => {
-    async function loadGoals() {
+    async function loadOptions() {
       if (!user) return;
 
       try {
         setGoalsLoading(true);
-        const data = await apiRequest<MetricDefinition[]>(user, "/api/goals");
-        setGoals(data ?? []);
+        setExercisesLoading(true);
+        setCombinationsLoading(true);
+        const [goalData, exerciseData, combinationData] = await Promise.all([
+          apiRequest<MetricDefinition[]>(user, "/api/goals"),
+          apiRequest<ExerciseDefinition[]>(
+            user,
+            "/api/exercises?includeInactive=true",
+          ),
+          apiRequest<WorkoutCombination[]>(
+            user,
+            "/api/combinations?includeInactive=true",
+          ),
+        ]);
+        setGoals(goalData ?? []);
+        setExercises(exerciseData ?? []);
+        setCombinations(combinationData ?? []);
       } catch (e) {
         console.error(e);
-        toast.error("Failed to load goals");
+        toast.error("Failed to load visualization options");
       } finally {
         setGoalsLoading(false);
+        setExercisesLoading(false);
+        setCombinationsLoading(false);
       }
     }
 
-    loadGoals();
+    loadOptions();
   }, [user]);
 
   const widgetsByScope = useMemo(() => {
@@ -164,15 +186,29 @@ export default function VisualizationDetailPage() {
 
   const keyOptions = useMemo(() => {
     if (!visualization) return [];
-    return getKeyOptions(visualization.provider, goals);
-  }, [visualization, goals]);
+    return getKeyOptions(
+      visualization.provider,
+      goals,
+      exercises,
+      combinations,
+    );
+  }, [visualization, goals, exercises, combinations]);
+
+  const optionsLoading =
+    goalsLoading || exercisesLoading || combinationsLoading;
 
   const isCompositeStreak = Boolean(visualization?.options?.streakRule);
 
   function updateVisualization(partial: Partial<VisualizationDefinition>) {
     setVisualization((previous) =>
       previous
-        ? reconcileVisualization({ ...previous, ...partial }, previous, goals)
+        ? reconcileVisualization(
+            { ...previous, ...partial },
+            previous,
+            goals,
+            exercises,
+            combinations,
+          )
         : previous,
     );
   }
@@ -339,7 +375,7 @@ export default function VisualizationDetailPage() {
       </div>
 
       <div className="bg-card relative mb-6 overflow-hidden rounded-3xl border">
-        <div className="from-primary/15 via-primary/5 to-background h-28 bg-gradient-to-r" />
+        <div className="from-primary/15 via-primary/5 to-background h-28 bg-linear-to-r" />
 
         <div className="-mt-10 px-6 pb-6 sm:px-8">
           <div className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
@@ -488,9 +524,9 @@ export default function VisualizationDetailPage() {
                 <VisualizationFieldLabel topic="data" htmlFor="key">
                   Data Key
                 </VisualizationFieldLabel>
-                {goalsLoading ? (
+                {optionsLoading ? (
                   <div className="text-muted-foreground text-sm">
-                    Loading goals...
+                    Loading options...
                   </div>
                 ) : (
                   <div className="relative">
@@ -770,7 +806,7 @@ export default function VisualizationDetailPage() {
             </Button>
 
             <Button
-              className="flex-[2]"
+              className="flex-2"
               onClick={handleSave}
               disabled={saving || !hasChanges || !canSave}
             >
@@ -873,6 +909,8 @@ function reconcileVisualization(
   draft: VisualizationDefinition,
   previous: VisualizationDefinition,
   goals: MetricDefinition[],
+  exercises: ExerciseDefinition[],
+  combinations: WorkoutCombination[],
 ): VisualizationDefinition {
   const widgetsForScope = getWidgetsForScope(draft.scope);
 
@@ -887,6 +925,8 @@ function reconcileVisualization(
     draft,
     previous,
     goals,
+    exercises,
+    combinations,
   );
 
   const active =
@@ -917,7 +957,13 @@ function reconcileVisualization(
 
   const normalizedKey = isComposite
     ? INTERNAL_COMPOSITE_STREAK_KEY
-    : ensureValidKey(draft.key, active.provider, goals);
+    : ensureValidKey(
+        draft.key,
+        active.provider,
+        goals,
+        exercises,
+        combinations,
+      );
 
   const options = normalizeVisualizationOptions(
     draft.options,
@@ -938,6 +984,8 @@ function getCompatibleProviderExecutorCandidates(
   draft: VisualizationDefinition,
   previous: VisualizationDefinition,
   goals: MetricDefinition[],
+  exercises: ExerciseDefinition[],
+  combinations: WorkoutCombination[],
 ): ProviderExecutorOption[] {
   const candidates = getProviderExecutorOptionsFor(draft.scope, draft.widget);
   const isComposite = Boolean(draft.options?.streakRule);
@@ -969,7 +1017,13 @@ function getCompatibleProviderExecutorCandidates(
       return true;
     }
 
-    return isKeyAllowedForProvider(draft.key, candidate.provider, goals);
+    return isKeyAllowedForProvider(
+      draft.key,
+      candidate.provider,
+      goals,
+      exercises,
+      combinations,
+    );
   });
 
   if (keyCompatibleCandidates.length > 0) {
@@ -1054,6 +1108,8 @@ function getWidgetsForScope(scope: VisualizationScope): VisualizationWidget[] {
 function getKeyOptions(
   provider: VisualizationProviderType,
   goals: MetricDefinition[],
+  exercises: ExerciseDefinition[],
+  combinations: WorkoutCombination[],
 ): Array<{ value: string; label: string }> {
   if (provider === "entry") {
     return [
@@ -1066,6 +1122,10 @@ function getKeyOptions(
     return [{ value: "all", label: "All categories" }];
   }
 
+  if (provider === "exercise") {
+    return getExerciseVisualizationKeyOptions(exercises, combinations);
+  }
+
   return goals.map((goal) => ({
     value: goal.label,
     label: goal.label,
@@ -1076,8 +1136,10 @@ function ensureValidKey(
   key: string,
   provider: VisualizationProviderType,
   goals: MetricDefinition[],
+  exercises: ExerciseDefinition[],
+  combinations: WorkoutCombination[],
 ): string {
-  const options = getKeyOptions(provider, goals);
+  const options = getKeyOptions(provider, goals, exercises, combinations);
 
   if (options.some((option) => option.value === key)) {
     return key;
@@ -1090,8 +1152,10 @@ function isKeyAllowedForProvider(
   key: string,
   provider: VisualizationProviderType,
   goals: MetricDefinition[],
+  exercises: ExerciseDefinition[],
+  combinations: WorkoutCombination[],
 ): boolean {
-  const options = getKeyOptions(provider, goals);
+  const options = getKeyOptions(provider, goals, exercises, combinations);
   return options.some((option) => option.value === key);
 }
 

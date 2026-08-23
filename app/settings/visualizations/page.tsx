@@ -88,26 +88,48 @@ export default function VisualizationsPage() {
     load();
   }, [user]);
 
-  const grouped = useMemo(() => {
-    const groups: Record<VisualizationScope, VisualizationDefinition[]> = {
-      global: [],
-      goal: [],
-      category: [],
-    };
+  const sections = useMemo(() => {
+    const global = visualizations
+      .filter((visualization) => visualization.scope === "global")
+      .toSorted((a, b) => a.displayOrder - b.displayOrder);
 
-    for (const visualization of visualizations) {
-      if (!groups[visualization.scope]) {
-        continue;
-      }
+    const workouts = visualizations
+      .filter((visualization) => visualization.provider === "exercise")
+      .toSorted((a, b) => a.displayOrder - b.displayOrder);
 
-      groups[visualization.scope].push(visualization);
-    }
+    const goals = visualizations
+      .filter(
+        (visualization) =>
+          visualization.scope === "goal" &&
+          visualization.provider !== "exercise",
+      )
+      .toSorted((a, b) => a.displayOrder - b.displayOrder);
 
-    for (const scope of SCOPE_ORDER) {
-      groups[scope].sort((a, b) => a.displayOrder - b.displayOrder);
-    }
+    const categories = visualizations
+      .filter((visualization) => visualization.scope === "category")
+      .toSorted((a, b) => a.displayOrder - b.displayOrder);
 
-    return groups;
+    return [
+      {
+        id: "global",
+        label: "Global",
+        color: SCOPE_COLORS.global,
+        items: global,
+      },
+      {
+        id: "workouts",
+        label: "Workouts",
+        color: "bg-fuchsia-500",
+        items: workouts,
+      },
+      { id: "goal", label: "Goals", color: SCOPE_COLORS.goal, items: goals },
+      {
+        id: "category",
+        label: "Categories",
+        color: SCOPE_COLORS.category,
+        items: categories,
+      },
+    ];
   }, [visualizations]);
 
   return (
@@ -170,23 +192,21 @@ export default function VisualizationsPage() {
           </div>
         ) : (
           <div className="space-y-8">
-            {SCOPE_ORDER.map((scope) => {
-              const items = grouped[scope];
+            {sections.map((section) => {
+              const items = section.items;
 
               if (items.length === 0) {
                 return null;
               }
 
               return (
-                <section key={scope}>
+                <section key={section.id}>
                   <div className="mb-3 flex items-center gap-2">
                     <div
-                      className={`h-2.5 w-2.5 rounded-full ${SCOPE_COLORS[scope]}`}
+                      className={`h-2.5 w-2.5 rounded-full ${section.color}`}
                     />
 
-                    <h2 className="text-lg font-semibold">
-                      {SCOPE_LABELS[scope]}
-                    </h2>
+                    <h2 className="text-lg font-semibold">{section.label}</h2>
                   </div>
 
                   <div className="bg-card overflow-hidden rounded-2xl border border-zinc-800">

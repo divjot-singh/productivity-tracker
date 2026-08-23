@@ -18,6 +18,8 @@ const DEFAULT_COMBINATION: WorkoutCombination = {
   id: "",
   name: "",
   description: "",
+  coachingNotes: "",
+  warmupGuidance: "",
   exerciseIds: [],
   active: true,
 };
@@ -145,6 +147,34 @@ export default function NewCombinationPage() {
               }))
             }
             placeholder="Optional description"
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label>Coaching Notes</Label>
+          <Textarea
+            value={combination.coachingNotes ?? ""}
+            onChange={(e) =>
+              setCombination((prev) => ({
+                ...prev,
+                coachingNotes: e.target.value,
+              }))
+            }
+            placeholder="Execution cues for this day"
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label>Warm-up Guidance</Label>
+          <Textarea
+            value={combination.warmupGuidance ?? ""}
+            onChange={(e) =>
+              setCombination((prev) => ({
+                ...prev,
+                warmupGuidance: e.target.value,
+              }))
+            }
+            placeholder="How to warm up before the first working sets"
           />
         </div>
 

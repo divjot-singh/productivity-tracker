@@ -9,7 +9,7 @@ export type VisualizationPeriod =
       type: "all";
     };
 export type VisualizationProviderType =
-  "entry" | "metric" | "goal" | "category";
+  "entry" | "metric" | "goal" | "category" | "exercise";
 export type VisualizationExecutorType =
   | "trend"
   | "progress"
@@ -47,6 +47,7 @@ export interface VisualizationOptions {
 
 export type VisualizationAggregation =
   | "latest"
+  | "max"
   | "sum"
   | "average"
   | "count"

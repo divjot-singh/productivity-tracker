@@ -42,7 +42,11 @@ export default function LeaderboardRenderer({
 
             <div className="text-right">
               <p className="text-base font-semibold">
-                {formatCompactNumber(item.value)}%
+                {formatCompactNumber(item.value)}
+                {item.percentage !== undefined ? "%" : ""}
+                {item.percentage === undefined && item.unit
+                  ? ` ${item.unit}`
+                  : ""}
               </p>
 
               {item.score !== undefined && item.weight !== undefined ? (

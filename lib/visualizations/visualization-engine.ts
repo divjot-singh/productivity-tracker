@@ -33,6 +33,8 @@ export function buildVisualization(
     visualization,
     goals,
     entries,
+    exercises: [],
+    workouts: [],
   });
 
   return executor.execute(visualization, rawData);

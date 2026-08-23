@@ -30,6 +30,8 @@ import {
   VisualizationWidget,
 } from "@/models/visualization";
 import { MetricDefinition } from "@/models/metric";
+import { ExerciseDefinition, WorkoutCombination } from "@/models/workout";
+import { getExerciseVisualizationKeyOptions } from "@/lib/visualizations/exercise-keys";
 import { toast } from "sonner";
 
 const INTERNAL_COMPOSITE_STREAK_KEY = "__composite_streak__";
@@ -50,6 +52,10 @@ export default function NewVisualizationPage() {
 
   const [goals, setGoals] = useState<MetricDefinition[]>([]);
   const [goalsLoading, setGoalsLoading] = useState(true);
+  const [exercises, setExercises] = useState<ExerciseDefinition[]>([]);
+  const [combinations, setCombinations] = useState<WorkoutCombination[]>([]);
+  const [exercisesLoading, setExercisesLoading] = useState(true);
+  const [combinationsLoading, setCombinationsLoading] = useState(true);
   const [creating, setCreating] = useState(false);
 
   const [visualization, setVisualization] = useState<VisualizationDefinition>({
@@ -68,22 +74,38 @@ export default function NewVisualizationPage() {
   });
 
   useEffect(() => {
-    async function loadGoals() {
+    async function loadOptions() {
       if (!user) return;
 
       try {
         setGoalsLoading(true);
-        const data = await apiRequest<MetricDefinition[]>(user, "/api/goals");
-        setGoals(data ?? []);
+        setExercisesLoading(true);
+        setCombinationsLoading(true);
+        const [goalData, exerciseData, combinationData] = await Promise.all([
+          apiRequest<MetricDefinition[]>(user, "/api/goals"),
+          apiRequest<ExerciseDefinition[]>(
+            user,
+            "/api/exercises?includeInactive=true",
+          ),
+          apiRequest<WorkoutCombination[]>(
+            user,
+            "/api/combinations?includeInactive=true",
+          ),
+        ]);
+        setGoals(goalData ?? []);
+        setExercises(exerciseData ?? []);
+        setCombinations(combinationData ?? []);
       } catch (e) {
         console.error(e);
-        toast.error("Failed to load goals");
+        toast.error("Failed to load visualization options");
       } finally {
         setGoalsLoading(false);
+        setExercisesLoading(false);
+        setCombinationsLoading(false);
       }
     }
 
-    loadGoals();
+    loadOptions();
   }, [user]);
 
   const widgetsByScope = useMemo(() => {
@@ -156,8 +178,13 @@ export default function NewVisualizationPage() {
   }, [visualization.scope, visualization.widget]);
 
   const keyOptions = useMemo(() => {
-    return getKeyOptions(visualization.provider, goals);
-  }, [visualization.provider, goals]);
+    return getKeyOptions(
+      visualization.provider,
+      goals,
+      exercises,
+      combinations,
+    );
+  }, [visualization.provider, goals, exercises, combinations]);
 
   const combination = useMemo(() => {
     return VISUALIZATION_COMBINATIONS[visualization.provider]?.[
@@ -191,7 +218,7 @@ export default function NewVisualizationPage() {
       scope: newScope,
       provider: first.provider,
       executor: first.executor,
-      key: getDefaultKey(first.provider, goals),
+      key: getDefaultKey(first.provider, goals, exercises, combinations),
       aggregation: getDefaultAggregation(first.provider, first.executor),
       options: undefined,
     });
@@ -211,7 +238,7 @@ export default function NewVisualizationPage() {
       widget: newWidget,
       provider: first.provider,
       executor: first.executor,
-      key: getDefaultKey(first.provider, goals),
+      key: getDefaultKey(first.provider, goals, exercises, combinations),
       aggregation: getDefaultAggregation(first.provider, first.executor),
       options: undefined,
     });
@@ -226,7 +253,7 @@ export default function NewVisualizationPage() {
     updateVisualization({
       provider,
       executor,
-      key: getDefaultKey(provider, goals),
+      key: getDefaultKey(provider, goals, exercises, combinations),
       aggregation: getDefaultAggregation(provider, executor),
       options: undefined,
     });
@@ -293,6 +320,9 @@ export default function NewVisualizationPage() {
     (isCompositeStreak || visualization.key.trim().length > 0) &&
     hasValidPeriod &&
     hasValidDisplayOrder;
+
+  const optionsLoading =
+    goalsLoading || exercisesLoading || combinationsLoading;
 
   return (
     <AppShell>
@@ -439,9 +469,9 @@ export default function NewVisualizationPage() {
               <VisualizationFieldLabel topic="data" htmlFor="key">
                 Data
               </VisualizationFieldLabel>
-              {goalsLoading ? (
+              {optionsLoading ? (
                 <div className="text-muted-foreground text-sm">
-                  Loading goals...
+                  Loading options...
                 </div>
               ) : (
                 <div className="relative">
@@ -610,7 +640,7 @@ export default function NewVisualizationPage() {
             </Button>
 
             <Button
-              className="flex-[2]"
+              className="flex-2"
               onClick={handleSubmit}
               disabled={creating || !canSubmit}
             >
@@ -717,6 +747,8 @@ function providerExecutorOptionsFor(
 function getKeyOptions(
   provider: VisualizationProviderType,
   goals: MetricDefinition[],
+  exercises: ExerciseDefinition[],
+  combinations: WorkoutCombination[],
 ): Array<{ value: string; label: string }> {
   if (provider === "entry") {
     return [
@@ -729,6 +761,10 @@ function getKeyOptions(
     return [{ value: "all", label: "All categories" }];
   }
 
+  if (provider === "exercise") {
+    return getExerciseVisualizationKeyOptions(exercises, combinations);
+  }
+
   return goals.map((goal) => ({
     value: goal.label,
     label: goal.label,
@@ -738,9 +774,17 @@ function getKeyOptions(
 function getDefaultKey(
   provider: VisualizationProviderType,
   goals: MetricDefinition[],
+  exercises: ExerciseDefinition[],
+  combinations: WorkoutCombination[],
 ): string {
   if (provider === "entry") return "score";
   if (provider === "category") return "all";
+  if (provider === "exercise") {
+    return (
+      getExerciseVisualizationKeyOptions(exercises, combinations)[0]?.value ??
+      ""
+    );
+  }
   return goals[0]?.label ?? "";
 }
 
