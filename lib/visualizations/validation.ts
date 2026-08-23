@@ -177,6 +177,7 @@ export const VISUALIZATION_COMBINATIONS: Partial<
 export interface ValidationContext {
   goalLabels?: string[];
   exerciseIds?: string[];
+  combinationIds?: string[];
 }
 
 const PROVIDER_SCOPE_MAP: Record<
@@ -326,12 +327,21 @@ export function validateVisualizationDefinition(
         errors.push(
           `Key '${definition.key}' is not a valid exercise visualization key.`,
         );
+      } else if (parsedKey.entityType === "exercise") {
+        if (
+          context?.exerciseIds?.length &&
+          !context.exerciseIds.includes(parsedKey.entityId)
+        ) {
+          errors.push(
+            `Exercise '${parsedKey.entityId}' referenced in key does not exist.`,
+          );
+        }
       } else if (
-        context?.exerciseIds?.length &&
-        !context.exerciseIds.includes(parsedKey.exerciseId)
+        context?.combinationIds?.length &&
+        !context.combinationIds.includes(parsedKey.entityId)
       ) {
         errors.push(
-          `Exercise '${parsedKey.exerciseId}' referenced in key does not exist.`,
+          `Combination '${parsedKey.entityId}' referenced in key does not exist.`,
         );
       }
     }

@@ -10,6 +10,7 @@ import {
 } from "@/lib/visualizations/validation";
 import { getExercises } from "@/repositories/exercises.server.repository";
 import { getGoals } from "@/repositories/goals.server.repository";
+import { getCombinations } from "@/repositories/combinations.server.repository";
 import {
   deleteVisualization,
   getVisualizationDefinition,
@@ -116,16 +117,19 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
       );
     }
 
-    const [goals, exercises] = await Promise.all([
+    const [goals, exercises, combinations] = await Promise.all([
       getGoals(user.uid),
       getExercises(user.uid, { includeInactive: true }),
+      getCombinations(user.uid, { includeInactive: true }),
     ]);
     const goalLabels = goals.map((goal) => goal.label);
     const exerciseIds = exercises.map((exercise) => exercise.id);
+    const combinationIds = combinations.map((combination) => combination.id);
 
     const errors = validateVisualizationDefinition(updated, {
       goalLabels,
       exerciseIds,
+      combinationIds,
     });
 
     if (errors.length > 0) {
