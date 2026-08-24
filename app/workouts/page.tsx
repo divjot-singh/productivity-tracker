@@ -1,8 +1,20 @@
 "use client";
 
 import { Suspense, useEffect, useMemo, useState } from "react";
-import { useSearchParams } from "next/navigation";
-import { ArrowDown, ArrowUp, Plus, Trash2 } from "lucide-react";
+import { useRouter, useSearchParams } from "next/navigation";
+import {
+  ArrowDown,
+  ArrowUp,
+  ChartNoAxesCombined,
+  Check,
+  ChevronRight,
+  Info,
+  Plus,
+  Save,
+  Trash,
+  Trash2,
+} from "lucide-react";
+import { Slider } from "@/components/ui/slider";
 import { toast } from "sonner";
 
 import DateSelector from "@/components/today/DateSelector";
@@ -18,7 +30,6 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { Textarea } from "@/components/ui/textarea";
-import { EFFORT_OPTIONS } from "@/lib/workouts/constants";
 import { useRequireAuth } from "@/lib/hooks/useRequireAuth";
 import { apiRequest } from "@/lib/api/client";
 import { cn } from "@/lib/utils";
@@ -90,8 +101,13 @@ function getTargetProgress(topWeight: number, targetWeight: number) {
   return Math.min(100, Math.round((topWeight / targetWeight) * 100));
 }
 
+function hasRecordedSet(setEntry: WorkoutSetEntry) {
+  return setEntry.weight !== null && setEntry.reps !== null;
+}
+
 function WorkoutsLogPageContent() {
   const { user } = useRequireAuth();
+  const router = useRouter();
   const searchParams = useSearchParams();
 
   const [selectedDate, setSelectedDate] = useState(getTodayDateString);
@@ -101,12 +117,17 @@ function WorkoutsLogPageContent() {
   const [combinations, setCombinations] = useState<WorkoutCombination[]>([]);
   const [exercises, setExercises] = useState<ExerciseDefinition[]>([]);
   const [manualExerciseId, setManualExerciseId] = useState("");
+  const [exerciseQuery, setExerciseQuery] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [hasSavedWorkout, setHasSavedWorkout] = useState(false);
   const [workoutDates, setWorkoutDates] = useState<Set<string>>(new Set());
   const [allWorkouts, setAllWorkouts] = useState<WorkoutEntry[]>([]);
   const [activeExerciseIndex, setActiveExerciseIndex] = useState(0);
+  const [isSummarySheetOpen, setIsSummarySheetOpen] = useState(false);
+  const [isNotesDialogOpen, setIsNotesDialogOpen] = useState(false);
+  const [isAddExerciseSheetOpen, setIsAddExerciseSheetOpen] = useState(false);
+  const [isEffortGuideOpen, setIsEffortGuideOpen] = useState(false);
   const [exerciseDetails, setExerciseDetails] = useState<{
     name: string;
     description?: string;
@@ -216,6 +237,31 @@ function WorkoutsLogPageContent() {
     );
     return exercises.filter((exercise) => !existingIds.has(exercise.id));
   }, [exercises, workout.exercises]);
+
+  const searchableManualExercises = useMemo(() => {
+    const normalizedQuery = exerciseQuery.trim().toLowerCase();
+
+    if (normalizedQuery.length === 0) {
+      return availableManualExercises;
+    }
+
+    return availableManualExercises.filter((exercise) => {
+      const haystack = [
+        exercise.name,
+        exercise.description,
+        exercise.equipment,
+        exercise.type,
+        ...(exercise.categories ?? []),
+        ...(exercise.muscleGroups ?? []),
+        ...(exercise.notes ?? []),
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
+
+      return haystack.includes(normalizedQuery);
+    });
+  }, [availableManualExercises, exerciseQuery]);
 
   const workoutValidationErrors = useMemo(() => {
     return validateWorkout({
@@ -371,13 +417,13 @@ function WorkoutsLogPageContent() {
   }
 
   function moveExercise(index: number, direction: -1 | 1) {
+    const nextIndex = index + direction;
+
+    if (nextIndex < 0 || nextIndex >= workout.exercises.length) {
+      return;
+    }
+
     setWorkout((prev) => {
-      const nextIndex = index + direction;
-
-      if (nextIndex < 0 || nextIndex >= prev.exercises.length) {
-        return prev;
-      }
-
       const nextExercises = [...prev.exercises];
       const [item] = nextExercises.splice(index, 1);
       nextExercises.splice(nextIndex, 0, item);
@@ -387,6 +433,9 @@ function WorkoutsLogPageContent() {
         exercises: nextExercises,
       };
     });
+
+    // Keep the moved exercise in view by following it to its new index.
+    setActiveExerciseIndex(nextIndex);
   }
 
   function updateExerciseEntry(
@@ -528,8 +577,30 @@ function WorkoutsLogPageContent() {
     }
   }
 
-  const totalSets = workout.exercises.reduce(
-    (sum, exercise) => sum + exercise.sets.length,
+  async function handleSaveAndAddSet() {
+    if (!activeExerciseEntry) {
+      return;
+    }
+
+    await handleSave("Set added and workout saved");
+    addSet(activeExerciseIndex);
+  }
+
+  async function handleSaveAndNext() {
+    await handleSave(
+      `${activeExercise?.name ?? "Exercise"} saved. Moved to next exercise.`,
+    );
+
+    setActiveExerciseIndex((current) =>
+      Math.min(workout.exercises.length - 1, current + 1),
+    );
+  }
+
+  const recordedExerciseCount = workout.exercises.filter((exercise) =>
+    exercise.sets.some(hasRecordedSet),
+  ).length;
+  const recordedSetCount = workout.exercises.reduce(
+    (sum, exercise) => sum + exercise.sets.filter(hasRecordedSet).length,
     0,
   );
   const totalWarmupSets = workout.exercises.reduce(
@@ -538,6 +609,7 @@ function WorkoutsLogPageContent() {
     0,
   );
   const selectedCombinationId = workout.combinationIds[0] ?? "";
+  const hasSelectedCombination = selectedCombinationId.length > 0;
   const activeExerciseEntry =
     workout.exercises.length > 0
       ? workout.exercises[
@@ -563,9 +635,31 @@ function WorkoutsLogPageContent() {
     activeTargetWeight !== null
       ? getTargetProgress(activeTopWeight, activeTargetWeight)
       : null;
+  const activeSetCount = activeExerciseEntry?.sets.length ?? 0;
+  const activeRecordedSetCount = activeExerciseEntry
+    ? activeExerciseEntry.sets.filter(hasRecordedSet).length
+    : 0;
+  const activeWarmupSetCount = activeExerciseEntry
+    ? activeExerciseEntry.sets.filter((setEntry) => setEntry.isWarmup).length
+    : 0;
+
+  const activeExerciseRepRange = activeExercise?.progression.repRange;
+  const effortGuide = [
+    { effort: 1 as const, label: "Very easy", rir: "5+ RIR" },
+    { effort: 2 as const, label: "Easy", rir: "4–5 RIR" },
+    { effort: 3 as const, label: "Moderate", rir: "3–4 RIR" },
+    { effort: 4 as const, label: "Hard", rir: "1–2 RIR" },
+    { effort: 5 as const, label: "Max", rir: "0–1 RIR" },
+  ];
+  const summaryCards = [
+    { label: "Recorded exercises", value: recordedExerciseCount },
+    { label: "Recorded sets", value: recordedSetCount },
+    { label: "Warm-up sets", value: totalWarmupSets },
+    { label: "Status", value: hasSavedWorkout ? "Loaded" : "New" },
+  ];
 
   return (
-    <div className="flex h-[calc(100dvh-14.5rem)] min-h-0 flex-col overflow-hidden">
+    <div className="flex h-[calc(100dvh-11rem)] min-h-0 flex-col overflow-hidden">
       {loading ? (
         <div className="text-muted-foreground p-6 text-sm">
           Loading workout...
@@ -574,53 +668,102 @@ function WorkoutsLogPageContent() {
         <>
           <div className="min-h-0 flex-1 space-y-3 overflow-y-auto pb-4">
             <section className="bg-card rounded-2xl border p-4">
-              <div className="grid gap-3 sm:grid-cols-2">
-                <div className="space-y-2">
-                  <Label>Date</Label>
+              <div className="flex items-center justify-between gap-3">
+                <div className="text-left">
+                  <p className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
+                    Workout log
+                  </p>
+                  <h1 className="text-lg font-semibold tracking-tight">
+                    {selectedDate}
+                  </h1>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <Button
+                    type="button"
+                    size="icon"
+                    variant="outline"
+                    onClick={() => setIsNotesDialogOpen(true)}
+                  >
+                    <Save className="h-4 w-4" />
+                  </Button>
+
+                  {hasSavedWorkout ? (
+                    <Button
+                      type="button"
+                      size="icon"
+                      variant="destructive"
+                      onClick={handleDeleteWorkout}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  ) : null}
+                </div>
+              </div>
+
+              {/* Exercise progress */}
+              <div className="bg-background/60 mt-4 rounded-xl border p-3">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <p className="text-muted-foreground text-[11px] font-semibold tracking-wide uppercase">
+                      Exercise progress
+                    </p>
+                    <p className="mt-0.5 text-sm font-semibold">
+                      {recordedExerciseCount} / {workout.exercises.length}{" "}
+                      completed
+                    </p>
+                  </div>
+
+                  <p className="text-muted-foreground text-xs">
+                    {recordedSetCount} sets · {totalWarmupSets} warm-ups
+                  </p>
+                </div>
+
+                <div className="bg-muted mt-3 h-2 w-full overflow-hidden rounded-full">
+                  <div
+                    className="bg-primary h-full rounded-full transition-all"
+                    style={{
+                      width: `${
+                        workout.exercises.length > 0
+                          ? Math.min(
+                              100,
+                              Math.round(
+                                (recordedExerciseCount /
+                                  workout.exercises.length) *
+                                  100,
+                              ),
+                            )
+                          : 0
+                      }%`,
+                    }}
+                  />
+                </div>
+              </div>
+
+              {/* Date navigation + insights */}
+              <div className="mt-4 flex flex-col items-center justify-center gap-3">
+                <div className="min-w-0 flex-1">
+                  <Label className="text-muted-foreground mb-2 block text-xs">
+                    Workout date
+                  </Label>
+
                   <DateSelector
                     selectedDate={selectedDate}
                     hasEntry={hasSavedWorkout}
                     entryDates={workoutDates}
                     onChange={setSelectedDate}
+                    subContent={
+                      <Link
+                        href={`/workouts/${selectedDate}`}
+                        aria-label="View date insights"
+                        title="View date insights"
+                        className="border-input bg-background hover:bg-accent hover:text-accent-foreground inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-[10px] border transition-colors"
+                      >
+                        <ChartNoAxesCombined className="h-4 w-4" />
+                      </Link>
+                    }
                   />
                 </div>
-
-                <div className="space-y-2">
-                  <Label>Status</Label>
-                  <div className="text-muted-foreground rounded-xl border px-3 py-2 text-xs">
-                    {hasSavedWorkout
-                      ? "Existing workout loaded"
-                      : "New workout for this date"}
-                  </div>
-                </div>
-              </div>
-
-              <div className="mt-3 grid gap-2 sm:grid-cols-2">
-                <div className="rounded-xl border px-3 py-2">
-                  <p className="text-muted-foreground text-xs">Exercises</p>
-                  <p className="text-sm font-semibold">
-                    {workout.exercises.length}
-                  </p>
-                </div>
-
-                <div className="rounded-xl border px-3 py-2">
-                  <p className="text-muted-foreground text-xs">Total sets</p>
-                  <p className="text-sm font-semibold">{totalSets}</p>
-                </div>
-
-                <div className="rounded-xl border px-3 py-2 sm:col-span-2">
-                  <p className="text-muted-foreground text-xs">Warm-up sets</p>
-                  <p className="text-sm font-semibold">{totalWarmupSets}</p>
-                </div>
-              </div>
-
-              <div className="mt-3">
-                <Link
-                  href={`/workouts/${selectedDate}`}
-                  className="text-primary text-xs font-medium underline-offset-2 hover:underline"
-                >
-                  View this date insights
-                </Link>
               </div>
             </section>
 
@@ -651,387 +794,558 @@ function WorkoutsLogPageContent() {
                 ) : null}
 
                 {selectedCombination ? (
-                  <div className="mt-2 space-y-2 rounded-xl border p-3">
-                    {selectedCombination.description ? (
-                      <div>
-                        <p className="text-xs font-semibold">Day overview</p>
-                        <p className="text-muted-foreground mt-1 text-xs">
-                          {selectedCombination.description}
-                        </p>
-                      </div>
-                    ) : null}
+                  <details className="mt-2 rounded-xl border p-3">
+                    <summary className="cursor-pointer text-xs font-semibold">
+                      Combination notes
+                    </summary>
 
-                    {selectedCombination.coachingNotes ? (
-                      <div>
-                        <p className="text-xs font-semibold">Coaching notes</p>
-                        <p className="text-muted-foreground mt-1 text-xs">
-                          {selectedCombination.coachingNotes}
-                        </p>
-                      </div>
-                    ) : null}
+                    <div className="mt-3 space-y-2">
+                      {selectedCombination.description ? (
+                        <div>
+                          <p className="text-xs font-semibold">Day overview</p>
+                          <p className="text-muted-foreground mt-1 text-xs">
+                            {selectedCombination.description}
+                          </p>
+                        </div>
+                      ) : null}
 
-                    {selectedCombination.warmupGuidance ? (
-                      <div>
-                        <p className="text-xs font-semibold">
-                          Warm-up guidance
-                        </p>
-                        <p className="text-muted-foreground mt-1 text-xs">
-                          {selectedCombination.warmupGuidance}
-                        </p>
-                      </div>
-                    ) : null}
-                  </div>
+                      {selectedCombination.coachingNotes ? (
+                        <div>
+                          <p className="text-xs font-semibold">
+                            Coaching notes
+                          </p>
+                          <p className="text-muted-foreground mt-1 text-xs">
+                            {selectedCombination.coachingNotes}
+                          </p>
+                        </div>
+                      ) : null}
+
+                      {selectedCombination.warmupGuidance ? (
+                        <div>
+                          <p className="text-xs font-semibold">
+                            Warm-up guidance
+                          </p>
+                          <p className="text-muted-foreground mt-1 text-xs">
+                            {selectedCombination.warmupGuidance}
+                          </p>
+                        </div>
+                      ) : null}
+                    </div>
+                  </details>
                 ) : null}
               </div>
             </section>
 
-            <section className="space-y-4">
-              {workout.exercises.length > 0 ? (
-                <div className="bg-card space-y-3 rounded-2xl border p-3">
-                  <div>
-                    <p className="text-xs font-medium">Exercise flow</p>
-                    <p className="text-muted-foreground text-xs">
-                      Exercise {activeExerciseIndex + 1} of{" "}
-                      {workout.exercises.length} -{" "}
-                      {exerciseMap.get(
-                        workout.exercises[activeExerciseIndex]?.exerciseId ??
-                          "",
-                      )?.name ??
-                        workout.exercises[activeExerciseIndex]?.exerciseId}
-                    </p>
-                  </div>
+            {!hasSelectedCombination ? (
+              <section className="bg-card text-muted-foreground rounded-2xl border p-8 text-center text-sm">
+                Select a workout combination to unlock the logging flow.
+              </section>
+            ) : (
+              <section className="space-y-4">
+                {workout.exercises.length > 0 ? (
+                  <div className="bg-background sticky top-0 z-20 space-y-2 pb-2">
+                    <div className="bg-card rounded-2xl border p-3">
+                      <div className="mb-3 flex items-center justify-between gap-2">
+                        <div>
+                          <p className="text-xs font-semibold">Workout flow</p>
+                          <p className="text-muted-foreground text-xs">
+                            {selectedCombination?.name ??
+                              "Combination selected"}
+                          </p>
+                        </div>
 
-                  <div className="flex flex-wrap gap-2">
-                    {workout.exercises.map((exerciseEntry, exerciseIndex) => (
-                      <Button
-                        key={`${exerciseEntry.exerciseId}-${exerciseIndex}`}
-                        type="button"
-                        variant={
-                          exerciseIndex === activeExerciseIndex
-                            ? "default"
-                            : "outline"
-                        }
-                        size="sm"
-                        onClick={() => setActiveExerciseIndex(exerciseIndex)}
-                      >
-                        {exerciseIndex + 1}
-                      </Button>
-                    ))}
-                  </div>
-
-                  <div className="flex gap-2">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      disabled={activeExerciseIndex <= 0}
-                      onClick={() =>
-                        setActiveExerciseIndex((current) =>
-                          Math.max(0, current - 1),
-                        )
-                      }
-                    >
-                      Previous
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      disabled={
-                        activeExerciseIndex >= workout.exercises.length - 1
-                      }
-                      onClick={() =>
-                        setActiveExerciseIndex((current) =>
-                          Math.min(workout.exercises.length - 1, current + 1),
-                        )
-                      }
-                    >
-                      Next
-                    </Button>
-                  </div>
-                </div>
-              ) : null}
-
-              {workout.exercises.length === 0 ? (
-                <div className="bg-card text-muted-foreground rounded-2xl border p-8 text-center text-sm">
-                  Select combinations or add exercises manually to start
-                  today&apos;s workout.
-                </div>
-              ) : activeExerciseEntry ? (
-                <div className="bg-card rounded-2xl border p-4">
-                  <div className="mb-4 flex items-start justify-between gap-3">
-                    <div>
-                      <h2 className="font-semibold">
-                        {activeExercise?.name ?? activeExerciseEntry.exerciseId}
-                      </h2>
-                      <p className="text-muted-foreground text-xs">
-                        {activeExercise?.categories.join(", ") ?? ""}
-                      </p>
-                      {Boolean(activeExercise?.description) ||
-                      Boolean(activeExerciseNotes) ? (
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          className="text-muted-foreground mt-1 h-auto px-0 text-xs"
-                          onClick={() =>
-                            setExerciseDetails({
-                              name:
-                                activeExercise?.name ??
-                                activeExerciseEntry.exerciseId,
-                              description: activeExercise?.description,
-                              notes: activeExerciseNotes || undefined,
-                            })
-                          }
-                        >
-                          View details
-                        </Button>
-                      ) : null}
-                    </div>
-
-                    <div className="flex gap-2">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        disabled={activeExerciseIndex <= 0}
-                        onClick={() => moveExercise(activeExerciseIndex, -1)}
-                      >
-                        <ArrowUp className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        disabled={
-                          activeExerciseIndex >= workout.exercises.length - 1
-                        }
-                        onClick={() => moveExercise(activeExerciseIndex, 1)}
-                      >
-                        <ArrowDown className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="destructive"
-                        size="sm"
-                        onClick={() => removeExercise(activeExerciseIndex)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-
-                  {activeProgressPercent !== null ? (
-                    <div className="mb-4 rounded-xl border p-3">
-                      <div className="mb-1 flex items-center justify-between gap-2">
-                        <p className="text-xs font-medium">Target Progress</p>
-                        <p className="text-muted-foreground text-xs">
-                          {activeTopWeight} / {activeTargetWeight}{" "}
-                          {activeWeightUnit}
-                        </p>
-                      </div>
-                      <div className="bg-muted h-2 w-full overflow-hidden rounded-full">
-                        <div
-                          className="bg-primary h-full rounded-full transition-all"
-                          style={{ width: `${activeProgressPercent}%` }}
-                        />
-                      </div>
-                      <p className="text-muted-foreground mt-1 text-[11px]">
-                        {activeProgressPercent}% of target
-                      </p>
-                    </div>
-                  ) : null}
-
-                  {activePreviousSnapshot ? (
-                    <div className="mb-4 rounded-xl border p-3">
-                      <p className="text-xs font-medium">
-                        Previous working sets
-                      </p>
-                      <p className="text-muted-foreground mt-1 text-xs">
-                        Date: {activePreviousSnapshot.date}
-                      </p>
-                      <p className="text-muted-foreground text-xs">
-                        Weights:{" "}
-                        {activePreviousSnapshot.sets
-                          .map((setEntry) => setEntry.weight)
-                          .join(", ")}
-                      </p>
-                      <div className="mt-2 space-y-1">
-                        {activePreviousSnapshot.sets.map(
-                          (setEntry, setIndex) => (
-                            <p
-                              key={`${activePreviousSnapshot.date}-${setIndex}`}
-                              className="text-muted-foreground text-xs"
-                            >
-                              Set {setIndex + 1}: {setEntry.weight}{" "}
-                              {activeWeightUnit} x {setEntry.reps} reps (volume{" "}
-                              {setEntry.volume})
-                            </p>
-                          ),
-                        )}
-                      </div>
-                    </div>
-                  ) : null}
-
-                  <div className="space-y-3">
-                    {activeExerciseEntry.sets.map((setEntry, setIndex) => (
-                      <div
-                        key={setIndex}
-                        className="space-y-2 rounded-xl border p-3"
-                      >
-                        <div className="grid gap-3 sm:grid-cols-[80px_1fr_1fr_1fr_auto]">
-                          <div className="text-muted-foreground flex items-center text-sm font-medium">
-                            Set {setIndex + 1}
-                          </div>
-
-                          <Input
-                            type="number"
-                            min={0}
-                            value={setEntry.weight ?? ""}
-                            onChange={(e) =>
-                              updateSet(activeExerciseIndex, setIndex, {
-                                weight:
-                                  e.target.value === ""
-                                    ? null
-                                    : Number(e.target.value),
-                              })
-                            }
-                            placeholder="Weight"
-                          />
-
-                          <Input
-                            type="number"
-                            min={1}
-                            value={setEntry.reps ?? ""}
-                            onChange={(e) =>
-                              updateSet(activeExerciseIndex, setIndex, {
-                                reps:
-                                  e.target.value === ""
-                                    ? null
-                                    : Number(e.target.value),
-                              })
-                            }
-                            placeholder="Reps"
-                          />
-
-                          <select
-                            className={NATIVE_SELECT_CLASS}
-                            value={setEntry.effort ?? ""}
-                            onChange={(e) =>
-                              updateSet(activeExerciseIndex, setIndex, {
-                                effort:
-                                  e.target.value === ""
-                                    ? null
-                                    : (Number(
-                                        e.target.value,
-                                      ) as WorkoutSetEntry["effort"]),
-                              })
+                        <div className="flex items-center gap-2">
+                          <Button
+                            type="button"
+                            size="icon"
+                            variant="outline"
+                            onClick={() => setIsNotesDialogOpen(true)}
+                            disabled={
+                              saving || workoutValidationErrors.length > 0
                             }
                           >
-                            <option value="">Effort</option>
-                            {EFFORT_OPTIONS.map((effort) => (
-                              <option key={effort} value={effort}>
-                                {effort}
-                              </option>
-                            ))}
-                          </select>
+                            <Save className="h-4 w-4" />
+                          </Button>
 
                           <Button
                             type="button"
+                            size="icon"
                             variant="outline"
-                            size="sm"
-                            onClick={() =>
-                              removeSet(activeExerciseIndex, setIndex)
-                            }
+                            onClick={() => setIsAddExerciseSheetOpen(true)}
+                            disabled={!hasSelectedCombination}
                           >
-                            Remove
+                            <Plus className="h-4 w-4" />
                           </Button>
+
+                          {hasSavedWorkout ? (
+                            <Button
+                              type="button"
+                              size="icon"
+                              variant="destructive"
+                              onClick={handleDeleteWorkout}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          ) : null}
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-[auto_1fr_auto] items-center gap-2">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          disabled={activeExerciseIndex <= 0}
+                          onClick={() =>
+                            setActiveExerciseIndex((current) =>
+                              Math.max(0, current - 1),
+                            )
+                          }
+                        >
+                          Prev
+                        </Button>
+
+                        <div className="flex gap-2 overflow-x-auto pb-1">
+                          {workout.exercises.map(
+                            (exerciseEntry, exerciseIndex) => (
+                              <Button
+                                key={`${exerciseEntry.exerciseId}-${exerciseIndex}`}
+                                type="button"
+                                variant={
+                                  exerciseIndex === activeExerciseIndex
+                                    ? "default"
+                                    : "outline"
+                                }
+                                size="sm"
+                                onClick={() =>
+                                  setActiveExerciseIndex(exerciseIndex)
+                                }
+                              >
+                                {exerciseIndex + 1}
+                              </Button>
+                            ),
+                          )}
                         </div>
 
-                        <label className="text-muted-foreground inline-flex items-center gap-2 text-xs">
-                          <input
-                            type="checkbox"
-                            checked={setEntry.isWarmup}
-                            onChange={(e) =>
-                              updateSet(activeExerciseIndex, setIndex, {
-                                isWarmup: e.target.checked,
-                              })
-                            }
-                          />
-                          Mark as warm-up set
-                        </label>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          disabled={
+                            activeExerciseIndex >= workout.exercises.length - 1
+                          }
+                          onClick={() =>
+                            setActiveExerciseIndex((current) =>
+                              Math.min(
+                                workout.exercises.length - 1,
+                                current + 1,
+                              ),
+                            )
+                          }
+                        >
+                          Next
+                        </Button>
+                      </div>
+                    </div>
 
-                        {getSetErrors(setEntry).length > 0 ? (
-                          <div className="text-muted-foreground space-y-1 text-xs">
-                            {getSetErrors(setEntry).map((error) => (
-                              <p key={error}>{error}</p>
-                            ))}
+                    {activeExerciseEntry ? (
+                      <div className="bg-card rounded-2xl border p-3">
+                        <div className="mb-3 flex items-start justify-between gap-3">
+                          <div>
+                            <h2 className="font-semibold">
+                              {activeExercise?.name ??
+                                activeExerciseEntry.exerciseId}
+                            </h2>
+                            <p className="text-muted-foreground text-xs">
+                              {activeExercise?.equipment ?? "No equipment"} ·{" "}
+                              {activeWeightUnit}
+                              {activeExerciseRepRange
+                                ? ` · Reps ${activeExerciseRepRange.min}-${activeExerciseRepRange.max}`
+                                : ""}
+                            </p>
+                            {Boolean(activeExercise?.description) ||
+                            Boolean(activeExerciseNotes) ? (
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                className="text-muted-foreground mt-1 h-auto px-0 text-xs"
+                                onClick={() =>
+                                  setExerciseDetails({
+                                    name:
+                                      activeExercise?.name ??
+                                      activeExerciseEntry.exerciseId,
+                                    description: activeExercise?.description,
+                                    notes: activeExerciseNotes || undefined,
+                                  })
+                                }
+                              >
+                                View details
+                              </Button>
+                            ) : null}
+                          </div>
+                          <div className="flex flex-col items-end gap-2">
+                            <div className="flex gap-2">
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                disabled={activeExerciseIndex <= 0}
+                                onClick={() =>
+                                  moveExercise(activeExerciseIndex, -1)
+                                }
+                              >
+                                <ArrowUp className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                disabled={
+                                  activeExerciseIndex >=
+                                  workout.exercises.length - 1
+                                }
+                                onClick={() =>
+                                  moveExercise(activeExerciseIndex, 1)
+                                }
+                              >
+                                <ArrowDown className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                type="button"
+                                variant="destructive"
+                                size="sm"
+                                onClick={() =>
+                                  removeExercise(activeExerciseIndex)
+                                }
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                            <div className="mt-2 flex gap-2">
+                              <span className="rounded-full border px-2.5 py-1 text-[11px] font-medium">
+                                Sets done {activeRecordedSetCount}/
+                                {activeSetCount}
+                              </span>
+                              <span className="text-muted-foreground rounded-full border px-2.5 py-1 text-[11px] font-medium">
+                                Warm-up {activeWarmupSetCount}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {activeProgressPercent !== null ? (
+                          <div className="rounded-xl border p-3">
+                            <div className="mb-1 flex items-center justify-between gap-2">
+                              <p className="text-xs font-medium">
+                                Target Progress
+                              </p>
+                              <p className="text-muted-foreground text-xs">
+                                {activeTopWeight} / {activeTargetWeight}{" "}
+                                {activeWeightUnit}
+                              </p>
+                            </div>
+                            <div className="bg-muted h-2 w-full overflow-hidden rounded-full">
+                              <div
+                                className="bg-primary h-full rounded-full transition-all"
+                                style={{ width: `${activeProgressPercent}%` }}
+                              />
+                            </div>
+                            <p className="text-muted-foreground mt-1 text-[11px]">
+                              {activeProgressPercent}% of target
+                            </p>
                           </div>
                         ) : null}
                       </div>
-                    ))}
+                    ) : null}
+                  </div>
+                ) : null}
 
-                    <div className="flex flex-wrap gap-2">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => addSet(activeExerciseIndex)}
-                      >
-                        <Plus className="mr-1.5 h-4 w-4" />
-                        Add Set
-                      </Button>
+                {workout.exercises.length === 0 ? (
+                  <div className="bg-card text-muted-foreground rounded-2xl border p-8 text-center text-sm">
+                    Selected combination has no exercises. Add one below.
+                  </div>
+                ) : activeExerciseEntry ? (
+                  <div className="bg-card rounded-2xl border p-4">
+                    {activePreviousSnapshot ? (
+                      <div className="mb-4 rounded-xl border p-3">
+                        <p className="text-xs font-medium">
+                          Previous working sets
+                        </p>
+                        <p className="text-muted-foreground mt-1 text-xs">
+                          Date: {activePreviousSnapshot.date}
+                        </p>
+                        <p className="text-muted-foreground text-xs">
+                          Weights:{" "}
+                          {activePreviousSnapshot.sets
+                            .map((setEntry) => setEntry.weight)
+                            .join(", ")}
+                        </p>
+                        <div className="mt-2 space-y-1">
+                          {activePreviousSnapshot.sets.map(
+                            (setEntry, setIndex) => (
+                              <p
+                                key={`${activePreviousSnapshot.date}-${setIndex}`}
+                                className="text-muted-foreground text-xs"
+                              >
+                                Set {setIndex + 1}: {setEntry.weight}{" "}
+                                {activeWeightUnit} x {setEntry.reps} reps
+                                (volume {setEntry.volume})
+                              </p>
+                            ),
+                          )}
+                        </div>
+                      </div>
+                    ) : null}
 
-                      <Button
-                        type="button"
-                        variant="secondary"
-                        size="sm"
-                        onClick={() =>
-                          handleSave(
-                            `${activeExercise?.name ?? "Exercise"} saved`,
-                          )
-                        }
-                      >
-                        Save Exercise
-                      </Button>
+                    <div className="space-y-3">
+                      {activeExerciseEntry.sets.map((setEntry, setIndex) => {
+                        const selectedEffort = effortGuide.find(
+                          (item) => item.effort === setEntry.effort,
+                        );
 
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        disabled={
-                          activeExerciseIndex >= workout.exercises.length - 1
-                        }
-                        onClick={() =>
-                          setActiveExerciseIndex((current) =>
-                            Math.min(workout.exercises.length - 1, current + 1),
-                          )
-                        }
-                      >
-                        Save and Next
-                      </Button>
-                    </div>
+                        return (
+                          <div
+                            key={setIndex}
+                            className="space-y-4 rounded-xl border p-3"
+                          >
+                            {/* Set header */}
+                            <div className="flex items-center justify-between gap-3">
+                              <p className="text-sm font-semibold">
+                                Set {setIndex + 1}
+                              </p>
 
-                    <div className="space-y-2">
-                      <Label>Exercise Notes</Label>
-                      <Textarea
-                        value={activeExerciseEntry.notes ?? ""}
-                        onChange={(e) =>
-                          updateExerciseEntry(activeExerciseIndex, {
-                            notes: e.target.value,
-                          })
-                        }
-                        placeholder="Optional exercise notes"
-                      />
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                className="text-muted-foreground hover:text-destructive h-8 px-2"
+                                onClick={() =>
+                                  removeSet(activeExerciseIndex, setIndex)
+                                }
+                              >
+                                <Trash className="h-4 w-4" />
+                              </Button>
+                            </div>
+
+                            {/* Weight + Reps */}
+                            <div className="grid grid-cols-2 gap-3">
+                              <div className="space-y-1.5">
+                                <Label className="text-muted-foreground text-xs">
+                                  Weight
+                                </Label>
+
+                                <Input
+                                  type="number"
+                                  min={0}
+                                  value={setEntry.weight ?? ""}
+                                  onChange={(e) =>
+                                    updateSet(activeExerciseIndex, setIndex, {
+                                      weight:
+                                        e.target.value === ""
+                                          ? null
+                                          : Number(e.target.value),
+                                    })
+                                  }
+                                  placeholder="Weight"
+                                />
+                              </div>
+
+                              <div className="space-y-1.5">
+                                <Label className="text-muted-foreground text-xs">
+                                  Reps
+                                </Label>
+
+                                <Input
+                                  type="number"
+                                  min={1}
+                                  value={setEntry.reps ?? ""}
+                                  onChange={(e) =>
+                                    updateSet(activeExerciseIndex, setIndex, {
+                                      reps:
+                                        e.target.value === ""
+                                          ? null
+                                          : Number(e.target.value),
+                                    })
+                                  }
+                                  placeholder="Reps"
+                                />
+                              </div>
+                            </div>
+
+                            {/* Effort */}
+                            <div className="space-y-3">
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-1.5">
+                                  <Label className="text-muted-foreground text-xs">
+                                    Effort
+                                  </Label>
+
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="icon"
+                                    className="text-muted-foreground h-6 w-6"
+                                    onClick={() => setIsEffortGuideOpen(true)}
+                                    aria-label="Explain effort and RIR"
+                                  >
+                                    <Info className="h-3.5 w-3.5" />
+                                  </Button>
+                                </div>
+
+                                {selectedEffort ? (
+                                  <div className="text-right">
+                                    <p className="text-sm font-semibold">
+                                      {selectedEffort.rir}
+                                    </p>
+                                    <p className="text-muted-foreground text-[11px]">
+                                      {selectedEffort.label}
+                                    </p>
+                                  </div>
+                                ) : null}
+                              </div>
+
+                              <div className="px-2">
+                                <Slider
+                                  min={1}
+                                  max={5}
+                                  step={1}
+                                  value={[setEntry.effort ?? 0]}
+                                  onValueChange={(value) => {
+                                    const effort = Array.isArray(value)
+                                      ? value[0]
+                                      : value;
+
+                                    updateSet(activeExerciseIndex, setIndex, {
+                                      effort: effort as 1 | 2 | 3 | 4 | 5,
+                                    });
+                                  }}
+                                />
+
+                                <div className="text-muted-foreground mt-2 flex justify-between text-[10px]">
+                                  <span>Very easy</span>
+                                  <span>Max</span>
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Warm-up */}
+                            <Button
+                              type="button"
+                              variant={
+                                setEntry.isWarmup ? "secondary" : "outline"
+                              }
+                              size="sm"
+                              className="w-full"
+                              onClick={() =>
+                                updateSet(activeExerciseIndex, setIndex, {
+                                  isWarmup: !setEntry.isWarmup,
+                                })
+                              }
+                            >
+                              {setEntry.isWarmup
+                                ? "🔥 Warm-up set"
+                                : "Mark as warm-up"}
+                            </Button>
+
+                            {/* Validation */}
+                            {getSetErrors(setEntry).length > 0 ? (
+                              <div className="text-muted-foreground space-y-1 text-xs">
+                                {getSetErrors(setEntry).map((error) => (
+                                  <p key={error}>{error}</p>
+                                ))}
+                              </div>
+                            ) : null}
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
-                </div>
-              ) : null}
-            </section>
+                ) : null}
+              </section>
+            )}
+          </div>
 
-            <section className="bg-card rounded-2xl border p-4">
-              <div className="space-y-2">
-                <Label>Workout Notes</Label>
+          <div className="bg-background shrink-0 border-t pt-3 pb-[calc(env(safe-area-inset-bottom))] lg:pb-1">
+            {workoutValidationErrors.length > 0 && hasSelectedCombination ? (
+              <p className="text-muted-foreground mb-2 text-center text-xs">
+                Fix the highlighted fields before saving.
+              </p>
+            ) : null}
+
+            <div className="flex gap-2">
+              <Button
+                className="h-11 flex-1"
+                onClick={handleSaveAndAddSet}
+                disabled={
+                  !hasSelectedCombination ||
+                  !activeExerciseEntry ||
+                  saving ||
+                  workoutValidationErrors.length > 0
+                }
+              >
+                <Check className="mr-2 h-4 w-4" />
+                {saving ? "Saving..." : "Save & Add Set"}
+              </Button>
+
+              <Button
+                className="h-11 px-5"
+                variant="secondary"
+                onClick={handleSaveAndNext}
+                disabled={
+                  !hasSelectedCombination ||
+                  !activeExerciseEntry ||
+                  saving ||
+                  workoutValidationErrors.length > 0 ||
+                  activeExerciseIndex >= workout.exercises.length - 1
+                }
+              >
+                Next
+                <ChevronRight className="ml-1 h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+
+          <Sheet open={isSummarySheetOpen} onOpenChange={setIsSummarySheetOpen}>
+            <SheetContent side="bottom" className="rounded-t-2xl">
+              <SheetHeader>
+                <SheetTitle>Workout summary</SheetTitle>
+                <SheetDescription>
+                  Status and loaded workout details
+                </SheetDescription>
+              </SheetHeader>
+
+              <div className="space-y-3 px-4 pb-6 text-sm">
+                <div className="grid grid-cols-2 gap-2">
+                  {summaryCards.map((item) => (
+                    <div key={item.label} className="rounded-xl border p-3">
+                      <p className="text-muted-foreground text-[11px] tracking-wide uppercase">
+                        {item.label}
+                      </p>
+                      <p className="text-sm font-semibold">{item.value}</p>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="text-muted-foreground rounded-xl border p-3 text-xs">
+                  {hasSavedWorkout
+                    ? "Existing workout loaded for this date."
+                    : "New workout draft for this date."}
+                </div>
+              </div>
+            </SheetContent>
+          </Sheet>
+
+          <Sheet open={isNotesDialogOpen} onOpenChange={setIsNotesDialogOpen}>
+            <SheetContent side="bottom" className="rounded-t-2xl">
+              <SheetHeader>
+                <SheetTitle>Workout notes</SheetTitle>
+                <SheetDescription>
+                  Optional notes for this workout
+                </SheetDescription>
+              </SheetHeader>
+
+              <div className="space-y-3 px-4 pb-6">
                 <Textarea
                   value={workout.notes ?? ""}
                   onChange={(e) =>
@@ -1040,74 +1354,92 @@ function WorkoutsLogPageContent() {
                       notes: e.target.value,
                     }))
                   }
-                  placeholder="Optional notes for the day"
+                  placeholder="Optional workout notes"
+                  className="min-h-32"
                 />
+
+                <div className="flex gap-2">
+                  <Button
+                    className="flex-1"
+                    onClick={async () => {
+                      await handleSave("Workout saved");
+                      setIsNotesDialogOpen(false);
+                    }}
+                    disabled={
+                      saving ||
+                      workoutValidationErrors.length > 0 ||
+                      !hasSelectedCombination
+                    }
+                  >
+                    {saving ? "Saving..." : "Save Workout"}
+                  </Button>
+
+                  <Button
+                    variant="outline"
+                    onClick={() => setIsNotesDialogOpen(false)}
+                  >
+                    Close
+                  </Button>
+                </div>
               </div>
-            </section>
+            </SheetContent>
+          </Sheet>
 
-            <section className="bg-card rounded-2xl border p-4">
-              <Label className="mb-3 block">Add Exercise</Label>
-              <div className="flex flex-col gap-3 sm:flex-row">
-                <select
-                  className={cn(NATIVE_SELECT_CLASS, "sm:flex-1")}
-                  value={manualExerciseId}
-                  onChange={(e) => setManualExerciseId(e.target.value)}
-                >
-                  <option value="">Select an exercise</option>
-                  {availableManualExercises.map((exercise) => (
-                    <option key={exercise.id} value={exercise.id}>
-                      {exercise.name}
-                    </option>
-                  ))}
-                </select>
+          <Sheet
+            open={isAddExerciseSheetOpen}
+            onOpenChange={setIsAddExerciseSheetOpen}
+          >
+            <SheetContent side="bottom" className="rounded-t-2xl">
+              <SheetHeader>
+                <SheetTitle>Add exercise</SheetTitle>
+                <SheetDescription>
+                  Search the catalog and add an exercise to this workout
+                </SheetDescription>
+              </SheetHeader>
 
-                <Button
-                  type="button"
-                  onClick={addManualExercise}
-                  disabled={!manualExerciseId}
-                >
-                  <Plus className="mr-1.5 h-4 w-4" />
-                  Add
-                </Button>
+              <div className="space-y-3 px-4 pb-6">
+                <Input
+                  value={exerciseQuery}
+                  onChange={(event) => setExerciseQuery(event.target.value)}
+                  placeholder="Search exercises"
+                />
+
+                <div className="max-h-80 space-y-2 overflow-auto rounded-xl border p-3">
+                  {searchableManualExercises.length === 0 ? (
+                    <p className="text-muted-foreground text-sm">
+                      No exercises match your search.
+                    </p>
+                  ) : (
+                    searchableManualExercises.map((exercise) => (
+                      <button
+                        key={exercise.id}
+                        type="button"
+                        onClick={() => {
+                          setManualExerciseId(exercise.id);
+                          addManualExercise();
+                          setIsAddExerciseSheetOpen(false);
+                        }}
+                        className="hover:bg-accent flex w-full items-start justify-between gap-3 rounded-lg px-3 py-2 text-left"
+                      >
+                        <div className="min-w-0">
+                          <p className="truncate text-sm font-medium">
+                            {exercise.name}
+                          </p>
+                          <p className="text-muted-foreground truncate text-xs">
+                            {[exercise.equipment, ...exercise.categories]
+                              .filter(Boolean)
+                              .join(" • ") || "No categories"}
+                          </p>
+                        </div>
+
+                        <Plus className="text-muted-foreground h-4 w-4 shrink-0" />
+                      </button>
+                    ))
+                  )}
+                </div>
               </div>
-            </section>
-          </div>
-
-          <div className="bg-background shrink-0 border-t pt-3 pb-[calc(env(safe-area-inset-bottom))] lg:pb-1">
-            {workoutValidationErrors.length > 0 ? (
-              <p className="text-muted-foreground mb-2 text-xs">
-                Fix highlighted field issues before saving.
-              </p>
-            ) : null}
-            <div className="flex flex-wrap gap-2">
-              <Button
-                className="h-11 flex-1"
-                onClick={() => handleSave()}
-                disabled={saving || workoutValidationErrors.length > 0}
-              >
-                {saving ? "Saving..." : "Save Workout"}
-              </Button>
-
-              <Button
-                className="h-11"
-                variant="secondary"
-                onClick={() => handleSave("Workout ended and saved")}
-                disabled={saving || workoutValidationErrors.length > 0}
-              >
-                End Workout
-              </Button>
-
-              {hasSavedWorkout ? (
-                <Button
-                  className="h-11"
-                  variant="destructive"
-                  onClick={handleDeleteWorkout}
-                >
-                  Delete Workout
-                </Button>
-              ) : null}
-            </div>
-          </div>
+            </SheetContent>
+          </Sheet>
 
           <Sheet
             open={exerciseDetails !== null}
@@ -1143,6 +1475,37 @@ function WorkoutsLogPageContent() {
                     </p>
                   </div>
                 ) : null}
+              </div>
+            </SheetContent>
+          </Sheet>
+          <Sheet open={isEffortGuideOpen} onOpenChange={setIsEffortGuideOpen}>
+            <SheetContent side="bottom" className="rounded-t-2xl">
+              <SheetHeader>
+                <SheetTitle>Effort & RIR</SheetTitle>
+                <SheetDescription>
+                  RIR means reps in reserve — roughly how many good reps you
+                  could have done before reaching failure.
+                </SheetDescription>
+              </SheetHeader>
+
+              <div className="space-y-2 px-4 pb-6">
+                {effortGuide.map((item) => (
+                  <div
+                    key={item.effort}
+                    className="flex items-center justify-between rounded-xl border p-3"
+                  >
+                    <div>
+                      <p className="text-sm font-semibold">{item.rir}</p>
+                      <p className="text-muted-foreground text-xs">
+                        {item.label}
+                      </p>
+                    </div>
+
+                    <span className="bg-muted rounded-lg px-2.5 py-1 text-xs font-semibold">
+                      {item.effort}/5
+                    </span>
+                  </div>
+                ))}
               </div>
             </SheetContent>
           </Sheet>

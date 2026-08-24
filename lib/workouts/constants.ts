@@ -1,32 +1,61 @@
 export const EXERCISE_CATEGORY_OPTIONS = [
+  // Training splits
   "push",
   "pull",
   "legs",
-  "core",
+
+  // Major body parts
   "chest",
   "back",
   "shoulders",
   "arms",
   "biceps",
+  "hip_stability",
   "triceps",
   "quads",
   "hamstrings",
   "glutes",
   "calves",
+
+  // Specific muscle / movement areas
   "rear_delts",
+  "side_delts",
+  "front_delts",
+  "upper_chest",
+  "upper_back",
+  "mid_back",
+  "lats",
+  "adductors",
+  "abductors",
+  "forearms",
+
+  // Core
+  "core",
   "abs",
+  "obliques",
+  "deep_core",
+
+  // Movement / training characteristics
   "functional",
   "posterior_chain",
   "strength",
   "unilateral",
   "full_body",
   "grip",
+  "power",
+
+  // Mobility / stability
+  "mobility",
+  "stability",
 ] as const;
 
 export const EXERCISE_MUSCLE_GROUP_OPTIONS = [
   "chest",
   "triceps",
   "front_delts",
+  "adductors",
+  "gluteus_medius",
+  "gluteus_minimus",
   "upper_chest",
   "side_delts",
   "glutes",
@@ -52,22 +81,42 @@ export const EXERCISE_MUSCLE_GROUP_OPTIONS = [
   "hip_flexors",
   "forearms",
   "legs",
+  "brachialis",
+  "brachioradialis",
 ] as const;
 
 export const EXERCISE_EQUIPMENT_OPTIONS = [
   "barbell",
   "barbell_or_dumbbell",
-  "bodyweight",
-  "cable",
-  "cable_machine",
-  "cable_or_band",
+  "barbell_or_machine",
+  "back_extension_bench",
+  "assisted_pullup_machine_or_band",
+
   "dumbbell",
   "dumbbell_or_bodyweight",
   "dumbbell_or_cable",
   "dumbbell_or_kettlebell",
   "dumbbell_or_machine",
+  "cable_or_dumbbell",
+
+  "machine_or_dumbbell",
+
+  "cable",
+  "cable_machine",
+  "cable_or_band",
+
   "machine",
   "machine_or_bodyweight",
+
+  "kettlebell",
+
+  "bodyweight",
+
+  "pull_up_bar",
+  "dip_station",
+  "bench",
+
+  "resistance_band",
 ] as const;
 
 export const EXERCISE_TYPE_OPTIONS = [
@@ -85,10 +134,15 @@ export const EXERCISE_WEIGHT_TRACKING_MODE_OPTIONS = [
   "per_hand_or_stack",
   "stack",
   "machine_or_total",
+  "per_side_or_stack",
   "per_hand_or_machine",
   "bodyweight",
   "per_hand_or_total",
+  "total_or_machine",
   "machine",
+  "assistance",
+  "stack_or_total",
+  "bodyweight_or_total",
 ] as const;
 
 export const EXERCISE_PROGRESSION_STRATEGY_OPTIONS = [
@@ -96,6 +150,7 @@ export const EXERCISE_PROGRESSION_STRATEGY_OPTIONS = [
   "descending_weight",
   "rep_progression",
   "load_or_distance_progression",
+  "descending_assistance",
 ] as const;
 
 export const EFFORT_OPTIONS = [1, 2, 3, 4, 5] as const;

@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
+import Link from "next/link";
 import { ChevronLeft, Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -202,65 +203,65 @@ export default function CombinationDetailPage() {
         {combination.description || "No description provided."}
       </p>
 
-      <div className="mt-6 space-y-4">
-        <div className="space-y-2">
-          <Label>Name</Label>
-          <Input
-            disabled={!isEditing}
-            value={combination.name}
-            onChange={(e) =>
-              setCombination((prev) =>
-                prev ? { ...prev, name: e.target.value } : prev,
-              )
-            }
-          />
-        </div>
+      {isEditing ? (
+        <div className="mt-6 space-y-4">
+          <div className="space-y-2">
+            <Label>Name</Label>
+            <Input
+              disabled={!isEditing}
+              value={combination.name}
+              onChange={(e) =>
+                setCombination((prev) =>
+                  prev ? { ...prev, name: e.target.value } : prev,
+                )
+              }
+            />
+          </div>
 
-        <div className="space-y-2">
-          <Label>Description</Label>
-          <Textarea
-            disabled={!isEditing}
-            value={combination.description ?? ""}
-            onChange={(e) =>
-              setCombination((prev) =>
-                prev ? { ...prev, description: e.target.value } : prev,
-              )
-            }
-          />
-        </div>
+          <div className="space-y-2">
+            <Label>Description</Label>
+            <Textarea
+              disabled={!isEditing}
+              value={combination.description ?? ""}
+              onChange={(e) =>
+                setCombination((prev) =>
+                  prev ? { ...prev, description: e.target.value } : prev,
+                )
+              }
+            />
+          </div>
 
-        <div className="space-y-2">
-          <Label>Coaching Notes</Label>
-          <Textarea
-            disabled={!isEditing}
-            value={combination.coachingNotes ?? ""}
-            onChange={(e) =>
-              setCombination((prev) =>
-                prev ? { ...prev, coachingNotes: e.target.value } : prev,
-              )
-            }
-            placeholder="Execution cues for this day"
-          />
-        </div>
+          <div className="space-y-2">
+            <Label>Coaching Notes</Label>
+            <Textarea
+              disabled={!isEditing}
+              value={combination.coachingNotes ?? ""}
+              onChange={(e) =>
+                setCombination((prev) =>
+                  prev ? { ...prev, coachingNotes: e.target.value } : prev,
+                )
+              }
+              placeholder="Execution cues for this day"
+            />
+          </div>
 
-        <div className="space-y-2">
-          <Label>Warm-up Guidance</Label>
-          <Textarea
-            disabled={!isEditing}
-            value={combination.warmupGuidance ?? ""}
-            onChange={(e) =>
-              setCombination((prev) =>
-                prev ? { ...prev, warmupGuidance: e.target.value } : prev,
-              )
-            }
-            placeholder="How to warm up before the first working sets"
-          />
-        </div>
+          <div className="space-y-2">
+            <Label>Warm-up Guidance</Label>
+            <Textarea
+              disabled={!isEditing}
+              value={combination.warmupGuidance ?? ""}
+              onChange={(e) =>
+                setCombination((prev) =>
+                  prev ? { ...prev, warmupGuidance: e.target.value } : prev,
+                )
+              }
+              placeholder="How to warm up before the first working sets"
+            />
+          </div>
 
-        <div className="space-y-2">
-          <Label>Exercises</Label>
+          <div className="space-y-2">
+            <Label>Exercises</Label>
 
-          {isEditing ? (
             <div className="max-h-72 space-y-2 overflow-auto rounded-xl border p-3">
               {activeExercises.map((exercise) => {
                 const checked = combination.exerciseIds.includes(exercise.id);
@@ -287,20 +288,66 @@ export default function CombinationDetailPage() {
                 );
               })}
             </div>
-          ) : (
-            <div className="rounded-xl border p-3 text-sm">
-              {combination.exerciseIds.length === 0
-                ? "No exercises selected"
-                : combination.exerciseIds
-                    .map(
-                      (exerciseId) =>
-                        exerciseNameMap.get(exerciseId) ?? exerciseId,
-                    )
-                    .join(", ")}
-            </div>
-          )}
+          </div>
         </div>
-      </div>
+      ) : (
+        <div className="mt-6 space-y-4">
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="rounded-xl border p-3">
+              <p className="text-muted-foreground text-xs">Exercises</p>
+              <p className="mt-1 text-sm font-semibold">
+                {combination.exerciseIds.length || 0}
+              </p>
+            </div>
+
+            <div className="rounded-xl border p-3">
+              <p className="text-muted-foreground text-xs">Workout usage</p>
+              <p className="mt-1 text-sm font-semibold">
+                {referencingWorkouts.length} workout
+                {referencingWorkouts.length === 1 ? "" : "s"}
+              </p>
+            </div>
+          </div>
+
+          {combination.coachingNotes ? (
+            <div className="rounded-xl border p-3">
+              <p className="text-muted-foreground text-xs">Coaching notes</p>
+              <p className="mt-1 text-sm">{combination.coachingNotes}</p>
+            </div>
+          ) : null}
+
+          {combination.warmupGuidance ? (
+            <div className="rounded-xl border p-3">
+              <p className="text-muted-foreground text-xs">Warm-up guidance</p>
+              <p className="mt-1 text-sm">{combination.warmupGuidance}</p>
+            </div>
+          ) : null}
+
+          <div className="rounded-xl border p-3">
+            <p className="text-muted-foreground text-xs">Exercises</p>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {combination.exerciseIds.length === 0 ? (
+                <p className="text-sm">No exercises selected</p>
+              ) : (
+                combination.exerciseIds.map((exerciseId) => {
+                  const exerciseName =
+                    exerciseNameMap.get(exerciseId) ?? exerciseId;
+
+                  return (
+                    <Link
+                      key={exerciseId}
+                      href={`/workouts/exercises/${encodeURIComponent(exerciseId)}`}
+                      className="hover:bg-accent rounded-full border px-3 py-1 text-sm transition-colors"
+                    >
+                      {exerciseName}
+                    </Link>
+                  );
+                })
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="mt-8 flex flex-wrap gap-2">
         {isEditing ? (

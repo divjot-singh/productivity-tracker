@@ -56,6 +56,7 @@ export interface WorkoutCombination {
   warmupGuidance?: string;
   exerciseIds: string[];
   active: boolean;
+  optionalExercises?: string[];
 }
 
 export interface WorkoutSetEntry {

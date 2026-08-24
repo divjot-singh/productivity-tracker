@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
+import Link from "next/link";
 import { ChevronLeft, Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -279,23 +280,95 @@ export default function ExerciseDetailPage() {
         {exercise.description || "No description provided."}
       </p>
 
-      <div className="mt-6">
-        <ExerciseEditorFields
-          exercise={exercise}
-          disabled={!isEditing}
-          combinations={combinations}
-          selectedCombinationIds={selectedCombinationIds}
-          onToggleCombination={(combinationId) =>
-            setSelectedCombinationIds((prev) =>
-              prev.includes(combinationId)
-                ? prev.filter((value) => value !== combinationId)
-                : [...prev, combinationId],
-            )
-          }
-          onValidationChange={setHasFormErrors}
-          onChange={setExercise}
-        />
-      </div>
+      {isEditing ? (
+        <div className="mt-6">
+          <ExerciseEditorFields
+            exercise={exercise}
+            disabled={!isEditing}
+            combinations={combinations}
+            selectedCombinationIds={selectedCombinationIds}
+            onToggleCombination={(combinationId) =>
+              setSelectedCombinationIds((prev) =>
+                prev.includes(combinationId)
+                  ? prev.filter((value) => value !== combinationId)
+                  : [...prev, combinationId],
+              )
+            }
+            onValidationChange={setHasFormErrors}
+            onChange={setExercise}
+          />
+        </div>
+      ) : (
+        <div className="mt-6 space-y-4">
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="rounded-xl border p-3">
+              <p className="text-muted-foreground text-xs">Categories</p>
+              <p className="mt-1 text-sm font-medium">
+                {exercise.categories.join(", ") || "None"}
+              </p>
+            </div>
+
+            <div className="rounded-xl border p-3">
+              <p className="text-muted-foreground text-xs">Muscle groups</p>
+              <p className="mt-1 text-sm font-medium">
+                {exercise.muscleGroups.join(", ") || "None"}
+              </p>
+            </div>
+
+            <div className="rounded-xl border p-3">
+              <p className="text-muted-foreground text-xs">Equipment</p>
+              <p className="mt-1 text-sm font-medium">
+                {exercise.equipment || "Not set"}
+              </p>
+            </div>
+
+            <div className="rounded-xl border p-3">
+              <p className="text-muted-foreground text-xs">Progression</p>
+              <p className="mt-1 text-sm font-medium">
+                {exercise.progression.repRange
+                  ? `Rep range ${exercise.progression.repRange.min}-${exercise.progression.repRange.max}`
+                  : "No rep range set"}
+              </p>
+            </div>
+          </div>
+
+          {exercise.notes.length > 0 ? (
+            <div className="rounded-xl border p-3">
+              <p className="text-muted-foreground text-xs">Notes</p>
+              <ul className="mt-2 space-y-1 text-sm">
+                {exercise.notes.map((note) => (
+                  <li key={note}>• {note}</li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
+
+          <div className="rounded-xl border p-3">
+            <p className="text-muted-foreground text-xs">Combinations</p>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {combinations.filter((combination) =>
+                combination.exerciseIds.includes(exercise.id),
+              ).length > 0 ? (
+                combinations
+                  .filter((combination) =>
+                    combination.exerciseIds.includes(exercise.id),
+                  )
+                  .map((combination) => (
+                    <Link
+                      key={combination.id}
+                      href={`/workouts/combinations/${combination.id}`}
+                      className="hover:bg-accent rounded-full border px-3 py-1 text-sm transition-colors"
+                    >
+                      {combination.name}
+                    </Link>
+                  ))
+              ) : (
+                <p className="text-sm">No combinations attached.</p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="mt-8 flex flex-wrap gap-2">
         {isEditing ? (

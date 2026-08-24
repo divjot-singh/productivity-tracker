@@ -18,6 +18,7 @@ interface DateSelectorProps {
   hasEntry: boolean;
   entryDates: Set<string>;
   onChange: (date: string) => void;
+  subContent?: React.ReactNode;
 }
 
 export default function DateSelector({
@@ -25,6 +26,7 @@ export default function DateSelector({
   hasEntry,
   entryDates,
   onChange,
+  subContent,
 }: DateSelectorProps) {
   const [open, setOpen] = useState(false);
 
@@ -116,7 +118,9 @@ export default function DateSelector({
               hasEntry ? "bg-emerald-500" : "bg-muted-foreground/50",
             )}
           />
-          <span>{hasEntry ? "Today · Entered" : "Today"}</span>
+          <span>
+            {hasEntry ? "Today · Entered" : "Today"} {subContent}
+          </span>
         </div>
       )}
     </div>
