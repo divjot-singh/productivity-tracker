@@ -183,3 +183,14 @@ export function titleCaseWorkoutValue(value: string): string {
     .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
     .join(" ");
 }
+
+export function formatExerciseEquipmentLabel(value?: string): string {
+  if (!value) {
+    return "Not set";
+  }
+
+  return value
+    .split("_or_")
+    .map((part) => titleCaseWorkoutValue(part))
+    .join(" / ");
+}

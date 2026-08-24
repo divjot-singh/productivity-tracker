@@ -19,6 +19,14 @@ import { toast } from "sonner";
 
 import DateSelector from "@/components/today/DateSelector";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import Link from "next/link";
 import { Label } from "@/components/ui/label";
@@ -32,6 +40,10 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { useRequireAuth } from "@/lib/hooks/useRequireAuth";
 import { apiRequest } from "@/lib/api/client";
+import {
+  formatExerciseEquipmentLabel,
+  titleCaseWorkoutValue,
+} from "@/lib/workouts/constants";
 import { cn } from "@/lib/utils";
 import { validateWorkout } from "@/lib/workouts/normalize";
 import {
@@ -128,6 +140,10 @@ function WorkoutsLogPageContent() {
   const [isNotesDialogOpen, setIsNotesDialogOpen] = useState(false);
   const [isAddExerciseSheetOpen, setIsAddExerciseSheetOpen] = useState(false);
   const [isEffortGuideOpen, setIsEffortGuideOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [exerciseToRemoveIndex, setExerciseToRemoveIndex] = useState<
+    number | null
+  >(null);
   const [exerciseDetails, setExerciseDetails] = useState<{
     name: string;
     description?: string;
@@ -395,16 +411,33 @@ function WorkoutsLogPageContent() {
     });
   }
 
-  function addManualExercise() {
-    if (!manualExerciseId) {
-      return;
+  async function addManualExercise(exerciseId = manualExerciseId) {
+    if (!exerciseId) {
+      return false;
     }
+
+    const saved = await handleSave("Workout saved");
+
+    if (!saved) {
+      return false;
+    }
+
+    const insertIndex = Math.min(
+      activeExerciseIndex + 1,
+      workout.exercises.length,
+    );
 
     setWorkout((prev) => ({
       ...prev,
-      exercises: [...prev.exercises, createExerciseEntry(manualExerciseId)],
+      exercises: [
+        ...prev.exercises.slice(0, insertIndex),
+        createExerciseEntry(exerciseId),
+        ...prev.exercises.slice(insertIndex),
+      ],
     }));
+    setActiveExerciseIndex(insertIndex);
     setManualExerciseId("");
+    return true;
   }
 
   function removeExercise(index: number) {
@@ -507,13 +540,13 @@ function WorkoutsLogPageContent() {
 
   async function handleSave(successMessage = "Workout saved") {
     if (!user) {
-      return;
+      return false;
     }
 
     try {
       if (workoutValidationErrors.length > 0) {
         toast.error(workoutValidationErrors[0]);
-        return;
+        return false;
       }
 
       setSaving(true);
@@ -538,11 +571,13 @@ function WorkoutsLogPageContent() {
       });
       setWorkoutDates((prev) => new Set(prev).add(selectedDate));
       toast.success(successMessage);
+      return true;
     } catch (error) {
       console.error(error);
       toast.error(
         error instanceof Error ? error.message : "Failed to save workout",
       );
+      return false;
     } finally {
       setSaving(false);
     }
@@ -693,7 +728,7 @@ function WorkoutsLogPageContent() {
                       type="button"
                       size="icon"
                       variant="destructive"
-                      onClick={handleDeleteWorkout}
+                      onClick={() => setIsDeleteDialogOpen(true)}
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
@@ -706,37 +741,43 @@ function WorkoutsLogPageContent() {
                 <div className="flex items-center justify-between gap-3">
                   <div>
                     <p className="text-muted-foreground text-[11px] font-semibold tracking-wide uppercase">
-                      Exercise progress
+                      Workout progress
                     </p>
+
                     <p className="mt-0.5 text-sm font-semibold">
-                      {recordedExerciseCount} / {workout.exercises.length}{" "}
-                      completed
+                      {recordedExerciseCount} of {workout.exercises.length}{" "}
+                      exercises
                     </p>
                   </div>
 
-                  <p className="text-muted-foreground text-xs">
-                    {recordedSetCount} sets · {totalWarmupSets} warm-ups
-                  </p>
+                  <span className="text-muted-foreground text-xs">
+                    {recordedSetCount} sets
+                  </span>
                 </div>
 
-                <div className="bg-muted mt-3 h-2 w-full overflow-hidden rounded-full">
-                  <div
-                    className="bg-primary h-full rounded-full transition-all"
-                    style={{
-                      width: `${
-                        workout.exercises.length > 0
-                          ? Math.min(
-                              100,
-                              Math.round(
-                                (recordedExerciseCount /
-                                  workout.exercises.length) *
-                                  100,
-                              ),
-                            )
-                          : 0
-                      }%`,
-                    }}
-                  />
+                {/* Exercise progress */}
+                <div className="mt-3 flex items-center gap-1.5">
+                  {workout.exercises.map((exercise, index) => {
+                    const isCompleted = exercise.sets.some(hasRecordedSet);
+
+                    return (
+                      <div
+                        key={`${exercise.exerciseId}-${index}`}
+                        className={cn(
+                          "h-2 flex-1 rounded-full transition-colors",
+                          isCompleted ? "bg-primary" : "bg-muted",
+                        )}
+                      />
+                    );
+                  })}
+                </div>
+
+                <div className="text-muted-foreground mt-3 flex items-center justify-between text-[11px]">
+                  <span>{recordedSetCount} sets completed</span>
+
+                  <span>
+                    {totalWarmupSets} warm-up{totalWarmupSets === 1 ? "" : "s"}
+                  </span>
                 </div>
               </div>
 
@@ -882,7 +923,7 @@ function WorkoutsLogPageContent() {
                               type="button"
                               size="icon"
                               variant="destructive"
-                              onClick={handleDeleteWorkout}
+                              onClick={() => setIsDeleteDialogOpen(true)}
                             >
                               <Trash2 className="h-4 w-4" />
                             </Button>
@@ -950,57 +991,49 @@ function WorkoutsLogPageContent() {
 
                     {activeExerciseEntry ? (
                       <div className="bg-card rounded-2xl border p-3">
-                        <div className="mb-3 flex items-start justify-between gap-3">
-                          <div>
-                            <h2 className="font-semibold">
-                              {activeExercise?.name ??
-                                activeExerciseEntry.exerciseId}
-                            </h2>
-                            <p className="text-muted-foreground text-xs">
-                              {activeExercise?.equipment ?? "No equipment"} ·{" "}
-                              {activeWeightUnit}
-                              {activeExerciseRepRange
-                                ? ` · Reps ${activeExerciseRepRange.min}-${activeExerciseRepRange.max}`
-                                : ""}
-                            </p>
-                            {Boolean(activeExercise?.description) ||
-                            Boolean(activeExerciseNotes) ? (
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                size="sm"
-                                className="text-muted-foreground mt-1 h-auto px-0 text-xs"
-                                onClick={() =>
-                                  setExerciseDetails({
-                                    name:
-                                      activeExercise?.name ??
-                                      activeExerciseEntry.exerciseId,
-                                    description: activeExercise?.description,
-                                    notes: activeExerciseNotes || undefined,
-                                  })
-                                }
-                              >
-                                View details
-                              </Button>
-                            ) : null}
-                          </div>
-                          <div className="flex flex-col items-end gap-2">
-                            <div className="flex gap-2">
+                        <div className="mb-3 space-y-3">
+                          {/* Exercise header */}
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="min-w-0">
+                              <h2 className="font-semibold">
+                                {activeExercise?.name ??
+                                  activeExerciseEntry.exerciseId}
+                              </h2>
+
+                              <p className="text-muted-foreground text-xs">
+                                {activeExercise?.equipment
+                                  ? formatExerciseEquipmentLabel(
+                                      activeExercise.equipment,
+                                    )
+                                  : "No equipment"}{" "}
+                                · {activeWeightUnit}
+                                {activeExerciseRepRange
+                                  ? ` · Reps ${activeExerciseRepRange.min}-${activeExerciseRepRange.max}`
+                                  : ""}
+                              </p>
+                            </div>
+
+                            {/* Exercise actions */}
+                            <div className="flex shrink-0 gap-2">
                               <Button
                                 type="button"
                                 variant="outline"
-                                size="sm"
+                                size="icon"
+                                className="h-9 w-9"
                                 disabled={activeExerciseIndex <= 0}
                                 onClick={() =>
                                   moveExercise(activeExerciseIndex, -1)
                                 }
+                                aria-label="Move exercise up"
                               >
                                 <ArrowUp className="h-4 w-4" />
                               </Button>
+
                               <Button
                                 type="button"
                                 variant="outline"
-                                size="sm"
+                                size="icon"
+                                className="h-9 w-9"
                                 disabled={
                                   activeExerciseIndex >=
                                   workout.exercises.length - 1
@@ -1008,30 +1041,90 @@ function WorkoutsLogPageContent() {
                                 onClick={() =>
                                   moveExercise(activeExerciseIndex, 1)
                                 }
+                                aria-label="Move exercise down"
                               >
                                 <ArrowDown className="h-4 w-4" />
                               </Button>
+
                               <Button
                                 type="button"
                                 variant="destructive"
-                                size="sm"
+                                size="icon"
+                                className="h-9 w-9"
                                 onClick={() =>
-                                  removeExercise(activeExerciseIndex)
+                                  setExerciseToRemoveIndex(activeExerciseIndex)
                                 }
+                                aria-label="Remove exercise"
                               >
                                 <Trash2 className="h-4 w-4" />
                               </Button>
                             </div>
-                            <div className="mt-2 flex gap-2">
-                              <span className="rounded-full border px-2.5 py-1 text-[11px] font-medium">
-                                Sets done {activeRecordedSetCount}/
-                                {activeSetCount}
-                              </span>
-                              <span className="text-muted-foreground rounded-full border px-2.5 py-1 text-[11px] font-medium">
-                                Warm-up {activeWarmupSetCount}
-                              </span>
+                          </div>
+
+                          {/* Exercise progress */}
+                          <div className="space-y-2">
+                            <div className="flex items-end justify-between gap-3">
+                              <div>
+                                <p className="text-muted-foreground text-[11px] font-medium tracking-wide uppercase">
+                                  Sets
+                                </p>
+                                <p className="text-sm font-semibold">
+                                  {activeRecordedSetCount}/{activeSetCount}
+                                </p>
+                              </div>
+
+                              <div className="text-right">
+                                <p className="text-muted-foreground text-[11px] font-medium tracking-wide uppercase">
+                                  Warm-up
+                                </p>
+                                <p className="text-sm font-semibold">
+                                  {activeWarmupSetCount}
+                                </p>
+                              </div>
+                            </div>
+
+                            <div className="bg-muted h-2 w-full overflow-hidden rounded-full">
+                              <div
+                                className="bg-primary h-full rounded-full transition-all"
+                                style={{
+                                  width: `${
+                                    activeSetCount > 0
+                                      ? Math.min(
+                                          100,
+                                          Math.round(
+                                            (activeRecordedSetCount /
+                                              activeSetCount) *
+                                              100,
+                                          ),
+                                        )
+                                      : 0
+                                  }%`,
+                                }}
+                              />
                             </div>
                           </div>
+
+                          {/* Exercise details */}
+                          {Boolean(activeExercise?.description) ||
+                          Boolean(activeExerciseNotes) ? (
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              className="text-muted-foreground h-auto px-0 text-xs"
+                              onClick={() =>
+                                setExerciseDetails({
+                                  name:
+                                    activeExercise?.name ??
+                                    activeExerciseEntry.exerciseId,
+                                  description: activeExercise?.description,
+                                  notes: activeExerciseNotes || undefined,
+                                })
+                              }
+                            >
+                              View details
+                            </Button>
+                          ) : null}
                         </div>
 
                         {activeProgressPercent !== null ? (
@@ -1069,31 +1162,65 @@ function WorkoutsLogPageContent() {
                   <div className="bg-card rounded-2xl border p-4">
                     {activePreviousSnapshot ? (
                       <div className="mb-4 rounded-xl border p-3">
-                        <p className="text-xs font-medium">
-                          Previous working sets
-                        </p>
-                        <p className="text-muted-foreground mt-1 text-xs">
-                          Date: {activePreviousSnapshot.date}
-                        </p>
-                        <p className="text-muted-foreground text-xs">
-                          Weights:{" "}
-                          {activePreviousSnapshot.sets
-                            .map((setEntry) => setEntry.weight)
-                            .join(", ")}
-                        </p>
-                        <div className="mt-2 space-y-1">
+                        <div className="flex items-center justify-between gap-3">
+                          <div>
+                            <p className="text-sm font-semibold">
+                              Last workout
+                            </p>
+                            <p className="text-muted-foreground text-xs">
+                              {new Date(
+                                `${activePreviousSnapshot.date}T00:00:00`,
+                              ).toLocaleDateString("en-GB", {
+                                weekday: "short",
+                                day: "numeric",
+                                month: "long",
+                                year: "numeric",
+                              })}
+                            </p>
+                          </div>
+
+                          <span className="text-muted-foreground text-[11px] font-medium uppercase">
+                            Previous
+                          </span>
+                        </div>
+
+                        <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
                           {activePreviousSnapshot.sets.map(
                             (setEntry, setIndex) => (
-                              <p
+                              <div
                                 key={`${activePreviousSnapshot.date}-${setIndex}`}
-                                className="text-muted-foreground text-xs"
+                                className="bg-muted/30 min-w-22.5 rounded-lg border px-3 py-2 text-center"
                               >
-                                Set {setIndex + 1}: {setEntry.weight}{" "}
-                                {activeWeightUnit} x {setEntry.reps} reps
-                                (volume {setEntry.volume})
-                              </p>
+                                <p className="text-muted-foreground text-[10px] font-medium uppercase">
+                                  Set {setIndex + 1}
+                                </p>
+
+                                <p className="mt-1 text-sm font-semibold whitespace-nowrap">
+                                  {setEntry.weight} {activeWeightUnit}
+                                </p>
+
+                                <p className="text-muted-foreground text-xs">
+                                  × {setEntry.reps} reps
+                                </p>
+                              </div>
                             ),
                           )}
+                        </div>
+
+                        <div className="mt-3 flex items-center justify-between border-t pt-2">
+                          <span className="text-muted-foreground text-xs">
+                            Total volume
+                          </span>
+
+                          <span className="text-xs font-semibold">
+                            {activePreviousSnapshot.sets
+                              .reduce(
+                                (sum, setEntry) => sum + setEntry.volume,
+                                0,
+                              )
+                              .toLocaleString()}{" "}
+                            {activeWeightUnit}
+                          </span>
                         </div>
                       </div>
                     ) : null}
@@ -1336,6 +1463,81 @@ function WorkoutsLogPageContent() {
             </SheetContent>
           </Sheet>
 
+          <Dialog
+            open={isDeleteDialogOpen}
+            onOpenChange={setIsDeleteDialogOpen}
+          >
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Delete workout?</DialogTitle>
+                <DialogDescription>
+                  This will permanently remove the workout for {selectedDate}.
+                </DialogDescription>
+              </DialogHeader>
+
+              <DialogFooter>
+                <Button
+                  variant="outline"
+                  onClick={() => setIsDeleteDialogOpen(false)}
+                >
+                  Cancel
+                </Button>
+
+                <Button
+                  variant="destructive"
+                  onClick={async () => {
+                    await handleDeleteWorkout();
+                    setIsDeleteDialogOpen(false);
+                  }}
+                >
+                  Delete workout
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+
+          <Dialog
+            open={exerciseToRemoveIndex !== null}
+            onOpenChange={(open) => {
+              if (!open) {
+                setExerciseToRemoveIndex(null);
+              }
+            }}
+          >
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Remove exercise?</DialogTitle>
+                <DialogDescription>
+                  {exerciseToRemoveIndex !== null
+                    ? `Remove ${exerciseMap.get(workout.exercises[exerciseToRemoveIndex]?.exerciseId ?? "")?.name ?? "this exercise"} from this workout?`
+                    : "Remove this exercise from the workout?"}
+                </DialogDescription>
+              </DialogHeader>
+
+              <DialogFooter>
+                <Button
+                  variant="outline"
+                  onClick={() => setExerciseToRemoveIndex(null)}
+                >
+                  Cancel
+                </Button>
+
+                <Button
+                  variant="destructive"
+                  onClick={() => {
+                    if (exerciseToRemoveIndex !== null) {
+                      removeExercise(exerciseToRemoveIndex);
+                    }
+
+                    setExerciseToRemoveIndex(null);
+                  }}
+                >
+                  Remove exercise
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+
           <Sheet open={isNotesDialogOpen} onOpenChange={setIsNotesDialogOpen}>
             <SheetContent side="bottom" className="rounded-t-2xl">
               <SheetHeader>
@@ -1414,10 +1616,13 @@ function WorkoutsLogPageContent() {
                       <button
                         key={exercise.id}
                         type="button"
-                        onClick={() => {
+                        onClick={async () => {
                           setManualExerciseId(exercise.id);
-                          addManualExercise();
-                          setIsAddExerciseSheetOpen(false);
+                          const added = await addManualExercise(exercise.id);
+
+                          if (added !== false) {
+                            setIsAddExerciseSheetOpen(false);
+                          }
                         }}
                         className="hover:bg-accent flex w-full items-start justify-between gap-3 rounded-lg px-3 py-2 text-left"
                       >
@@ -1426,7 +1631,16 @@ function WorkoutsLogPageContent() {
                             {exercise.name}
                           </p>
                           <p className="text-muted-foreground truncate text-xs">
-                            {[exercise.equipment, ...exercise.categories]
+                            {[
+                              exercise.equipment
+                                ? formatExerciseEquipmentLabel(
+                                    exercise.equipment,
+                                  )
+                                : undefined,
+                              ...exercise.categories.map((category) =>
+                                titleCaseWorkoutValue(category),
+                              ),
+                            ]
                               .filter(Boolean)
                               .join(" • ") || "No categories"}
                           </p>

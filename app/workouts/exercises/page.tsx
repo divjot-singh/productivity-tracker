@@ -9,6 +9,10 @@ import { buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useRequireAuth } from "@/lib/hooks/useRequireAuth";
 import { apiRequest } from "@/lib/api/client";
+import {
+  formatExerciseEquipmentLabel,
+  titleCaseWorkoutValue,
+} from "@/lib/workouts/constants";
 import { ExerciseDefinition } from "@/models/workout";
 import { cn } from "@/lib/utils";
 
@@ -120,7 +124,14 @@ export default function WorkoutExercisesPage() {
                 <div className="min-w-0">
                   <p className="truncate font-medium">{exercise.name}</p>
                   <p className="text-muted-foreground truncate text-xs">
-                    {[exercise.equipment, ...exercise.categories]
+                    {[
+                      exercise.equipment
+                        ? formatExerciseEquipmentLabel(exercise.equipment)
+                        : undefined,
+                      ...exercise.categories.map((category) =>
+                        titleCaseWorkoutValue(category),
+                      ),
+                    ]
                       .filter(Boolean)
                       .join(" • ") || "No categories"}
                   </p>
