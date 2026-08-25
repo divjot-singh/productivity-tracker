@@ -694,7 +694,7 @@ function WorkoutsLogPageContent() {
   ];
 
   return (
-    <div className="flex h-[calc(100dvh-11rem)] min-h-0 flex-col overflow-hidden">
+    <div className="flex h-[calc(100dvh-9rem)] min-h-0 flex-col overflow-hidden">
       {loading ? (
         <div className="text-muted-foreground p-6 text-sm">
           Loading workout...
@@ -991,163 +991,152 @@ function WorkoutsLogPageContent() {
 
                     {activeExerciseEntry ? (
                       <div className="bg-card rounded-2xl border p-3">
-                        <div className="mb-3 space-y-3">
-                          {/* Exercise header */}
-                          <div className="flex items-start justify-between gap-3">
-                            <div className="min-w-0">
-                              <h2 className="font-semibold">
-                                {activeExercise?.name ??
-                                  activeExerciseEntry.exerciseId}
-                              </h2>
+                        {/* Compact header */}
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="min-w-0">
+                            <h2 className="truncate text-sm font-semibold">
+                              {activeExercise?.name ??
+                                activeExerciseEntry.exerciseId}
+                            </h2>
 
-                              <p className="text-muted-foreground text-xs">
-                                {activeExercise?.equipment
-                                  ? formatExerciseEquipmentLabel(
-                                      activeExercise.equipment,
-                                    )
-                                  : "No equipment"}{" "}
-                                · {activeWeightUnit}
-                                {activeExerciseRepRange
-                                  ? ` · Reps ${activeExerciseRepRange.min}-${activeExerciseRepRange.max}`
-                                  : ""}
-                              </p>
-                            </div>
-
-                            {/* Exercise actions */}
-                            <div className="flex shrink-0 gap-2">
-                              <Button
-                                type="button"
-                                variant="outline"
-                                size="icon"
-                                className="h-9 w-9"
-                                disabled={activeExerciseIndex <= 0}
-                                onClick={() =>
-                                  moveExercise(activeExerciseIndex, -1)
-                                }
-                                aria-label="Move exercise up"
-                              >
-                                <ArrowUp className="h-4 w-4" />
-                              </Button>
-
-                              <Button
-                                type="button"
-                                variant="outline"
-                                size="icon"
-                                className="h-9 w-9"
-                                disabled={
-                                  activeExerciseIndex >=
-                                  workout.exercises.length - 1
-                                }
-                                onClick={() =>
-                                  moveExercise(activeExerciseIndex, 1)
-                                }
-                                aria-label="Move exercise down"
-                              >
-                                <ArrowDown className="h-4 w-4" />
-                              </Button>
-
-                              <Button
-                                type="button"
-                                variant="destructive"
-                                size="icon"
-                                className="h-9 w-9"
-                                onClick={() =>
-                                  setExerciseToRemoveIndex(activeExerciseIndex)
-                                }
-                                aria-label="Remove exercise"
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          </div>
-
-                          {/* Exercise progress */}
-                          <div className="space-y-2">
-                            <div className="flex items-end justify-between gap-3">
-                              <div>
-                                <p className="text-muted-foreground text-[11px] font-medium tracking-wide uppercase">
-                                  Sets
-                                </p>
-                                <p className="text-sm font-semibold">
-                                  {activeRecordedSetCount}/{activeSetCount}
-                                </p>
-                              </div>
-
-                              <div className="text-right">
-                                <p className="text-muted-foreground text-[11px] font-medium tracking-wide uppercase">
-                                  Warm-up
-                                </p>
-                                <p className="text-sm font-semibold">
-                                  {activeWarmupSetCount}
-                                </p>
-                              </div>
-                            </div>
-
-                            <div className="bg-muted h-2 w-full overflow-hidden rounded-full">
-                              <div
-                                className="bg-primary h-full rounded-full transition-all"
-                                style={{
-                                  width: `${
-                                    activeSetCount > 0
-                                      ? Math.min(
-                                          100,
-                                          Math.round(
-                                            (activeRecordedSetCount /
-                                              activeSetCount) *
-                                              100,
-                                          ),
-                                        )
-                                      : 0
-                                  }%`,
-                                }}
-                              />
-                            </div>
-                          </div>
-
-                          {/* Exercise details */}
-                          {Boolean(activeExercise?.description) ||
-                          Boolean(activeExerciseNotes) ? (
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              className="text-muted-foreground h-auto px-0 text-xs"
-                              onClick={() =>
-                                setExerciseDetails({
-                                  name:
-                                    activeExercise?.name ??
-                                    activeExerciseEntry.exerciseId,
-                                  description: activeExercise?.description,
-                                  notes: activeExerciseNotes || undefined,
-                                })
-                              }
-                            >
-                              View details
-                            </Button>
-                          ) : null}
-                        </div>
-
-                        {activeProgressPercent !== null ? (
-                          <div className="rounded-xl border p-3">
-                            <div className="mb-1 flex items-center justify-between gap-2">
-                              <p className="text-xs font-medium">
-                                Target Progress
-                              </p>
-                              <p className="text-muted-foreground text-xs">
-                                {activeTopWeight} / {activeTargetWeight}{" "}
-                                {activeWeightUnit}
-                              </p>
-                            </div>
-                            <div className="bg-muted h-2 w-full overflow-hidden rounded-full">
-                              <div
-                                className="bg-primary h-full rounded-full transition-all"
-                                style={{ width: `${activeProgressPercent}%` }}
-                              />
-                            </div>
-                            <p className="text-muted-foreground mt-1 text-[11px]">
-                              {activeProgressPercent}% of target
+                            <p className="text-muted-foreground truncate text-[11px]">
+                              {activeExercise?.equipment
+                                ? formatExerciseEquipmentLabel(
+                                    activeExercise.equipment,
+                                  )
+                                : "No equipment"}{" "}
+                              · {activeWeightUnit}
+                              {activeExerciseRepRange
+                                ? ` · ${activeExerciseRepRange.min}-${activeExerciseRepRange.max} reps`
+                                : ""}
                             </p>
                           </div>
+
+                          {/* Keep your existing actions */}
+                          <div className="flex shrink-0 gap-1.5">
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="icon"
+                              className="h-8 w-8"
+                              disabled={activeExerciseIndex <= 0}
+                              onClick={() =>
+                                moveExercise(activeExerciseIndex, -1)
+                              }
+                              aria-label="Move exercise up"
+                            >
+                              <ArrowUp className="h-3.5 w-3.5" />
+                            </Button>
+
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="icon"
+                              className="h-8 w-8"
+                              disabled={
+                                activeExerciseIndex >=
+                                workout.exercises.length - 1
+                              }
+                              onClick={() =>
+                                moveExercise(activeExerciseIndex, 1)
+                              }
+                              aria-label="Move exercise down"
+                            >
+                              <ArrowDown className="h-3.5 w-3.5" />
+                            </Button>
+
+                            <Button
+                              type="button"
+                              variant="destructive"
+                              size="icon"
+                              className="h-8 w-8"
+                              onClick={() =>
+                                setExerciseToRemoveIndex(activeExerciseIndex)
+                              }
+                              aria-label="Remove exercise"
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </Button>
+                          </div>
+                        </div>
+
+                        {/* Progress row */}
+                        <div className="mt-3">
+                          <div className="flex items-center justify-between">
+                            <p className="text-muted-foreground text-[10px] font-medium uppercase">
+                              Sets
+                              <span className="text-foreground ml-1">
+                                {activeRecordedSetCount}/{activeSetCount}
+                              </span>
+                            </p>
+
+                            <p className="text-muted-foreground text-[10px]">
+                              {activeWarmupSetCount} warm-up
+                              {activeWarmupSetCount === 1 ? "" : "s"}
+                            </p>
+                          </div>
+
+                          <div className="bg-muted mt-1.5 h-1.5 overflow-hidden rounded-full">
+                            <div
+                              className="bg-primary h-full rounded-full transition-all"
+                              style={{
+                                width: `${
+                                  activeSetCount > 0
+                                    ? Math.min(
+                                        100,
+                                        Math.round(
+                                          (activeRecordedSetCount /
+                                            activeSetCount) *
+                                            100,
+                                        ),
+                                      )
+                                    : 0
+                                }%`,
+                              }}
+                            />
+                          </div>
+                        </div>
+
+                        {/* Target — compact inline row */}
+                        {activeProgressPercent !== null ? (
+                          <div className="bg-muted/40 mt-2 flex items-center justify-between rounded-lg px-2.5 py-1.5">
+                            <div className="flex items-center gap-2">
+                              <span className="text-muted-foreground text-[10px] uppercase">
+                                Target
+                              </span>
+
+                              <span className="text-xs font-medium">
+                                {activeTopWeight}/{activeTargetWeight}{" "}
+                                {activeWeightUnit}
+                              </span>
+                            </div>
+
+                            <span className="text-primary text-xs font-semibold">
+                              {activeProgressPercent}%
+                            </span>
+                          </div>
+                        ) : null}
+
+                        {/* Details as a single small action */}
+                        {Boolean(activeExercise?.description) ||
+                        Boolean(activeExerciseNotes) ? (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="text-muted-foreground mt-1 h-6 px-0 text-[11px]"
+                            onClick={() =>
+                              setExerciseDetails({
+                                name:
+                                  activeExercise?.name ??
+                                  activeExerciseEntry.exerciseId,
+                                description: activeExercise?.description,
+                                notes: activeExerciseNotes || undefined,
+                              })
+                            }
+                          >
+                            View exercise details
+                          </Button>
                         ) : null}
                       </div>
                     ) : null}

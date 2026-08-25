@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { useMemo, useEffect, useState } from "react";
 import { useParams } from "next/navigation";
-import { ArrowLeft, Dumbbell, Pencil, TrendingUp } from "lucide-react";
+import { ArrowLeft, Dumbbell, Pencil, TrendingUp, Power } from "lucide-react";
+
 import { toast } from "sonner";
 
 import { apiRequest } from "@/lib/api/client";
@@ -325,6 +326,12 @@ export default function WorkoutDateInsightsPage() {
 
             const weightUnit = exercise?.weightTracking.unit ?? "kg";
 
+            const avgEffort =
+              exerciseEntry.sets.reduce(
+                (sum, setEntry) => sum + (setEntry.effort ?? 0),
+                0,
+              ) / exerciseEntry.sets.length;
+
             return (
               <article
                 key={`${exerciseEntry.exerciseId}-${exerciseIndex}`}
@@ -409,6 +416,32 @@ export default function WorkoutDateInsightsPage() {
                         {exercise.progression.repRange.min}–
                         {exercise.progression.repRange.max}
                       </span>
+                    </div>
+                  ) : null}
+
+                  {/* Average effort */}
+                  {avgEffort !== null ? (
+                    <div className="mt-4">
+                      <div className="mb-1.5 flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-1.5">
+                          <Power className="text-primary h-3.5 w-3.5" />
+
+                          <p className="text-xs font-medium">Average effort</p>
+                        </div>
+
+                        <p className="text-muted-foreground text-[11px]">
+                          {formatNumber(avgEffort)} / 5
+                        </p>
+                      </div>
+
+                      <div className="bg-muted h-2 w-full overflow-hidden rounded-full">
+                        <div
+                          className="bg-primary h-full rounded-full transition-all"
+                          style={{
+                            width: `${(avgEffort / 5) * 100}%`,
+                          }}
+                        />
+                      </div>
                     </div>
                   ) : null}
                 </div>

@@ -33,7 +33,7 @@ import {
 const NATIVE_SELECT_CLASS =
   "border-input bg-background text-foreground focus:ring-primary/40 h-10 w-full rounded-xl border px-3 text-sm transition outline-none focus:ring-1 disabled:cursor-not-allowed disabled:opacity-60";
 
-const INITIAL_EXERCISE_COUNT = 3;
+const INITIAL_EXERCISE_COUNT = 0;
 
 function getExerciseTopWeight(exerciseEntry: WorkoutExerciseEntry) {
   return exerciseEntry.sets.reduce((max, setEntry) => {
@@ -366,7 +366,7 @@ export default function WorkoutsProgressPage() {
       ) : (
         <>
           {/* Summary */}
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid grid-cols-2 gap-3">
             <SummaryCard
               label="Workouts"
               value={overallSummary.workouts}
@@ -707,7 +707,7 @@ export default function WorkoutsProgressPage() {
                           </>
                         ) : (
                           <>
-                            Show {hiddenExerciseCount} more exercise
+                            Show {hiddenExerciseCount} exercise
                             {hiddenExerciseCount === 1 ? "" : "s"}
                             <ChevronDown className="h-3.5 w-3.5" />
                           </>
