@@ -1310,7 +1310,7 @@ function WorkoutsLogPageContent() {
 
                             {/* Effort */}
                             <div className="space-y-3">
-                              <div className="flex items-center justify-between">
+                              {/* <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-1.5">
                                   <Label className="text-muted-foreground text-xs">
                                     Effort
@@ -1338,28 +1338,74 @@ function WorkoutsLogPageContent() {
                                     </p>
                                   </div>
                                 ) : null}
-                              </div>
+                              </div> */}
 
-                              <div className="px-2">
-                                <Slider
-                                  min={1}
-                                  max={5}
-                                  step={1}
-                                  value={[setEntry.effort ?? 0]}
-                                  onValueChange={(value) => {
-                                    const effort = Array.isArray(value)
-                                      ? value[0]
-                                      : value;
+                              <div className="space-y-2">
+                                <div className="flex items-center justify-between">
+                                  <div className="flex items-center gap-1.5">
+                                    <Label className="text-muted-foreground text-xs">
+                                      Effort
+                                    </Label>
 
-                                    updateSet(activeExerciseIndex, setIndex, {
-                                      effort: effort as 1 | 2 | 3 | 4 | 5,
-                                    });
-                                  }}
-                                />
+                                    <Button
+                                      type="button"
+                                      variant="ghost"
+                                      size="icon"
+                                      className="text-muted-foreground h-6 w-6"
+                                      onClick={() => setIsEffortGuideOpen(true)}
+                                      aria-label="Explain effort and RIR"
+                                    >
+                                      <Info className="h-3.5 w-3.5" />
+                                    </Button>
+                                  </div>
 
-                                <div className="text-muted-foreground mt-2 flex justify-between text-[10px]">
+                                  {selectedEffort ? (
+                                    <div className="text-right">
+                                      <p className="text-sm font-semibold">
+                                        {selectedEffort.rir}
+                                      </p>
+                                      <p className="text-muted-foreground text-[11px]">
+                                        {selectedEffort.label}
+                                      </p>
+                                    </div>
+                                  ) : null}
+                                </div>
+
+                                <div className="bg-muted/50 grid grid-cols-5 gap-1 rounded-xl p-1">
+                                  {([1, 2, 3, 4, 5] as const).map((effort) => {
+                                    const isSelected =
+                                      setEntry.effort === effort;
+
+                                    return (
+                                      <button
+                                        key={effort}
+                                        type="button"
+                                        onClick={() =>
+                                          updateSet(
+                                            activeExerciseIndex,
+                                            setIndex,
+                                            {
+                                              effort,
+                                            },
+                                          )
+                                        }
+                                        className={`flex h-10 items-center justify-center rounded-lg text-sm font-semibold transition-all ${
+                                          isSelected
+                                            ? "bg-background text-foreground shadow-sm ring-1 ring-black/10"
+                                            : "text-muted-foreground hover:text-foreground"
+                                        }`}
+                                        aria-label={`Effort ${effort}`}
+                                        aria-pressed={isSelected}
+                                      >
+                                        {effort}
+                                      </button>
+                                    );
+                                  })}
+                                </div>
+
+                                <div className="text-muted-foreground flex justify-between px-1 text-[9px]">
                                   <span>Very easy</span>
-                                  <span>Max</span>
+                                  <span>Max effort</span>
                                 </div>
                               </div>
                             </div>
