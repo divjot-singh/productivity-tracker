@@ -1620,7 +1620,7 @@ function WorkoutsLogPageContent() {
                 <Input
                   value={exerciseQuery}
                   onChange={(event) => setExerciseQuery(event.target.value)}
-                  placeholder="Search exercises"
+                  placeholder="Search exercises by name"
                 />
 
                 <div className="grid grid-cols-3 gap-2">

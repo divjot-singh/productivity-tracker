@@ -466,7 +466,7 @@ export default function CombinationDetailPage() {
                   <Input
                     value={exerciseQuery}
                     onChange={(event) => setExerciseQuery(event.target.value)}
-                    placeholder="Search exercises"
+                    placeholder="Search exercises by name"
                     className="h-9"
                   />
 
