@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Check, ChevronsUpDown, X } from "lucide-react";
+import { ChevronDown, X } from "lucide-react";
 
 import {
   EXERCISE_CATEGORY_OPTIONS,
@@ -19,24 +19,11 @@ import {
 } from "@/lib/workouts/constants";
 import { ExerciseDefinition, WorkoutCombination } from "@/models/workout";
 
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import SearchableSelect from "@/components/workouts/SearchableSelect";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "@/components/ui/command";
 
 const NATIVE_SELECT_CLASS =
   "border-input bg-background text-foreground focus:ring-primary/40 h-11 w-full appearance-none rounded-xl border px-3.5 pr-10 text-sm transition outline-none focus:ring-1 disabled:cursor-not-allowed disabled:opacity-60";
@@ -110,34 +97,11 @@ function SelectedValue({
   );
 }
 
-function MultiSelectTrigger({
-  selectedCount,
-  placeholder,
-  disabled,
-  open,
-}: {
-  selectedCount: number;
-  placeholder: string;
-  disabled?: boolean;
-  open: boolean;
-}) {
+function NativeSelectWrapper({ children }: { children: React.ReactNode }) {
   return (
-    <div
-      className={`border-input bg-background hover:bg-accent hover:text-accent-foreground flex h-11 w-full items-center justify-between rounded-xl border px-3.5 text-sm font-normal shadow-xs transition-colors ${
-        disabled
-          ? "pointer-events-none cursor-not-allowed opacity-50"
-          : "cursor-pointer"
-      }`}
-    >
-      <span className="truncate">
-        {selectedCount > 0 ? `${selectedCount} selected` : placeholder}
-      </span>
-
-      <ChevronsUpDown
-        className={`text-muted-foreground ml-2 h-4 w-4 shrink-0 transition-transform ${
-          open ? "rotate-180" : ""
-        }`}
-      />
+    <div className="relative">
+      {children}
+      <ChevronDown className="text-muted-foreground pointer-events-none absolute top-1/2 right-4 h-4 w-4 -translate-y-1/2" />
     </div>
   );
 }
@@ -152,12 +116,6 @@ export default function ExerciseEditorFields({
   onValidationChange,
   onChange,
 }: ExerciseEditorFieldsProps) {
-  const [categoryOpen, setCategoryOpen] = useState(false);
-  const [muscleOpen, setMuscleOpen] = useState(false);
-  const [equipmentOpen, setEquipmentOpen] = useState(false);
-  const [combinationOpen, setCombinationOpen] = useState(false);
-  const [customEquipmentInput, setCustomEquipmentInput] = useState("");
-
   const [repMinInput, setRepMinInput] = useState("");
   const [repMaxInput, setRepMaxInput] = useState("");
 
@@ -187,6 +145,38 @@ export default function ExerciseEditorFields({
       ]),
     ).sort();
   }, [equipmentOptions, selectedEquipments]);
+  const categoryOptions = useMemo(
+    () =>
+      EXERCISE_CATEGORY_OPTIONS.map((category) => ({
+        value: category,
+        label: titleCaseWorkoutValue(category),
+      })),
+    [],
+  );
+  const muscleOptions = useMemo(
+    () =>
+      EXERCISE_MUSCLE_GROUP_OPTIONS.map((muscleGroup) => ({
+        value: muscleGroup,
+        label: titleCaseWorkoutValue(muscleGroup),
+      })),
+    [],
+  );
+  const equipmentSelectOptions = useMemo(
+    () =>
+      resolvedEquipmentOptions.map((equipment) => ({
+        value: equipment,
+        label: formatExerciseEquipmentLabel(equipment),
+      })),
+    [resolvedEquipmentOptions],
+  );
+  const combinationOptions = useMemo(
+    () =>
+      combinations.map((combination) => ({
+        value: combination.id,
+        label: combination.name,
+      })),
+    [combinations],
+  );
 
   const repRangeError = useMemo(() => {
     if (repMinInput === "" && repMaxInput === "") {
@@ -273,22 +263,11 @@ export default function ExerciseEditorFields({
   function updateEquipments(nextEquipments: string[]) {
     update({
       equipments: nextEquipments,
-      equipment: nextEquipments[0],
     });
   }
 
-  function toggleEquipment(value: string) {
+  function addCustomEquipment(value: string) {
     const normalized = normalizeEquipmentValue(value);
-
-    if (!normalized) {
-      return;
-    }
-
-    updateEquipments(toggleValue(selectedEquipments, normalized));
-  }
-
-  function addCustomEquipment() {
-    const normalized = normalizeEquipmentValue(customEquipmentInput);
 
     if (!normalized) {
       return;
@@ -297,8 +276,6 @@ export default function ExerciseEditorFields({
     if (!selectedEquipments.includes(normalized)) {
       updateEquipments([...selectedEquipments, normalized]);
     }
-
-    setCustomEquipmentInput("");
   }
 
   return (
@@ -387,66 +364,20 @@ export default function ExerciseEditorFields({
               </p>
             )}
 
-            <Popover open={categoryOpen} onOpenChange={setCategoryOpen}>
-              <PopoverTrigger
-                render={
-                  <button
-                    type="button"
-                    disabled={disabled}
-                    className="w-full text-left outline-none"
-                  />
-                }
-              >
-                <MultiSelectTrigger
-                  selectedCount={exercise.categories.length}
-                  placeholder="Select categories"
-                  disabled={disabled}
-                  open={categoryOpen}
-                />
-              </PopoverTrigger>
-
-              <PopoverContent
-                className="w-[--radix-popover-trigger-width] p-0"
-                align="start"
-              >
-                <Command>
-                  <CommandInput placeholder="Search categories..." />
-
-                  <CommandList>
-                    <CommandEmpty>No categories found.</CommandEmpty>
-
-                    <CommandGroup>
-                      {EXERCISE_CATEGORY_OPTIONS.map((category) => {
-                        const selected = exercise.categories.includes(category);
-
-                        return (
-                          <CommandItem
-                            key={category}
-                            value={titleCaseWorkoutValue(category)}
-                            onSelect={() =>
-                              update({
-                                categories: toggleValue(
-                                  exercise.categories,
-                                  category,
-                                ),
-                              })
-                            }
-                          >
-                            <Check
-                              className={`mr-2 h-4 w-4 ${
-                                selected ? "opacity-100" : "opacity-0"
-                              }`}
-                            />
-
-                            <span>{titleCaseWorkoutValue(category)}</span>
-                          </CommandItem>
-                        );
-                      })}
-                    </CommandGroup>
-                  </CommandList>
-                </Command>
-              </PopoverContent>
-            </Popover>
+            <SearchableSelect
+              mode="multi"
+              options={categoryOptions}
+              value={exercise.categories as string[]}
+              disabled={disabled}
+              placeholder="Select categories"
+              searchPlaceholder="Search categories..."
+              emptyText="No categories found."
+              onChange={(next) =>
+                update({
+                  categories: next as ExerciseDefinition["categories"],
+                })
+              }
+            />
           </div>
 
           {/* Muscle groups */}
@@ -486,67 +417,20 @@ export default function ExerciseEditorFields({
               </p>
             )}
 
-            <Popover open={muscleOpen} onOpenChange={setMuscleOpen}>
-              <PopoverTrigger
-                render={
-                  <button
-                    type="button"
-                    disabled={disabled}
-                    className="w-full text-left outline-none"
-                  />
-                }
-              >
-                <MultiSelectTrigger
-                  selectedCount={exercise.muscleGroups.length}
-                  placeholder="Select muscle groups"
-                  disabled={disabled}
-                  open={muscleOpen}
-                />
-              </PopoverTrigger>
-
-              <PopoverContent
-                className="w-[--radix-popover-trigger-width] p-0"
-                align="start"
-              >
-                <Command>
-                  <CommandInput placeholder="Search muscle groups..." />
-
-                  <CommandList>
-                    <CommandEmpty>No muscle groups found.</CommandEmpty>
-
-                    <CommandGroup>
-                      {EXERCISE_MUSCLE_GROUP_OPTIONS.map((muscleGroup) => {
-                        const selected =
-                          exercise.muscleGroups.includes(muscleGroup);
-
-                        return (
-                          <CommandItem
-                            key={muscleGroup}
-                            value={titleCaseWorkoutValue(muscleGroup)}
-                            onSelect={() =>
-                              update({
-                                muscleGroups: toggleValue(
-                                  exercise.muscleGroups,
-                                  muscleGroup,
-                                ),
-                              })
-                            }
-                          >
-                            <Check
-                              className={`mr-2 h-4 w-4 ${
-                                selected ? "opacity-100" : "opacity-0"
-                              }`}
-                            />
-
-                            <span>{titleCaseWorkoutValue(muscleGroup)}</span>
-                          </CommandItem>
-                        );
-                      })}
-                    </CommandGroup>
-                  </CommandList>
-                </Command>
-              </PopoverContent>
-            </Popover>
+            <SearchableSelect
+              mode="multi"
+              options={muscleOptions}
+              value={exercise.muscleGroups as string[]}
+              disabled={disabled}
+              placeholder="Select muscle groups"
+              searchPlaceholder="Search muscle groups..."
+              emptyText="No muscle groups found."
+              onChange={(next) =>
+                update({
+                  muscleGroups: next as ExerciseDefinition["muscleGroups"],
+                })
+              }
+            />
           </div>
         </div>
       </Section>
@@ -569,7 +453,11 @@ export default function ExerciseEditorFields({
                   <SelectedValue
                     key={equipment}
                     disabled={disabled}
-                    onRemove={() => toggleEquipment(equipment)}
+                    onRemove={() =>
+                      updateEquipments(
+                        selectedEquipments.filter((item) => item !== equipment),
+                      )
+                    }
                   >
                     {formatExerciseEquipmentLabel(equipment)}
                   </SelectedValue>
@@ -581,159 +469,103 @@ export default function ExerciseEditorFields({
               </p>
             )}
 
-            <Popover open={equipmentOpen} onOpenChange={setEquipmentOpen}>
-              <PopoverTrigger
-                render={
-                  <button
-                    type="button"
-                    disabled={disabled}
-                    className="w-full text-left outline-none"
-                  />
-                }
-              >
-                <MultiSelectTrigger
-                  selectedCount={selectedEquipments.length}
-                  placeholder="Select one or more equipment"
-                  disabled={disabled}
-                  open={equipmentOpen}
-                />
-              </PopoverTrigger>
+            <SearchableSelect
+              mode="multi"
+              options={equipmentSelectOptions}
+              value={selectedEquipments}
+              disabled={disabled}
+              placeholder="Select one or more equipment"
+              searchPlaceholder="Search or type equipment..."
+              emptyText="No equipment found."
+              allowCreateOption
+              onCreateOption={addCustomEquipment}
+              onChange={updateEquipments}
+            />
 
-              <PopoverContent
-                className="w-[--radix-popover-trigger-width] p-0"
-                align="start"
-              >
-                <Command>
-                  <CommandInput placeholder="Search equipment..." />
-
-                  <CommandList>
-                    <CommandEmpty>No equipment found.</CommandEmpty>
-
-                    <CommandGroup>
-                      {resolvedEquipmentOptions.map((equipment) => {
-                        const selected = selectedEquipments.includes(equipment);
-
-                        return (
-                          <CommandItem
-                            key={equipment}
-                            value={formatExerciseEquipmentLabel(equipment)}
-                            onSelect={() => toggleEquipment(equipment)}
-                          >
-                            <Check
-                              className={`mr-2 h-4 w-4 ${
-                                selected ? "opacity-100" : "opacity-0"
-                              }`}
-                            />
-
-                            <span>
-                              {formatExerciseEquipmentLabel(equipment)}
-                            </span>
-                          </CommandItem>
-                        );
-                      })}
-                    </CommandGroup>
-                  </CommandList>
-                </Command>
-
-                <div className="border-t p-2">
-                  <div className="flex gap-2">
-                    <Input
-                      value={customEquipmentInput}
-                      disabled={disabled}
-                      onChange={(event) =>
-                        setCustomEquipmentInput(event.target.value)
-                      }
-                      placeholder="Add custom equipment"
-                      className="h-9"
-                    />
-
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      disabled={disabled || customEquipmentInput.trim() === ""}
-                      onClick={addCustomEquipment}
-                    >
-                      Add
-                    </Button>
-                  </div>
-                </div>
-              </PopoverContent>
-            </Popover>
+            <p className="text-muted-foreground text-xs">
+              Select multiple presets, or type any custom equipment and choose
+              Add "name".
+            </p>
           </div>
 
           <div className="grid gap-5 sm:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="measurement-mode">Measurement mode</Label>
 
-              <select
-                id="measurement-mode"
-                disabled={disabled}
-                className={NATIVE_SELECT_CLASS}
-                value={exercise.measurementMode ?? "external_load"}
-                onChange={(e) => {
-                  const mode = e.target
-                    .value as ExerciseDefinition["measurementMode"];
+              <NativeSelectWrapper>
+                <select
+                  id="measurement-mode"
+                  disabled={disabled}
+                  className={NATIVE_SELECT_CLASS}
+                  value={exercise.measurementMode ?? "external_load"}
+                  onChange={(e) => {
+                    const mode = e.target
+                      .value as ExerciseDefinition["measurementMode"];
 
-                  const nextUnit =
-                    mode === "bodyweight_height"
-                      ? ["in", "cm", "m"].includes(exercise.weightTracking.unit)
-                        ? exercise.weightTracking.unit
-                        : "in"
-                      : ["kg", "lb"].includes(exercise.weightTracking.unit)
-                        ? exercise.weightTracking.unit
-                        : "kg";
+                    const nextUnit =
+                      mode === "bodyweight_height"
+                        ? ["in", "cm", "m"].includes(
+                            exercise.weightTracking.unit,
+                          )
+                          ? exercise.weightTracking.unit
+                          : "in"
+                        : ["kg", "lb"].includes(exercise.weightTracking.unit)
+                          ? exercise.weightTracking.unit
+                          : "kg";
 
-                  update({
-                    measurementMode: mode,
-                    tracking: {
-                      ...exercise.tracking,
-                      weight: true,
-                    },
-                    weightTracking: {
-                      ...exercise.weightTracking,
-                      mode:
-                        mode === "bodyweight_height"
-                          ? "bodyweight"
-                          : exercise.weightTracking.mode,
-                      unit: nextUnit,
-                    },
-                  });
-                }}
-              >
-                {EXERCISE_MEASUREMENT_MODE_OPTIONS.map((mode) => (
-                  <option key={mode} value={mode}>
-                    {titleCaseWorkoutValue(mode)}
-                  </option>
-                ))}
-              </select>
+                    update({
+                      measurementMode: mode,
+                      tracking: {
+                        ...exercise.tracking,
+                        weight: true,
+                      },
+                      weightTracking: {
+                        ...exercise.weightTracking,
+                        mode:
+                          mode === "bodyweight_height"
+                            ? "bodyweight"
+                            : exercise.weightTracking.mode,
+                        unit: nextUnit,
+                      },
+                    });
+                  }}
+                >
+                  {EXERCISE_MEASUREMENT_MODE_OPTIONS.map((mode) => (
+                    <option key={mode} value={mode}>
+                      {titleCaseWorkoutValue(mode)}
+                    </option>
+                  ))}
+                </select>
+              </NativeSelectWrapper>
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="exercise-type">Type</Label>
 
-              <select
-                id="exercise-type"
-                disabled={disabled}
-                className={NATIVE_SELECT_CLASS}
-                value={exercise.type ?? ""}
-                onChange={(e) =>
-                  update({
-                    type:
-                      e.target.value === ""
-                        ? undefined
-                        : (e.target.value as ExerciseDefinition["type"]),
-                  })
-                }
-              >
-                <option value="">Select type</option>
+              <NativeSelectWrapper>
+                <select
+                  id="exercise-type"
+                  disabled={disabled}
+                  className={NATIVE_SELECT_CLASS}
+                  value={exercise.type ?? ""}
+                  onChange={(e) =>
+                    update({
+                      type:
+                        e.target.value === ""
+                          ? undefined
+                          : (e.target.value as ExerciseDefinition["type"]),
+                    })
+                  }
+                >
+                  <option value="">Select type</option>
 
-                {EXERCISE_TYPE_OPTIONS.map((type) => (
-                  <option key={type} value={type}>
-                    {titleCaseWorkoutValue(type)}
-                  </option>
-                ))}
-              </select>
+                  {EXERCISE_TYPE_OPTIONS.map((type) => (
+                    <option key={type} value={type}>
+                      {titleCaseWorkoutValue(type)}
+                    </option>
+                  ))}
+                </select>
+              </NativeSelectWrapper>
             </div>
           </div>
         </div>
@@ -821,58 +653,62 @@ export default function ExerciseEditorFields({
           <div className="space-y-2">
             <Label htmlFor="weight-unit">{primaryMetricLabel} unit</Label>
 
-            <select
-              id="weight-unit"
-              disabled={disabled}
-              className={NATIVE_SELECT_CLASS}
-              value={exercise.weightTracking.unit}
-              onChange={(e) =>
-                update({
-                  weightTracking: {
-                    ...exercise.weightTracking,
-                    unit: e.target
-                      .value as ExerciseDefinition["weightTracking"]["unit"],
-                  },
-                })
-              }
-            >
-              {EXERCISE_WEIGHT_UNIT_OPTIONS.filter((unit) =>
-                (exercise.measurementMode ?? "external_load") ===
-                "bodyweight_height"
-                  ? ["in", "cm", "m"].includes(unit)
-                  : ["kg", "lb"].includes(unit),
-              ).map((unit) => (
-                <option key={unit} value={unit}>
-                  {unit.toUpperCase()}
-                </option>
-              ))}
-            </select>
+            <NativeSelectWrapper>
+              <select
+                id="weight-unit"
+                disabled={disabled}
+                className={NATIVE_SELECT_CLASS}
+                value={exercise.weightTracking.unit}
+                onChange={(e) =>
+                  update({
+                    weightTracking: {
+                      ...exercise.weightTracking,
+                      unit: e.target
+                        .value as ExerciseDefinition["weightTracking"]["unit"],
+                    },
+                  })
+                }
+              >
+                {EXERCISE_WEIGHT_UNIT_OPTIONS.filter((unit) =>
+                  (exercise.measurementMode ?? "external_load") ===
+                  "bodyweight_height"
+                    ? ["in", "cm", "m"].includes(unit)
+                    : ["kg", "lb"].includes(unit),
+                ).map((unit) => (
+                  <option key={unit} value={unit}>
+                    {unit.toUpperCase()}
+                  </option>
+                ))}
+              </select>
+            </NativeSelectWrapper>
           </div>
 
           <div className="space-y-2">
             <Label htmlFor="weight-mode">Weight mode</Label>
 
-            <select
-              id="weight-mode"
-              disabled={disabled}
-              className={NATIVE_SELECT_CLASS}
-              value={exercise.weightTracking.mode}
-              onChange={(e) =>
-                update({
-                  weightTracking: {
-                    ...exercise.weightTracking,
-                    mode: e.target
-                      .value as ExerciseDefinition["weightTracking"]["mode"],
-                  },
-                })
-              }
-            >
-              {EXERCISE_WEIGHT_TRACKING_MODE_OPTIONS.map((mode) => (
-                <option key={mode} value={mode}>
-                  {titleCaseWorkoutValue(mode)}
-                </option>
-              ))}
-            </select>
+            <NativeSelectWrapper>
+              <select
+                id="weight-mode"
+                disabled={disabled}
+                className={NATIVE_SELECT_CLASS}
+                value={exercise.weightTracking.mode}
+                onChange={(e) =>
+                  update({
+                    weightTracking: {
+                      ...exercise.weightTracking,
+                      mode: e.target
+                        .value as ExerciseDefinition["weightTracking"]["mode"],
+                    },
+                  })
+                }
+              >
+                {EXERCISE_WEIGHT_TRACKING_MODE_OPTIONS.map((mode) => (
+                  <option key={mode} value={mode}>
+                    {titleCaseWorkoutValue(mode)}
+                  </option>
+                ))}
+              </select>
+            </NativeSelectWrapper>
           </div>
         </div>
 
@@ -933,27 +769,29 @@ export default function ExerciseEditorFields({
           <div className="space-y-2">
             <Label htmlFor="progression-strategy">Strategy</Label>
 
-            <select
-              id="progression-strategy"
-              disabled={disabled}
-              className={NATIVE_SELECT_CLASS}
-              value={exercise.progression.strategy}
-              onChange={(e) =>
-                update({
-                  progression: {
-                    ...exercise.progression,
-                    strategy: e.target
-                      .value as ExerciseDefinition["progression"]["strategy"],
-                  },
-                })
-              }
-            >
-              {EXERCISE_PROGRESSION_STRATEGY_OPTIONS.map((strategy) => (
-                <option key={strategy} value={strategy}>
-                  {titleCaseWorkoutValue(strategy)}
-                </option>
-              ))}
-            </select>
+            <NativeSelectWrapper>
+              <select
+                id="progression-strategy"
+                disabled={disabled}
+                className={NATIVE_SELECT_CLASS}
+                value={exercise.progression.strategy}
+                onChange={(e) =>
+                  update({
+                    progression: {
+                      ...exercise.progression,
+                      strategy: e.target
+                        .value as ExerciseDefinition["progression"]["strategy"],
+                    },
+                  })
+                }
+              >
+                {EXERCISE_PROGRESSION_STRATEGY_OPTIONS.map((strategy) => (
+                  <option key={strategy} value={strategy}>
+                    {titleCaseWorkoutValue(strategy)}
+                  </option>
+                ))}
+              </select>
+            </NativeSelectWrapper>
           </div>
 
           <div className="space-y-2">
@@ -1053,61 +891,29 @@ export default function ExerciseEditorFields({
               </p>
             )}
 
-            <Popover open={combinationOpen} onOpenChange={setCombinationOpen}>
-              <PopoverTrigger
-                render={
-                  <button
-                    type="button"
-                    disabled={disabled}
-                    className="w-full text-left outline-none"
-                  />
+            <SearchableSelect
+              mode="multi"
+              options={combinationOptions}
+              value={selectedCombinationIds}
+              disabled={disabled}
+              placeholder="Select workout combinations"
+              searchPlaceholder="Search combinations..."
+              emptyText="No combinations found."
+              onChange={(next) => {
+                const selectedSet = new Set(next);
+                for (const combinationId of selectedCombinationIds) {
+                  if (!selectedSet.has(combinationId)) {
+                    onToggleCombination(combinationId);
+                  }
                 }
-              >
-                <MultiSelectTrigger
-                  selectedCount={selectedCombinationIds.length}
-                  placeholder="Select workout combinations"
-                  disabled={disabled}
-                  open={combinationOpen}
-                />
-              </PopoverTrigger>
 
-              <PopoverContent
-                className="w-[--radix-popover-trigger-width] p-0"
-                align="start"
-              >
-                <Command>
-                  <CommandInput placeholder="Search combinations..." />
-
-                  <CommandList>
-                    <CommandEmpty>No combinations found.</CommandEmpty>
-
-                    <CommandGroup>
-                      {combinations.map((combination) => {
-                        const selected = selectedCombinationIds.includes(
-                          combination.id,
-                        );
-
-                        return (
-                          <CommandItem
-                            key={combination.id}
-                            value={combination.name}
-                            onSelect={() => onToggleCombination(combination.id)}
-                          >
-                            <Check
-                              className={`mr-2 h-4 w-4 ${
-                                selected ? "opacity-100" : "opacity-0"
-                              }`}
-                            />
-
-                            <span className="truncate">{combination.name}</span>
-                          </CommandItem>
-                        );
-                      })}
-                    </CommandGroup>
-                  </CommandList>
-                </Command>
-              </PopoverContent>
-            </Popover>
+                for (const combinationId of next) {
+                  if (!selectedCombinationIds.includes(combinationId)) {
+                    onToggleCombination(combinationId);
+                  }
+                }
+              }}
+            />
           </div>
         </Section>
       ) : null}

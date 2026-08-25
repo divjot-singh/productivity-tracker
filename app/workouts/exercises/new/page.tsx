@@ -22,7 +22,6 @@ const DEFAULT_EXERCISE: ExerciseDefinition = {
   name: "",
   categories: [],
   muscleGroups: [],
-  equipment: undefined,
   equipments: [],
   measurementMode: "external_load",
   type: undefined,

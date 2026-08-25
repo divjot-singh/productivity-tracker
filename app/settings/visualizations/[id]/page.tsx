@@ -18,6 +18,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import StreakRuleEditor from "@/components/settings/StreakRuleEditor";
+import SearchableSelect from "@/components/workouts/SearchableSelect";
 import { useRequireAuth } from "@/lib/hooks/useRequireAuth";
 import { apiRequest } from "@/lib/api/client";
 import {
@@ -530,31 +531,17 @@ export default function VisualizationDetailPage() {
                     Loading options...
                   </div>
                 ) : (
-                  <div className="relative">
-                    <select
-                      id="key"
-                      value={visualization.key}
-                      onChange={(e) => {
-                        const value = e.target.value;
-                        if (!value) return;
-                        updateVisualization({ key: value });
-                      }}
-                      className={NATIVE_SELECT_CLASS}
-                    >
-                      {keyOptions.length === 0 ? (
-                        <option value="" disabled>
-                          No options available
-                        </option>
-                      ) : (
-                        keyOptions.map((option) => (
-                          <option key={option.value} value={option.value}>
-                            {option.label}
-                          </option>
-                        ))
-                      )}
-                    </select>
-                    <ChevronDown className="text-muted-foreground pointer-events-none absolute top-1/2 right-4 h-4 w-4 -translate-y-1/2" />
-                  </div>
+                  <SearchableSelect
+                    mode="single"
+                    value={visualization.key}
+                    disabled={keyOptions.length === 0}
+                    options={keyOptions}
+                    placeholder="No options available"
+                    searchPlaceholder="Search data keys..."
+                    emptyText="No matching keys found."
+                    triggerClassName={NATIVE_SELECT_CLASS}
+                    onChange={(value) => updateVisualization({ key: value })}
+                  />
                 )}
               </div>
             )}

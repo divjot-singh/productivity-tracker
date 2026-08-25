@@ -37,6 +37,7 @@ export interface ExerciseDefinition {
   name: string;
   categories: ExerciseCategory[];
   muscleGroups: ExerciseMuscleGroup[];
+  /** @deprecated Use equipments instead. */
   equipment?: ExerciseEquipment;
   equipments?: ExerciseEquipment[];
   measurementMode?: ExerciseMeasurementMode;

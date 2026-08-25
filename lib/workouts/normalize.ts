@@ -148,7 +148,6 @@ export function normalizeExercisePayload(
       value.muscleGroups,
       EXERCISE_MUSCLE_GROUP_OPTIONS,
     ),
-    equipment: equipments[0],
     equipments,
     measurementMode:
       normalizeOptionalEnum(

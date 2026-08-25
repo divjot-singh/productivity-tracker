@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ChevronLeft } from "lucide-react";
+import { ChevronDown, ChevronLeft } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -32,6 +32,9 @@ const DEFAULT_COMBINATION: WorkoutCombination = {
   exerciseIds: [],
   active: true,
 };
+
+const NATIVE_SELECT_CLASS =
+  "border-input bg-background text-foreground focus:ring-primary/40 h-10 w-full appearance-none rounded-xl border px-2 pr-9 text-xs transition outline-none focus:ring-1 disabled:cursor-not-allowed disabled:opacity-60";
 
 export default function NewCombinationPage() {
   const { user } = useRequireAuth();
@@ -221,50 +224,59 @@ export default function NewCombinationPage() {
             />
 
             <div className="grid grid-cols-3 gap-2">
-              <select
-                value={exerciseCategoryFilter}
-                onChange={(event) =>
-                  setExerciseCategoryFilter(event.target.value)
-                }
-                className="border-input bg-background h-10 rounded-xl border px-2 text-xs"
-              >
-                <option value="">All categories</option>
-                {exerciseFilterOptions.categories.map((value) => (
-                  <option key={value} value={value}>
-                    {titleCaseWorkoutValue(value)}
-                  </option>
-                ))}
-              </select>
+              <div className="relative">
+                <select
+                  value={exerciseCategoryFilter}
+                  onChange={(event) =>
+                    setExerciseCategoryFilter(event.target.value)
+                  }
+                  className={NATIVE_SELECT_CLASS}
+                >
+                  <option value="">All categories</option>
+                  {exerciseFilterOptions.categories.map((value) => (
+                    <option key={value} value={value}>
+                      {titleCaseWorkoutValue(value)}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown className="text-muted-foreground pointer-events-none absolute top-1/2 right-3 h-4 w-4 -translate-y-1/2" />
+              </div>
 
-              <select
-                value={exerciseMuscleFilter}
-                onChange={(event) =>
-                  setExerciseMuscleFilter(event.target.value)
-                }
-                className="border-input bg-background h-10 rounded-xl border px-2 text-xs"
-              >
-                <option value="">All muscles</option>
-                {exerciseFilterOptions.muscleGroups.map((value) => (
-                  <option key={value} value={value}>
-                    {titleCaseWorkoutValue(value)}
-                  </option>
-                ))}
-              </select>
+              <div className="relative">
+                <select
+                  value={exerciseMuscleFilter}
+                  onChange={(event) =>
+                    setExerciseMuscleFilter(event.target.value)
+                  }
+                  className={NATIVE_SELECT_CLASS}
+                >
+                  <option value="">All muscles</option>
+                  {exerciseFilterOptions.muscleGroups.map((value) => (
+                    <option key={value} value={value}>
+                      {titleCaseWorkoutValue(value)}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown className="text-muted-foreground pointer-events-none absolute top-1/2 right-3 h-4 w-4 -translate-y-1/2" />
+              </div>
 
-              <select
-                value={exerciseEquipmentFilter}
-                onChange={(event) =>
-                  setExerciseEquipmentFilter(event.target.value)
-                }
-                className="border-input bg-background h-10 rounded-xl border px-2 text-xs"
-              >
-                <option value="">All equipment</option>
-                {exerciseFilterOptions.equipments.map((value) => (
-                  <option key={value} value={value}>
-                    {formatExerciseEquipmentLabel(value)}
-                  </option>
-                ))}
-              </select>
+              <div className="relative">
+                <select
+                  value={exerciseEquipmentFilter}
+                  onChange={(event) =>
+                    setExerciseEquipmentFilter(event.target.value)
+                  }
+                  className={NATIVE_SELECT_CLASS}
+                >
+                  <option value="">All equipment</option>
+                  {exerciseFilterOptions.equipments.map((value) => (
+                    <option key={value} value={value}>
+                      {formatExerciseEquipmentLabel(value)}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown className="text-muted-foreground pointer-events-none absolute top-1/2 right-3 h-4 w-4 -translate-y-1/2" />
+              </div>
             </div>
           </div>
 

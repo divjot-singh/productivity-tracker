@@ -7,6 +7,7 @@ import {
   ArrowUp,
   ChartNoAxesCombined,
   Check,
+  ChevronDown,
   ChevronRight,
   Info,
   MoreVertical,
@@ -756,24 +757,6 @@ function WorkoutsLogPageContent() {
 
               {/* Exercise progress */}
               <div className="bg-background/60 mt-4 rounded-xl border p-3">
-                <div className="flex items-center justify-between gap-3">
-                  <div>
-                    <p className="text-muted-foreground text-[11px] font-semibold tracking-wide uppercase">
-                      Workout progress
-                    </p>
-
-                    <p className="mt-0.5 text-sm font-semibold">
-                      {recordedExerciseCount} of {workout.exercises.length}{" "}
-                      exercises
-                    </p>
-                  </div>
-
-                  <span className="text-muted-foreground text-xs">
-                    {recordedSetCount} sets
-                  </span>
-                </div>
-
-                {/* Exercise progress */}
                 <div className="mt-3 flex items-center gap-1.5">
                   {workout.exercises.map((exercise, index) => {
                     const isCompleted = exercise.sets.some(hasRecordedSet);
@@ -1641,50 +1624,59 @@ function WorkoutsLogPageContent() {
                 />
 
                 <div className="grid grid-cols-3 gap-2">
-                  <select
-                    className={NATIVE_SELECT_CLASS}
-                    value={exerciseCategoryFilter}
-                    onChange={(event) =>
-                      setExerciseCategoryFilter(event.target.value)
-                    }
-                  >
-                    <option value="">All categories</option>
-                    {manualExerciseFilterOptions.categories.map((value) => (
-                      <option key={value} value={value}>
-                        {titleCaseWorkoutValue(value)}
-                      </option>
-                    ))}
-                  </select>
+                  <div className="relative">
+                    <select
+                      className={NATIVE_SELECT_CLASS}
+                      value={exerciseCategoryFilter}
+                      onChange={(event) =>
+                        setExerciseCategoryFilter(event.target.value)
+                      }
+                    >
+                      <option value="">All categories</option>
+                      {manualExerciseFilterOptions.categories.map((value) => (
+                        <option key={value} value={value}>
+                          {titleCaseWorkoutValue(value)}
+                        </option>
+                      ))}
+                    </select>
+                    <ChevronDown className="text-muted-foreground pointer-events-none absolute top-1/2 right-3 h-4 w-4 -translate-y-1/2" />
+                  </div>
 
-                  <select
-                    className={NATIVE_SELECT_CLASS}
-                    value={exerciseMuscleFilter}
-                    onChange={(event) =>
-                      setExerciseMuscleFilter(event.target.value)
-                    }
-                  >
-                    <option value="">All muscles</option>
-                    {manualExerciseFilterOptions.muscleGroups.map((value) => (
-                      <option key={value} value={value}>
-                        {titleCaseWorkoutValue(value)}
-                      </option>
-                    ))}
-                  </select>
+                  <div className="relative">
+                    <select
+                      className={NATIVE_SELECT_CLASS}
+                      value={exerciseMuscleFilter}
+                      onChange={(event) =>
+                        setExerciseMuscleFilter(event.target.value)
+                      }
+                    >
+                      <option value="">All muscles</option>
+                      {manualExerciseFilterOptions.muscleGroups.map((value) => (
+                        <option key={value} value={value}>
+                          {titleCaseWorkoutValue(value)}
+                        </option>
+                      ))}
+                    </select>
+                    <ChevronDown className="text-muted-foreground pointer-events-none absolute top-1/2 right-3 h-4 w-4 -translate-y-1/2" />
+                  </div>
 
-                  <select
-                    className={NATIVE_SELECT_CLASS}
-                    value={exerciseEquipmentFilter}
-                    onChange={(event) =>
-                      setExerciseEquipmentFilter(event.target.value)
-                    }
-                  >
-                    <option value="">All equipment</option>
-                    {manualExerciseFilterOptions.equipments.map((value) => (
-                      <option key={value} value={value}>
-                        {formatExerciseEquipmentLabel(value)}
-                      </option>
-                    ))}
-                  </select>
+                  <div className="relative">
+                    <select
+                      className={NATIVE_SELECT_CLASS}
+                      value={exerciseEquipmentFilter}
+                      onChange={(event) =>
+                        setExerciseEquipmentFilter(event.target.value)
+                      }
+                    >
+                      <option value="">All equipment</option>
+                      {manualExerciseFilterOptions.equipments.map((value) => (
+                        <option key={value} value={value}>
+                          {formatExerciseEquipmentLabel(value)}
+                        </option>
+                      ))}
+                    </select>
+                    <ChevronDown className="text-muted-foreground pointer-events-none absolute top-1/2 right-3 h-4 w-4 -translate-y-1/2" />
+                  </div>
                 </div>
 
                 <div className="max-h-80 space-y-2 overflow-auto rounded-xl border p-3">

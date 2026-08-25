@@ -1,6 +1,7 @@
 import { adminDb } from "@/lib/firebase-admin";
 import { removeUndefinedDeep } from "@/lib/firestore/sanitize";
 import { ExerciseDefinition } from "@/models/workout";
+import { FieldValue } from "firebase-admin/firestore";
 
 function getExerciseRef(uid: string, exerciseId: string) {
   return adminDb
@@ -87,11 +88,16 @@ export async function updateExercise(
 ): Promise<ExerciseDefinition> {
   const ref = getExerciseRef(uid, exercise.id);
 
+  const payload = removeUndefinedDeep({
+    ...exercise,
+    updatedAt: new Date(),
+  });
+
   await ref.set(
-    removeUndefinedDeep({
-      ...exercise,
-      updatedAt: new Date(),
-    }),
+    {
+      ...payload,
+      equipment: FieldValue.delete(),
+    },
     {
       merge: true,
     },
