@@ -9,6 +9,7 @@ import {
   Check,
   ChevronRight,
   Info,
+  MoreVertical,
   Plus,
   Save,
   Trash,
@@ -53,6 +54,13 @@ import {
   WorkoutExerciseEntry,
   WorkoutSetEntry,
 } from "@/models/workout";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
 
 interface PreviousExerciseSnapshot {
   date: string;
@@ -991,13 +999,19 @@ function WorkoutsLogPageContent() {
 
                     {activeExerciseEntry ? (
                       <div className="bg-card rounded-2xl border p-3">
-                        {/* Compact header */}
-                        <div className="flex items-center justify-between gap-2">
-                          <div className="min-w-0">
-                            <h2 className="truncate text-sm font-semibold">
-                              {activeExercise?.name ??
-                                activeExerciseEntry.exerciseId}
-                            </h2>
+                        {/* Header */}
+                        <div className="flex items-start gap-2">
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-2">
+                              <h2 className="truncate text-sm font-semibold">
+                                {activeExercise?.name ??
+                                  activeExerciseEntry.exerciseId}
+                              </h2>
+
+                              <span className="text-muted-foreground shrink-0 text-[10px]">
+                                {activeRecordedSetCount}/{activeSetCount}
+                              </span>
+                            </div>
 
                             <p className="text-muted-foreground truncate text-[11px]">
                               {activeExercise?.equipment
@@ -1012,71 +1026,108 @@ function WorkoutsLogPageContent() {
                             </p>
                           </div>
 
-                          {/* Keep your existing actions */}
-                          <div className="flex shrink-0 gap-1.5">
-                            <Button
-                              type="button"
-                              variant="outline"
-                              size="icon"
-                              className="h-8 w-8"
-                              disabled={activeExerciseIndex <= 0}
-                              onClick={() =>
-                                moveExercise(activeExerciseIndex, -1)
-                              }
-                              aria-label="Move exercise up"
-                            >
-                              <ArrowUp className="h-3.5 w-3.5" />
-                            </Button>
+                          {/* Exercise actions */}
+                          <DropdownMenu>
+                            <DropdownMenuTrigger>
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 shrink-0"
+                                aria-label="Exercise actions"
+                              >
+                                <MoreVertical className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
 
-                            <Button
-                              type="button"
-                              variant="outline"
-                              size="icon"
-                              className="h-8 w-8"
-                              disabled={
-                                activeExerciseIndex >=
-                                workout.exercises.length - 1
-                              }
-                              onClick={() =>
-                                moveExercise(activeExerciseIndex, 1)
-                              }
-                              aria-label="Move exercise down"
-                            >
-                              <ArrowDown className="h-3.5 w-3.5" />
-                            </Button>
+                            <DropdownMenuContent align="end" className="w-52">
+                              <DropdownMenuItem
+                                disabled={activeExerciseIndex <= 0}
+                                onClick={() =>
+                                  moveExercise(activeExerciseIndex, -1)
+                                }
+                              >
+                                <ArrowUp className="mr-2 h-4 w-4" />
+                                Move up
+                              </DropdownMenuItem>
 
-                            <Button
-                              type="button"
-                              variant="destructive"
-                              size="icon"
-                              className="h-8 w-8"
-                              onClick={() =>
-                                setExerciseToRemoveIndex(activeExerciseIndex)
-                              }
-                              aria-label="Remove exercise"
-                            >
-                              <Trash2 className="h-3.5 w-3.5" />
-                            </Button>
-                          </div>
+                              <DropdownMenuItem
+                                disabled={
+                                  activeExerciseIndex >=
+                                  workout.exercises.length - 1
+                                }
+                                onClick={() =>
+                                  moveExercise(activeExerciseIndex, 1)
+                                }
+                              >
+                                <ArrowDown className="mr-2 h-4 w-4" />
+                                Move down
+                              </DropdownMenuItem>
+
+                              {Boolean(activeExercise?.description) ||
+                              Boolean(activeExerciseNotes) ? (
+                                <DropdownMenuItem
+                                  onClick={() =>
+                                    setExerciseDetails({
+                                      name:
+                                        activeExercise?.name ??
+                                        activeExerciseEntry.exerciseId,
+                                      description: activeExercise?.description,
+                                      notes: activeExerciseNotes || undefined,
+                                    })
+                                  }
+                                >
+                                  <Info className="mr-2 h-4 w-4" />
+                                  Exercise details
+                                </DropdownMenuItem>
+                              ) : null}
+
+                              <DropdownMenuSeparator />
+
+                              <DropdownMenuItem
+                                disabled={
+                                  !hasSelectedCombination ||
+                                  saving ||
+                                  workoutValidationErrors.length > 0
+                                }
+                                onClick={handleSaveAndAddSet}
+                              >
+                                <Check className="mr-2 h-4 w-4" />
+                                {saving ? "Saving..." : "Save & add set"}
+                              </DropdownMenuItem>
+
+                              <DropdownMenuItem
+                                disabled={
+                                  !hasSelectedCombination ||
+                                  saving ||
+                                  workoutValidationErrors.length > 0 ||
+                                  activeExerciseIndex >=
+                                    workout.exercises.length - 1
+                                }
+                                onClick={handleSaveAndNext}
+                              >
+                                <ChevronRight className="mr-2 h-4 w-4" />
+                                Next exercise
+                              </DropdownMenuItem>
+
+                              <DropdownMenuSeparator />
+
+                              <DropdownMenuItem
+                                className="text-destructive focus:text-destructive"
+                                onClick={() =>
+                                  setExerciseToRemoveIndex(activeExerciseIndex)
+                                }
+                              >
+                                <Trash2 className="mr-2 h-4 w-4" />
+                                Remove exercise
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         </div>
 
-                        {/* Progress row */}
-                        <div className="mt-3">
-                          <div className="flex items-center justify-between">
-                            <p className="text-muted-foreground text-[10px] font-medium uppercase">
-                              Sets
-                              <span className="text-foreground ml-1">
-                                {activeRecordedSetCount}/{activeSetCount}
-                              </span>
-                            </p>
-
-                            <p className="text-muted-foreground text-[10px]">
-                              {activeWarmupSetCount} warm-up
-                              {activeWarmupSetCount === 1 ? "" : "s"}
-                            </p>
-                          </div>
-
-                          <div className="bg-muted mt-1.5 h-1.5 overflow-hidden rounded-full">
+                        {/* Progress */}
+                        <div className="mt-2">
+                          <div className="bg-muted h-1.5 overflow-hidden rounded-full">
                             <div
                               className="bg-primary h-full rounded-full transition-all"
                               style={{
@@ -1097,11 +1148,11 @@ function WorkoutsLogPageContent() {
                           </div>
                         </div>
 
-                        {/* Target — compact inline row */}
+                        {/* Target */}
                         {activeProgressPercent !== null ? (
-                          <div className="bg-muted/40 mt-2 flex items-center justify-between rounded-lg px-2.5 py-1.5">
+                          <div className="bg-muted/40 mt-2 flex h-8 items-center justify-between rounded-lg px-2.5">
                             <div className="flex items-center gap-2">
-                              <span className="text-muted-foreground text-[10px] uppercase">
+                              <span className="text-muted-foreground text-[10px] font-medium uppercase">
                                 Target
                               </span>
 
@@ -1116,28 +1167,6 @@ function WorkoutsLogPageContent() {
                             </span>
                           </div>
                         ) : null}
-
-                        {/* Details as a single small action */}
-                        {Boolean(activeExercise?.description) ||
-                        Boolean(activeExerciseNotes) ? (
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            className="text-muted-foreground mt-1 h-6 px-0 text-[11px]"
-                            onClick={() =>
-                              setExerciseDetails({
-                                name:
-                                  activeExercise?.name ??
-                                  activeExerciseEntry.exerciseId,
-                                description: activeExercise?.description,
-                                notes: activeExerciseNotes || undefined,
-                              })
-                            }
-                          >
-                            View exercise details
-                          </Button>
-                        ) : null}
                       </div>
                     ) : null}
                   </div>
@@ -1150,58 +1179,25 @@ function WorkoutsLogPageContent() {
                 ) : activeExerciseEntry ? (
                   <div className="bg-card rounded-2xl border p-4">
                     {activePreviousSnapshot ? (
-                      <div className="mb-4 rounded-xl border p-3">
-                        <div className="flex items-center justify-between gap-3">
-                          <div>
-                            <p className="text-sm font-semibold">
+                      <div className="mb-3 border-b pb-3">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <span className="text-muted-foreground text-[10px] font-semibold uppercase">
                               Last workout
-                            </p>
-                            <p className="text-muted-foreground text-xs">
+                            </span>
+
+                            <span className="text-muted-foreground text-[10px]">
                               {new Date(
                                 `${activePreviousSnapshot.date}T00:00:00`,
                               ).toLocaleDateString("en-GB", {
-                                weekday: "short",
                                 day: "numeric",
-                                month: "long",
+                                month: "short",
                                 year: "numeric",
                               })}
-                            </p>
+                            </span>
                           </div>
 
-                          <span className="text-muted-foreground text-[11px] font-medium uppercase">
-                            Previous
-                          </span>
-                        </div>
-
-                        <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
-                          {activePreviousSnapshot.sets.map(
-                            (setEntry, setIndex) => (
-                              <div
-                                key={`${activePreviousSnapshot.date}-${setIndex}`}
-                                className="bg-muted/30 min-w-22.5 rounded-lg border px-3 py-2 text-center"
-                              >
-                                <p className="text-muted-foreground text-[10px] font-medium uppercase">
-                                  Set {setIndex + 1}
-                                </p>
-
-                                <p className="mt-1 text-sm font-semibold whitespace-nowrap">
-                                  {setEntry.weight} {activeWeightUnit}
-                                </p>
-
-                                <p className="text-muted-foreground text-xs">
-                                  × {setEntry.reps} reps
-                                </p>
-                              </div>
-                            ),
-                          )}
-                        </div>
-
-                        <div className="mt-3 flex items-center justify-between border-t pt-2">
-                          <span className="text-muted-foreground text-xs">
-                            Total volume
-                          </span>
-
-                          <span className="text-xs font-semibold">
+                          <span className="text-muted-foreground text-[10px]">
                             {activePreviousSnapshot.sets
                               .reduce(
                                 (sum, setEntry) => sum + setEntry.volume,
@@ -1210,6 +1206,29 @@ function WorkoutsLogPageContent() {
                               .toLocaleString()}{" "}
                             {activeWeightUnit}
                           </span>
+                        </div>
+
+                        <div className="mt-2 flex gap-1.5 overflow-x-auto">
+                          {activePreviousSnapshot.sets.map(
+                            (setEntry, setIndex) => (
+                              <div
+                                key={`${activePreviousSnapshot.date}-${setIndex}`}
+                                className="bg-muted/30 shrink-0 rounded-md border px-2 py-1 text-center"
+                              >
+                                <p className="text-muted-foreground text-[9px]">
+                                  {setIndex + 1}
+                                </p>
+
+                                <p className="text-xs font-semibold whitespace-nowrap">
+                                  {setEntry.weight} {activeWeightUnit}
+                                  <span className="text-muted-foreground font-normal">
+                                    {" "}
+                                    × {setEntry.reps}
+                                  </span>
+                                </p>
+                              </div>
+                            ),
+                          )}
                         </div>
                       </div>
                     ) : null}
@@ -1388,38 +1407,6 @@ function WorkoutsLogPageContent() {
                 Fix the highlighted fields before saving.
               </p>
             ) : null}
-
-            <div className="flex gap-2">
-              <Button
-                className="h-11 flex-1"
-                onClick={handleSaveAndAddSet}
-                disabled={
-                  !hasSelectedCombination ||
-                  !activeExerciseEntry ||
-                  saving ||
-                  workoutValidationErrors.length > 0
-                }
-              >
-                <Check className="mr-2 h-4 w-4" />
-                {saving ? "Saving..." : "Save & Add Set"}
-              </Button>
-
-              <Button
-                className="h-11 px-5"
-                variant="secondary"
-                onClick={handleSaveAndNext}
-                disabled={
-                  !hasSelectedCombination ||
-                  !activeExerciseEntry ||
-                  saving ||
-                  workoutValidationErrors.length > 0 ||
-                  activeExerciseIndex >= workout.exercises.length - 1
-                }
-              >
-                Next
-                <ChevronRight className="ml-1 h-4 w-4" />
-              </Button>
-            </div>
           </div>
 
           <Sheet open={isSummarySheetOpen} onOpenChange={setIsSummarySheetOpen}>
