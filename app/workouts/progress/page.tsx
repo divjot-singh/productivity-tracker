@@ -106,6 +106,21 @@ function getWorkoutVolume(workout: WorkoutEntry) {
   );
 }
 
+function getWorkoutEffort(workout: WorkoutEntry) {
+  let effortCount = 0;
+  const totalEffort = workout.exercises.reduce((effortSum, exercise) => {
+    const sumEffort =
+      effortSum +
+      exercise.sets.reduce((setSum, setEntry) => {
+        effortCount += 1;
+        return setSum + (setEntry.effort ?? 0);
+      }, 0);
+    return sumEffort;
+  }, 0);
+
+  return totalEffort / effortCount;
+}
+
 function getWorkoutSetCount(workout: WorkoutEntry) {
   return workout.exercises.reduce(
     (sum, exercise) => sum + exercise.sets.length,
@@ -486,6 +501,7 @@ export default function WorkoutsProgressPage() {
             {filteredWorkouts.map((workout) => {
               const totalSets = getWorkoutSetCount(workout);
               const volume = getWorkoutVolume(workout);
+              const effort = getWorkoutEffort(workout);
               const isExpanded = expandedWorkoutIds.has(workout.id);
 
               const visibleExercises = isExpanded
@@ -544,7 +560,7 @@ export default function WorkoutsProgressPage() {
                   </Link>
 
                   {/* Workout stats */}
-                  <div className="grid grid-cols-3 gap-2 border-b p-3 sm:p-4">
+                  <div className="grid grid-cols-4 gap-2 border-b p-3 sm:p-4">
                     <div className="bg-muted/40 rounded-xl px-3 py-2.5">
                       <p className="text-muted-foreground text-[10px] font-medium uppercase">
                         Exercises
@@ -569,6 +585,14 @@ export default function WorkoutsProgressPage() {
                       </p>
                       <p className="mt-0.5 text-sm font-semibold">
                         {formatVolume(volume)}
+                      </p>
+                    </div>
+                    <div className="bg-muted/40 rounded-xl px-3 py-2.5">
+                      <p className="text-muted-foreground text-[10px] font-medium uppercase">
+                        Effort
+                      </p>
+                      <p className="mt-0.5 text-sm font-semibold">
+                        {effort.toFixed(1)}/5
                       </p>
                     </div>
                   </div>
