@@ -70,6 +70,17 @@ export async function getCombinations(
   }));
 }
 
+export async function hasAnyCombinations(uid: string): Promise<boolean> {
+  const snapshot = await adminDb
+    .collection("users")
+    .doc(uid)
+    .collection("combinations")
+    .limit(1)
+    .get();
+
+  return !snapshot.empty;
+}
+
 export async function updateCombination(
   uid: string,
   combination: WorkoutCombination,

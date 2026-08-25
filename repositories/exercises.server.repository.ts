@@ -70,6 +70,17 @@ export async function getExercises(
   }));
 }
 
+export async function hasAnyExercises(uid: string): Promise<boolean> {
+  const snapshot = await adminDb
+    .collection("users")
+    .doc(uid)
+    .collection("exercises")
+    .limit(1)
+    .get();
+
+  return !snapshot.empty;
+}
+
 export async function updateExercise(
   uid: string,
   exercise: ExerciseDefinition,

@@ -44,7 +44,7 @@ export interface ExerciseDefinition {
   weightTracking: ExerciseWeightTracking;
   progression: ExerciseProgression;
   currentWeight: number | null;
-  targetWeight: number | null;
+  targetWeight?: number | null;
   active: boolean;
 }
 
@@ -78,4 +78,17 @@ export interface WorkoutEntry {
   combinationIds: string[];
   exercises: WorkoutExerciseEntry[];
   notes?: string;
+}
+
+export interface WorkoutOnboardingStatus {
+  hasExercises: boolean;
+  hasCombinations: boolean;
+  requiresOnboarding: boolean;
+}
+
+export interface WorkoutOnboardingSeedResult extends WorkoutOnboardingStatus {
+  skipped: boolean;
+  seeded: boolean;
+  exercisesCreated: number;
+  combinationsCreated: number;
 }

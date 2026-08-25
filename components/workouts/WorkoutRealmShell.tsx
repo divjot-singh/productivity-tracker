@@ -19,6 +19,7 @@ export default function WorkoutRealmShell({
 
   // Only the workout logging page gets the special scrolling header.
   const isWorkoutLogPage = pathname === "/workouts";
+  const isWorkoutOnboardingPage = pathname === "/workouts/onboarding";
 
   if (isWorkoutLogPage) {
     return (
@@ -46,9 +47,11 @@ export default function WorkoutRealmShell({
           {children}
         </main>
 
-        <div className="fixed inset-x-0 bottom-0 z-50 lg:hidden">
-          <WorkoutBottomNavigation />
-        </div>
+        {!isWorkoutOnboardingPage ? (
+          <div className="fixed inset-x-0 bottom-0 z-50 lg:hidden">
+            <WorkoutBottomNavigation />
+          </div>
+        ) : null}
       </div>
     );
   }
@@ -74,9 +77,11 @@ export default function WorkoutRealmShell({
             </p>
           </div>
 
-          <div className="mt-4 hidden lg:block">
-            <WorkoutsSubNav />
-          </div>
+          {!isWorkoutOnboardingPage ? (
+            <div className="mt-4 hidden lg:block">
+              <WorkoutsSubNav />
+            </div>
+          ) : null}
         </div>
       </header>
 
@@ -84,9 +89,11 @@ export default function WorkoutRealmShell({
         {children}
       </main>
 
-      <div className="fixed inset-x-0 bottom-0 z-50 lg:hidden">
-        <WorkoutBottomNavigation />
-      </div>
+      {!isWorkoutOnboardingPage ? (
+        <div className="fixed inset-x-0 bottom-0 z-50 lg:hidden">
+          <WorkoutBottomNavigation />
+        </div>
+      ) : null}
     </div>
   );
 }
