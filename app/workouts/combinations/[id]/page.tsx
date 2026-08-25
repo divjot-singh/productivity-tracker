@@ -30,6 +30,14 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useRequireAuth } from "@/lib/hooks/useRequireAuth";
 import { apiRequest } from "@/lib/api/client";
+import {
+  formatExerciseEquipmentLabel,
+  titleCaseWorkoutValue,
+} from "@/lib/workouts/constants";
+import {
+  filterExercises,
+  getExerciseFilterOptions,
+} from "@/lib/workouts/exercise-filters";
 import { normalizeCombinationPayload } from "@/lib/workouts/normalize";
 import {
   ExerciseDefinition,
@@ -55,6 +63,10 @@ export default function CombinationDetailPage() {
   const [loading, setLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [exerciseQuery, setExerciseQuery] = useState("");
+  const [exerciseCategoryFilter, setExerciseCategoryFilter] = useState("");
+  const [exerciseMuscleFilter, setExerciseMuscleFilter] = useState("");
+  const [exerciseEquipmentFilter, setExerciseEquipmentFilter] = useState("");
 
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -103,6 +115,26 @@ export default function CombinationDetailPage() {
     () => exercises.filter((exercise) => exercise.active),
     [exercises],
   );
+
+  const exerciseFilterOptions = useMemo(
+    () => getExerciseFilterOptions(activeExercises),
+    [activeExercises],
+  );
+
+  const filteredActiveExercises = useMemo(() => {
+    return filterExercises(activeExercises, {
+      query: exerciseQuery,
+      category: exerciseCategoryFilter,
+      muscleGroup: exerciseMuscleFilter,
+      equipment: exerciseEquipmentFilter,
+    });
+  }, [
+    activeExercises,
+    exerciseCategoryFilter,
+    exerciseEquipmentFilter,
+    exerciseMuscleFilter,
+    exerciseQuery,
+  ]);
 
   const hasChanges = JSON.stringify(combination) !== JSON.stringify(original);
 
@@ -426,6 +458,62 @@ export default function CombinationDetailPage() {
                   </span>
                 </div>
 
+                <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                  <Input
+                    value={exerciseQuery}
+                    onChange={(event) => setExerciseQuery(event.target.value)}
+                    placeholder="Search exercises"
+                    className="h-9"
+                  />
+
+                  <div className="grid grid-cols-2 gap-2">
+                    <select
+                      value={exerciseCategoryFilter}
+                      onChange={(event) =>
+                        setExerciseCategoryFilter(event.target.value)
+                      }
+                      className="border-input bg-background h-9 rounded-[12px] border px-2 text-xs"
+                    >
+                      <option value="">All categories</option>
+                      {exerciseFilterOptions.categories.map((value) => (
+                        <option key={value} value={value}>
+                          {titleCaseWorkoutValue(value)}
+                        </option>
+                      ))}
+                    </select>
+
+                    <select
+                      value={exerciseMuscleFilter}
+                      onChange={(event) =>
+                        setExerciseMuscleFilter(event.target.value)
+                      }
+                      className="border-input bg-background h-9 rounded-lg border px-2 text-xs"
+                    >
+                      <option value="">All muscles</option>
+                      {exerciseFilterOptions.muscleGroups.map((value) => (
+                        <option key={value} value={value}>
+                          {titleCaseWorkoutValue(value)}
+                        </option>
+                      ))}
+                    </select>
+
+                    <select
+                      value={exerciseEquipmentFilter}
+                      onChange={(event) =>
+                        setExerciseEquipmentFilter(event.target.value)
+                      }
+                      className="border-input bg-background h-9 rounded-lg border px-2 text-xs"
+                    >
+                      <option value="">All equipment</option>
+                      {exerciseFilterOptions.equipments.map((value) => (
+                        <option key={value} value={value}>
+                          {formatExerciseEquipmentLabel(value)}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
                 {/* Selected exercises */}
                 {combination.exerciseIds.length > 0 ? (
                   <div className="mt-2.5 flex flex-wrap gap-1.5">
@@ -465,9 +553,13 @@ export default function CombinationDetailPage() {
                   <p className="text-muted-foreground p-3 text-sm">
                     No active exercises available.
                   </p>
+                ) : filteredActiveExercises.length === 0 ? (
+                  <p className="text-muted-foreground p-3 text-sm">
+                    No exercises match current filters.
+                  </p>
                 ) : (
                   <div className="grid gap-1.5 sm:grid-cols-2">
-                    {activeExercises.map((exercise) => {
+                    {filteredActiveExercises.map((exercise) => {
                       const checked = combination.exerciseIds.includes(
                         exercise.id,
                       );

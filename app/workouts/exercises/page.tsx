@@ -9,10 +9,11 @@ import { buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useRequireAuth } from "@/lib/hooks/useRequireAuth";
 import { apiRequest } from "@/lib/api/client";
+import { titleCaseWorkoutValue } from "@/lib/workouts/constants";
 import {
-  formatExerciseEquipmentLabel,
-  titleCaseWorkoutValue,
-} from "@/lib/workouts/constants";
+  getExerciseEquipmentLabel,
+  getExerciseEquipments,
+} from "@/lib/workouts/exercise-filters";
 import { ExerciseDefinition } from "@/models/workout";
 import { cn } from "@/lib/utils";
 
@@ -58,7 +59,7 @@ export default function WorkoutExercisesPage() {
       const haystack = [
         exercise.name,
         exercise.description,
-        exercise.equipment,
+        ...getExerciseEquipments(exercise),
         exercise.type,
         ...(exercise.categories ?? []),
         ...(exercise.muscleGroups ?? []),
@@ -125,9 +126,7 @@ export default function WorkoutExercisesPage() {
                   <p className="truncate font-medium">{exercise.name}</p>
                   <p className="text-muted-foreground truncate text-xs">
                     {[
-                      exercise.equipment
-                        ? formatExerciseEquipmentLabel(exercise.equipment)
-                        : undefined,
+                      getExerciseEquipmentLabel(exercise),
                       ...exercise.categories.map((category) =>
                         titleCaseWorkoutValue(category),
                       ),

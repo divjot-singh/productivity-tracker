@@ -119,6 +119,11 @@ export const EXERCISE_EQUIPMENT_OPTIONS = [
   "resistance_band",
 ] as const;
 
+export const EXERCISE_MEASUREMENT_MODE_OPTIONS = [
+  "external_load",
+  "bodyweight_height",
+] as const;
+
 export const EXERCISE_TYPE_OPTIONS = [
   "compound",
   "isolation",
@@ -126,7 +131,13 @@ export const EXERCISE_TYPE_OPTIONS = [
   "functional",
 ] as const;
 
-export const EXERCISE_WEIGHT_UNIT_OPTIONS = ["kg"] as const;
+export const EXERCISE_WEIGHT_UNIT_OPTIONS = [
+  "kg",
+  "lb",
+  "in",
+  "cm",
+  "m",
+] as const;
 
 export const EXERCISE_WEIGHT_TRACKING_MODE_OPTIONS = [
   "total",
@@ -169,13 +180,15 @@ export const DEFAULT_COMBINATION_NAMES = [
 export type ExerciseCategory = (typeof EXERCISE_CATEGORY_OPTIONS)[number];
 export type ExerciseMuscleGroup =
   (typeof EXERCISE_MUSCLE_GROUP_OPTIONS)[number];
-export type ExerciseEquipment = (typeof EXERCISE_EQUIPMENT_OPTIONS)[number];
+export type ExerciseEquipment = string;
 export type ExerciseType = (typeof EXERCISE_TYPE_OPTIONS)[number];
 export type ExerciseWeightUnit = (typeof EXERCISE_WEIGHT_UNIT_OPTIONS)[number];
 export type ExerciseWeightTrackingMode =
   (typeof EXERCISE_WEIGHT_TRACKING_MODE_OPTIONS)[number];
 export type ExerciseProgressionStrategy =
   (typeof EXERCISE_PROGRESSION_STRATEGY_OPTIONS)[number];
+export type ExerciseMeasurementMode =
+  (typeof EXERCISE_MEASUREMENT_MODE_OPTIONS)[number];
 
 export function titleCaseWorkoutValue(value: string): string {
   return value
@@ -193,4 +206,34 @@ export function formatExerciseEquipmentLabel(value?: string): string {
     .split("_or_")
     .map((part) => titleCaseWorkoutValue(part))
     .join(" / ");
+}
+
+export function normalizeEquipmentValue(value: string): string {
+  return value
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9\s_-]/g, "")
+    .replace(/\s+/g, "_")
+    .replace(/_+/g, "_")
+    .replace(/^_+|_+$/g, "");
+}
+
+export function formatExerciseEquipmentList(values: string[]): string {
+  if (values.length === 0) {
+    return "Not set";
+  }
+
+  return values.map((value) => formatExerciseEquipmentLabel(value)).join(", ");
+}
+
+export function getDefaultEquipmentOptions(): string[] {
+  return [...EXERCISE_EQUIPMENT_OPTIONS];
+}
+
+export function getPrimaryMetricLabel(mode?: ExerciseMeasurementMode): string {
+  if (mode === "bodyweight_height") {
+    return "Height";
+  }
+
+  return "Weight";
 }

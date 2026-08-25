@@ -43,8 +43,15 @@ import { useRequireAuth } from "@/lib/hooks/useRequireAuth";
 import { apiRequest } from "@/lib/api/client";
 import {
   formatExerciseEquipmentLabel,
+  getPrimaryMetricLabel,
   titleCaseWorkoutValue,
 } from "@/lib/workouts/constants";
+import {
+  filterExercises,
+  getExerciseEquipmentLabel,
+  getExerciseFilterOptions,
+  getExerciseEquipments,
+} from "@/lib/workouts/exercise-filters";
 import { cn } from "@/lib/utils";
 import { validateWorkout } from "@/lib/workouts/normalize";
 import {
@@ -138,6 +145,9 @@ function WorkoutsLogPageContent() {
   const [exercises, setExercises] = useState<ExerciseDefinition[]>([]);
   const [manualExerciseId, setManualExerciseId] = useState("");
   const [exerciseQuery, setExerciseQuery] = useState("");
+  const [exerciseCategoryFilter, setExerciseCategoryFilter] = useState("");
+  const [exerciseMuscleFilter, setExerciseMuscleFilter] = useState("");
+  const [exerciseEquipmentFilter, setExerciseEquipmentFilter] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [hasSavedWorkout, setHasSavedWorkout] = useState(false);
@@ -262,30 +272,24 @@ function WorkoutsLogPageContent() {
     return exercises.filter((exercise) => !existingIds.has(exercise.id));
   }, [exercises, workout.exercises]);
 
+  const manualExerciseFilterOptions = useMemo(() => {
+    return getExerciseFilterOptions(availableManualExercises);
+  }, [availableManualExercises]);
+
   const searchableManualExercises = useMemo(() => {
-    const normalizedQuery = exerciseQuery.trim().toLowerCase();
-
-    if (normalizedQuery.length === 0) {
-      return availableManualExercises;
-    }
-
-    return availableManualExercises.filter((exercise) => {
-      const haystack = [
-        exercise.name,
-        exercise.description,
-        exercise.equipment,
-        exercise.type,
-        ...(exercise.categories ?? []),
-        ...(exercise.muscleGroups ?? []),
-        ...(exercise.notes ?? []),
-      ]
-        .filter(Boolean)
-        .join(" ")
-        .toLowerCase();
-
-      return haystack.includes(normalizedQuery);
+    return filterExercises(availableManualExercises, {
+      query: exerciseQuery,
+      category: exerciseCategoryFilter,
+      muscleGroup: exerciseMuscleFilter,
+      equipment: exerciseEquipmentFilter,
     });
-  }, [availableManualExercises, exerciseQuery]);
+  }, [
+    availableManualExercises,
+    exerciseCategoryFilter,
+    exerciseEquipmentFilter,
+    exerciseMuscleFilter,
+    exerciseQuery,
+  ]);
 
   const workoutValidationErrors = useMemo(() => {
     return validateWorkout({
@@ -361,11 +365,14 @@ function WorkoutsLogPageContent() {
     );
   }, [workout.exercises.length]);
 
-  function getSetErrors(setEntry: WorkoutSetEntry): string[] {
+  function getSetErrors(
+    setEntry: WorkoutSetEntry,
+    primaryMetricLabel = "Weight",
+  ): string[] {
     const errors: string[] = [];
 
     if (setEntry.weight !== null && setEntry.weight < 0) {
-      errors.push("Weight must be non-negative.");
+      errors.push(`${primaryMetricLabel} must be non-negative.`);
     }
 
     if (setEntry.reps === null || setEntry.reps <= 0) {
@@ -670,6 +677,9 @@ function WorkoutsLogPageContent() {
     ? previousExerciseMap.get(activeExerciseEntry.exerciseId)
     : null;
   const activeWeightUnit = activeExercise?.weightTracking.unit ?? "kg";
+  const activePrimaryMetricLabel = getPrimaryMetricLabel(
+    activeExercise?.measurementMode,
+  );
   const activeTopWeight = activeExerciseEntry
     ? getExerciseTopWeight(activeExerciseEntry)
     : 0;
@@ -1014,10 +1024,8 @@ function WorkoutsLogPageContent() {
                             </div>
 
                             <p className="text-muted-foreground truncate text-[11px]">
-                              {activeExercise?.equipment
-                                ? formatExerciseEquipmentLabel(
-                                    activeExercise.equipment,
-                                  )
+                              {activeExercise
+                                ? getExerciseEquipmentLabel(activeExercise)
                                 : "No equipment"}{" "}
                               · {activeWeightUnit}
                               {activeExerciseRepRange
@@ -1263,11 +1271,11 @@ function WorkoutsLogPageContent() {
                               </Button>
                             </div>
 
-                            {/* Weight + Reps */}
+                            {/* Primary metric + Reps */}
                             <div className="grid grid-cols-2 gap-3">
                               <div className="space-y-1.5">
                                 <Label className="text-muted-foreground text-xs">
-                                  Weight
+                                  {activePrimaryMetricLabel}
                                 </Label>
 
                                 <Input
@@ -1282,7 +1290,7 @@ function WorkoutsLogPageContent() {
                                           : Number(e.target.value),
                                     })
                                   }
-                                  placeholder="Weight"
+                                  placeholder={activePrimaryMetricLabel}
                                 />
                               </div>
 
@@ -1389,9 +1397,9 @@ function WorkoutsLogPageContent() {
                                             },
                                           )
                                         }
-                                        className={`flex h-10 items-center justify-center rounded-lg text-sm font-semibold transition-all ${
+                                        className={`flex h-10 items-center justify-center rounded-[12px] text-sm font-semibold transition-all ${
                                           isSelected
-                                            ? "bg-background text-foreground shadow-sm ring-1 ring-black/10"
+                                            ? "bg-primary text-background shadow-sm ring-1 ring-black/10"
                                             : "text-muted-foreground hover:text-foreground"
                                         }`}
                                         aria-label={`Effort ${effort}`}
@@ -1430,9 +1438,13 @@ function WorkoutsLogPageContent() {
                             </Button>
 
                             {/* Validation */}
-                            {getSetErrors(setEntry).length > 0 ? (
+                            {getSetErrors(setEntry, activePrimaryMetricLabel)
+                              .length > 0 ? (
                               <div className="text-muted-foreground space-y-1 text-xs">
-                                {getSetErrors(setEntry).map((error) => (
+                                {getSetErrors(
+                                  setEntry,
+                                  activePrimaryMetricLabel,
+                                ).map((error) => (
                                   <p key={error}>{error}</p>
                                 ))}
                               </div>
@@ -1628,6 +1640,53 @@ function WorkoutsLogPageContent() {
                   placeholder="Search exercises"
                 />
 
+                <div className="grid grid-cols-3 gap-2">
+                  <select
+                    className={NATIVE_SELECT_CLASS}
+                    value={exerciseCategoryFilter}
+                    onChange={(event) =>
+                      setExerciseCategoryFilter(event.target.value)
+                    }
+                  >
+                    <option value="">All categories</option>
+                    {manualExerciseFilterOptions.categories.map((value) => (
+                      <option key={value} value={value}>
+                        {titleCaseWorkoutValue(value)}
+                      </option>
+                    ))}
+                  </select>
+
+                  <select
+                    className={NATIVE_SELECT_CLASS}
+                    value={exerciseMuscleFilter}
+                    onChange={(event) =>
+                      setExerciseMuscleFilter(event.target.value)
+                    }
+                  >
+                    <option value="">All muscles</option>
+                    {manualExerciseFilterOptions.muscleGroups.map((value) => (
+                      <option key={value} value={value}>
+                        {titleCaseWorkoutValue(value)}
+                      </option>
+                    ))}
+                  </select>
+
+                  <select
+                    className={NATIVE_SELECT_CLASS}
+                    value={exerciseEquipmentFilter}
+                    onChange={(event) =>
+                      setExerciseEquipmentFilter(event.target.value)
+                    }
+                  >
+                    <option value="">All equipment</option>
+                    {manualExerciseFilterOptions.equipments.map((value) => (
+                      <option key={value} value={value}>
+                        {formatExerciseEquipmentLabel(value)}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
                 <div className="max-h-80 space-y-2 overflow-auto rounded-xl border p-3">
                   {searchableManualExercises.length === 0 ? (
                     <p className="text-muted-foreground text-sm">
@@ -1654,11 +1713,7 @@ function WorkoutsLogPageContent() {
                           </p>
                           <p className="text-muted-foreground truncate text-xs">
                             {[
-                              exercise.equipment
-                                ? formatExerciseEquipmentLabel(
-                                    exercise.equipment,
-                                  )
-                                : undefined,
+                              getExerciseEquipmentLabel(exercise),
                               ...exercise.categories.map((category) =>
                                 titleCaseWorkoutValue(category),
                               ),

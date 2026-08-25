@@ -25,9 +25,13 @@ import {
 import { useRequireAuth } from "@/lib/hooks/useRequireAuth";
 import { apiRequest } from "@/lib/api/client";
 import {
-  formatExerciseEquipmentLabel,
+  formatExerciseEquipmentList,
+  getDefaultEquipmentOptions,
+  getPrimaryMetricLabel,
+  normalizeEquipmentValue,
   titleCaseWorkoutValue,
 } from "@/lib/workouts/constants";
+import { getExerciseEquipments } from "@/lib/workouts/exercise-filters";
 import {
   createWorkoutId,
   normalizeExercisePayload,
@@ -47,6 +51,9 @@ export default function ExerciseDetailPage() {
   const [original, setOriginal] = useState<ExerciseDefinition | null>(null);
   const [exercise, setExercise] = useState<ExerciseDefinition | null>(null);
   const [combinations, setCombinations] = useState<WorkoutCombination[]>([]);
+  const [equipmentOptions, setEquipmentOptions] = useState<string[]>(
+    getDefaultEquipmentOptions(),
+  );
   const [selectedCombinationIds, setSelectedCombinationIds] = useState<
     string[]
   >([]);
@@ -106,7 +113,7 @@ export default function ExerciseDetailPage() {
           resolvedId = exerciseData.id;
         }
 
-        const [combinationData, workoutData] = await Promise.all([
+        const [combinationData, workoutData, allExercises] = await Promise.all([
           apiRequest<WorkoutCombination[]>(
             user,
             "/api/combinations?includeInactive=true",
@@ -114,6 +121,10 @@ export default function ExerciseDetailPage() {
           apiRequest<WorkoutEntry[]>(
             user,
             `/api/workouts?exerciseId=${encodeURIComponent(resolvedId)}`,
+          ),
+          apiRequest<ExerciseDefinition[]>(
+            user,
+            "/api/exercises?includeInactive=true",
           ),
         ]);
 
@@ -127,6 +138,16 @@ export default function ExerciseDetailPage() {
         setExercise(exerciseData);
         setCombinations(combinationData ?? []);
         setReferencingWorkouts(workoutData ?? []);
+        setEquipmentOptions(
+          Array.from(
+            new Set([
+              ...getDefaultEquipmentOptions(),
+              ...(allExercises ?? [])
+                .flatMap((entry) => getExerciseEquipments(entry))
+                .map((value) => normalizeEquipmentValue(value)),
+            ]),
+          ).sort(),
+        );
 
         setSelectedCombinationIds(
           (combinationData ?? [])
@@ -322,6 +343,9 @@ export default function ExerciseDetailPage() {
   const attachedCombinations = combinations.filter((combination) =>
     combination.exerciseIds.includes(exercise.id),
   );
+  const progressionMetricLabel = getPrimaryMetricLabel(
+    exercise.measurementMode,
+  );
 
   return (
     <div className="mx-auto max-w-3xl pb-32">
@@ -405,6 +429,7 @@ export default function ExerciseDetailPage() {
           <div className="bg-card rounded-2xl border p-4 shadow-sm sm:p-6">
             <ExerciseEditorFields
               exercise={exercise}
+              equipmentOptions={equipmentOptions}
               disabled={saving}
               combinations={combinations}
               selectedCombinationIds={selectedCombinationIds}
@@ -515,7 +540,9 @@ export default function ExerciseDetailPage() {
               <div className="grid sm:grid-cols-2">
                 <InfoItem
                   label="Equipment"
-                  value={formatExerciseEquipmentLabel(exercise.equipment)}
+                  value={formatExerciseEquipmentList(
+                    getExerciseEquipments(exercise),
+                  )}
                 />
 
                 <InfoItem
@@ -571,8 +598,8 @@ export default function ExerciseDetailPage() {
                     <p className="text-sm font-semibold">Rep range</p>
 
                     <p className="text-muted-foreground mt-0.5 text-xs">
-                      Aim to progress within this range before increasing
-                      weight.
+                      Aim to progress within this range before increasing{" "}
+                      {progressionMetricLabel.toLowerCase()}.
                     </p>
                   </div>
                 </div>

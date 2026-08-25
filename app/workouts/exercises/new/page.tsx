@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ChevronLeft } from "lucide-react";
 import { toast } from "sonner";
@@ -9,6 +9,11 @@ import { Button } from "@/components/ui/button";
 import ExerciseEditorFields from "@/components/workouts/ExerciseEditorFields";
 import { useRequireAuth } from "@/lib/hooks/useRequireAuth";
 import { apiRequest } from "@/lib/api/client";
+import {
+  getDefaultEquipmentOptions,
+  normalizeEquipmentValue,
+} from "@/lib/workouts/constants";
+import { getExerciseEquipments } from "@/lib/workouts/exercise-filters";
 import { ExerciseDefinition } from "@/models/workout";
 import { normalizeExercisePayload } from "@/lib/workouts/normalize";
 
@@ -18,6 +23,8 @@ const DEFAULT_EXERCISE: ExerciseDefinition = {
   categories: [],
   muscleGroups: [],
   equipment: undefined,
+  equipments: [],
+  measurementMode: "external_load",
   type: undefined,
   description: undefined,
   notes: [],
@@ -45,8 +52,53 @@ export default function NewExercisePage() {
 
   const [exercise, setExercise] =
     useState<ExerciseDefinition>(DEFAULT_EXERCISE);
+  const [equipmentOptions, setEquipmentOptions] = useState<string[]>(
+    getDefaultEquipmentOptions(),
+  );
   const [saving, setSaving] = useState(false);
   const [hasFormErrors, setHasFormErrors] = useState(false);
+
+  useEffect(() => {
+    async function loadEquipmentOptions() {
+      if (!user) {
+        return;
+      }
+
+      try {
+        const allExercises = await apiRequest<ExerciseDefinition[]>(
+          user,
+          "/api/exercises?includeInactive=true",
+        );
+
+        const customEquipment = (allExercises ?? []).flatMap((entry) =>
+          getExerciseEquipments(entry),
+        );
+
+        setEquipmentOptions(
+          Array.from(
+            new Set([
+              ...getDefaultEquipmentOptions(),
+              ...customEquipment.map((value) => normalizeEquipmentValue(value)),
+            ]),
+          ).sort(),
+        );
+      } catch (error) {
+        console.error(error);
+      }
+    }
+
+    loadEquipmentOptions();
+  }, [user]);
+
+  const mergedEquipmentOptions = useMemo(() => {
+    return Array.from(
+      new Set([
+        ...equipmentOptions,
+        ...(exercise.equipments ?? []),
+        ...(exercise.equipment ? [exercise.equipment] : []),
+      ]),
+    ).sort();
+  }, [equipmentOptions, exercise.equipment, exercise.equipments]);
 
   async function handleSave() {
     if (!user) {
@@ -95,6 +147,7 @@ export default function NewExercisePage() {
       <div className="space-y-4">
         <ExerciseEditorFields
           exercise={exercise}
+          equipmentOptions={mergedEquipmentOptions}
           onChange={setExercise}
           onValidationChange={setHasFormErrors}
         />

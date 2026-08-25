@@ -11,6 +11,15 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useRequireAuth } from "@/lib/hooks/useRequireAuth";
 import { apiRequest } from "@/lib/api/client";
+import {
+  formatExerciseEquipmentLabel,
+  titleCaseWorkoutValue,
+} from "@/lib/workouts/constants";
+import {
+  filterExercises,
+  getExerciseEquipmentLabel,
+  getExerciseFilterOptions,
+} from "@/lib/workouts/exercise-filters";
 import { ExerciseDefinition, WorkoutCombination } from "@/models/workout";
 import { normalizeCombinationPayload } from "@/lib/workouts/normalize";
 
@@ -33,6 +42,10 @@ export default function NewCombinationPage() {
   const [exercises, setExercises] = useState<ExerciseDefinition[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [exerciseQuery, setExerciseQuery] = useState("");
+  const [exerciseCategoryFilter, setExerciseCategoryFilter] = useState("");
+  const [exerciseMuscleFilter, setExerciseMuscleFilter] = useState("");
+  const [exerciseEquipmentFilter, setExerciseEquipmentFilter] = useState("");
 
   useEffect(() => {
     async function loadExercises() {
@@ -64,6 +77,25 @@ export default function NewCombinationPage() {
     () => combination.exerciseIds.length,
     [combination],
   );
+
+  const exerciseFilterOptions = useMemo(() => {
+    return getExerciseFilterOptions(exercises);
+  }, [exercises]);
+
+  const filteredExercises = useMemo(() => {
+    return filterExercises(exercises, {
+      query: exerciseQuery,
+      category: exerciseCategoryFilter,
+      muscleGroup: exerciseMuscleFilter,
+      equipment: exerciseEquipmentFilter,
+    });
+  }, [
+    exerciseCategoryFilter,
+    exerciseEquipmentFilter,
+    exerciseMuscleFilter,
+    exerciseQuery,
+    exercises,
+  ]);
 
   async function handleSave() {
     if (!user) {
@@ -181,6 +213,61 @@ export default function NewCombinationPage() {
         <div className="space-y-2">
           <Label>Exercises ({selectedCount} selected)</Label>
 
+          <div className="grid gap-2 sm:grid-cols-2">
+            <Input
+              value={exerciseQuery}
+              onChange={(event) => setExerciseQuery(event.target.value)}
+              placeholder="Search exercises"
+            />
+
+            <div className="grid grid-cols-3 gap-2">
+              <select
+                value={exerciseCategoryFilter}
+                onChange={(event) =>
+                  setExerciseCategoryFilter(event.target.value)
+                }
+                className="border-input bg-background h-10 rounded-xl border px-2 text-xs"
+              >
+                <option value="">All categories</option>
+                {exerciseFilterOptions.categories.map((value) => (
+                  <option key={value} value={value}>
+                    {titleCaseWorkoutValue(value)}
+                  </option>
+                ))}
+              </select>
+
+              <select
+                value={exerciseMuscleFilter}
+                onChange={(event) =>
+                  setExerciseMuscleFilter(event.target.value)
+                }
+                className="border-input bg-background h-10 rounded-xl border px-2 text-xs"
+              >
+                <option value="">All muscles</option>
+                {exerciseFilterOptions.muscleGroups.map((value) => (
+                  <option key={value} value={value}>
+                    {titleCaseWorkoutValue(value)}
+                  </option>
+                ))}
+              </select>
+
+              <select
+                value={exerciseEquipmentFilter}
+                onChange={(event) =>
+                  setExerciseEquipmentFilter(event.target.value)
+                }
+                className="border-input bg-background h-10 rounded-xl border px-2 text-xs"
+              >
+                <option value="">All equipment</option>
+                {exerciseFilterOptions.equipments.map((value) => (
+                  <option key={value} value={value}>
+                    {formatExerciseEquipmentLabel(value)}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
           {loading ? (
             <div className="text-muted-foreground p-3 text-sm">
               Loading exercises...
@@ -191,30 +278,41 @@ export default function NewCombinationPage() {
             </div>
           ) : (
             <div className="max-h-72 space-y-2 overflow-auto rounded-xl border p-3">
-              {exercises.map((exercise) => {
-                const checked = combination.exerciseIds.includes(exercise.id);
+              {filteredExercises.length === 0 ? (
+                <p className="text-muted-foreground text-sm">
+                  No exercises match current filters.
+                </p>
+              ) : (
+                filteredExercises.map((exercise) => {
+                  const checked = combination.exerciseIds.includes(exercise.id);
 
-                return (
-                  <label
-                    key={exercise.id}
-                    className="hover:bg-accent flex cursor-pointer items-start gap-3 rounded-lg px-2 py-2"
-                  >
-                    <input
-                      type="checkbox"
-                      checked={checked}
-                      onChange={() => toggleExercise(exercise.id)}
-                      className="mt-1"
-                    />
+                  return (
+                    <label
+                      key={exercise.id}
+                      className="hover:bg-accent flex cursor-pointer items-start gap-3 rounded-lg px-2 py-2"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={checked}
+                        onChange={() => toggleExercise(exercise.id)}
+                        className="mt-1"
+                      />
 
-                    <div>
-                      <p className="text-sm font-medium">{exercise.name}</p>
-                      <p className="text-muted-foreground text-xs">
-                        {exercise.categories.join(", ")}
-                      </p>
-                    </div>
-                  </label>
-                );
-              })}
+                      <div>
+                        <p className="text-sm font-medium">{exercise.name}</p>
+                        <p className="text-muted-foreground text-xs">
+                          {[
+                            getExerciseEquipmentLabel(exercise),
+                            ...exercise.categories,
+                          ]
+                            .filter(Boolean)
+                            .join(" • ")}
+                        </p>
+                      </div>
+                    </label>
+                  );
+                })
+              )}
             </div>
           )}
         </div>

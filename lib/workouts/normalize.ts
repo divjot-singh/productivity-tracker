@@ -1,12 +1,13 @@
 import {
   EFFORT_OPTIONS,
   EXERCISE_CATEGORY_OPTIONS,
-  EXERCISE_EQUIPMENT_OPTIONS,
+  EXERCISE_MEASUREMENT_MODE_OPTIONS,
   EXERCISE_MUSCLE_GROUP_OPTIONS,
   EXERCISE_PROGRESSION_STRATEGY_OPTIONS,
   EXERCISE_TYPE_OPTIONS,
   EXERCISE_WEIGHT_TRACKING_MODE_OPTIONS,
   EXERCISE_WEIGHT_UNIT_OPTIONS,
+  normalizeEquipmentValue,
 } from "@/lib/workouts/constants";
 import {
   ExerciseDefinition,
@@ -128,6 +129,17 @@ export function normalizeExercisePayload(
   const idSource = value.id?.trim() || fallbackId || name;
   const id = createWorkoutId(idSource);
 
+  const equipments = Array.from(
+    new Set(
+      [
+        ...normalizeStringArray(value.equipments),
+        typeof value.equipment === "string" ? value.equipment : "",
+      ]
+        .map((entry) => normalizeEquipmentValue(entry))
+        .filter((entry) => entry.length > 0),
+    ),
+  );
+
   return {
     id,
     name,
@@ -136,10 +148,13 @@ export function normalizeExercisePayload(
       value.muscleGroups,
       EXERCISE_MUSCLE_GROUP_OPTIONS,
     ),
-    equipment: normalizeOptionalEnum(
-      value.equipment,
-      EXERCISE_EQUIPMENT_OPTIONS,
-    ),
+    equipment: equipments[0],
+    equipments,
+    measurementMode:
+      normalizeOptionalEnum(
+        value.measurementMode,
+        EXERCISE_MEASUREMENT_MODE_OPTIONS,
+      ) ?? "external_load",
     type: normalizeOptionalEnum(value.type, EXERCISE_TYPE_OPTIONS),
     description: value.description?.trim() || undefined,
     notes: normalizeStringArray(value.notes),

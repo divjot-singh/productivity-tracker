@@ -9,6 +9,7 @@ import { buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useRequireAuth } from "@/lib/hooks/useRequireAuth";
 import { apiRequest } from "@/lib/api/client";
+import { getExerciseEquipments } from "@/lib/workouts/exercise-filters";
 import { ExerciseDefinition, WorkoutCombination } from "@/models/workout";
 import { cn } from "@/lib/utils";
 
@@ -64,7 +65,7 @@ export default function WorkoutCombinationsPage() {
         [
           exercise.name,
           exercise.description,
-          exercise.equipment,
+          ...getExerciseEquipments(exercise),
           exercise.type,
           ...(exercise.categories ?? []),
           ...(exercise.muscleGroups ?? []),

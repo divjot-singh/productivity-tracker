@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/sheet";
 import { useRequireAuth } from "@/lib/hooks/useRequireAuth";
 import { apiRequest } from "@/lib/api/client";
+import { getPrimaryMetricLabel } from "@/lib/workouts/constants";
 import {
   ExerciseDefinition,
   WorkoutCombination,
@@ -629,6 +630,9 @@ export default function WorkoutsProgressPage() {
                         Boolean(exercise?.description) || Boolean(notes);
 
                       const weightUnit = exercise?.weightTracking.unit ?? "kg";
+                      const primaryMetricLabel = getPrimaryMetricLabel(
+                        exercise?.measurementMode,
+                      );
 
                       return (
                         <div
@@ -700,7 +704,7 @@ export default function WorkoutsProgressPage() {
                           ) : topSet ? (
                             <div className="bg-muted/40 mt-3 flex items-center justify-between rounded-lg px-3 py-2">
                               <span className="text-muted-foreground text-[11px]">
-                                Top set
+                                Top {primaryMetricLabel.toLowerCase()} set
                               </span>
 
                               <span className="text-xs font-semibold">

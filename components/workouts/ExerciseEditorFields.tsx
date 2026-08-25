@@ -6,16 +6,20 @@ import { Check, ChevronsUpDown, X } from "lucide-react";
 import {
   EXERCISE_CATEGORY_OPTIONS,
   EXERCISE_EQUIPMENT_OPTIONS,
+  EXERCISE_MEASUREMENT_MODE_OPTIONS,
   EXERCISE_MUSCLE_GROUP_OPTIONS,
   EXERCISE_PROGRESSION_STRATEGY_OPTIONS,
   EXERCISE_TYPE_OPTIONS,
   EXERCISE_WEIGHT_TRACKING_MODE_OPTIONS,
   EXERCISE_WEIGHT_UNIT_OPTIONS,
   formatExerciseEquipmentLabel,
+  getPrimaryMetricLabel,
+  normalizeEquipmentValue,
   titleCaseWorkoutValue,
 } from "@/lib/workouts/constants";
 import { ExerciseDefinition, WorkoutCombination } from "@/models/workout";
 
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -40,6 +44,7 @@ const NATIVE_SELECT_CLASS =
 interface ExerciseEditorFieldsProps {
   exercise: ExerciseDefinition;
   disabled?: boolean;
+  equipmentOptions?: string[];
   combinations?: WorkoutCombination[];
   selectedCombinationIds?: string[];
   onToggleCombination?: (combinationId: string) => void;
@@ -140,6 +145,7 @@ function MultiSelectTrigger({
 export default function ExerciseEditorFields({
   exercise,
   disabled = false,
+  equipmentOptions = [],
   combinations = [],
   selectedCombinationIds = [],
   onToggleCombination,
@@ -148,7 +154,9 @@ export default function ExerciseEditorFields({
 }: ExerciseEditorFieldsProps) {
   const [categoryOpen, setCategoryOpen] = useState(false);
   const [muscleOpen, setMuscleOpen] = useState(false);
+  const [equipmentOpen, setEquipmentOpen] = useState(false);
   const [combinationOpen, setCombinationOpen] = useState(false);
+  const [customEquipmentInput, setCustomEquipmentInput] = useState("");
 
   const [repMinInput, setRepMinInput] = useState("");
   const [repMaxInput, setRepMaxInput] = useState("");
@@ -159,6 +167,26 @@ export default function ExerciseEditorFields({
   }, [exercise.progression.repRange?.min, exercise.progression.repRange?.max]);
 
   const notesText = exercise.notes.join("\n");
+  const primaryMetricLabel = getPrimaryMetricLabel(exercise.measurementMode);
+  const selectedEquipments = Array.from(
+    new Set(
+      [
+        ...(exercise.equipments ?? []),
+        ...(exercise.equipment ? [exercise.equipment] : []),
+      ]
+        .map((value) => normalizeEquipmentValue(value))
+        .filter((value) => value.length > 0),
+    ),
+  );
+  const resolvedEquipmentOptions = useMemo(() => {
+    return Array.from(
+      new Set([
+        ...EXERCISE_EQUIPMENT_OPTIONS,
+        ...equipmentOptions,
+        ...selectedEquipments,
+      ]),
+    ).sort();
+  }, [equipmentOptions, selectedEquipments]);
 
   const repRangeError = useMemo(() => {
     if (repMinInput === "" && repMaxInput === "") {
@@ -240,6 +268,37 @@ export default function ExerciseEditorFields({
         },
       },
     });
+  }
+
+  function updateEquipments(nextEquipments: string[]) {
+    update({
+      equipments: nextEquipments,
+      equipment: nextEquipments[0],
+    });
+  }
+
+  function toggleEquipment(value: string) {
+    const normalized = normalizeEquipmentValue(value);
+
+    if (!normalized) {
+      return;
+    }
+
+    updateEquipments(toggleValue(selectedEquipments, normalized));
+  }
+
+  function addCustomEquipment() {
+    const normalized = normalizeEquipmentValue(customEquipmentInput);
+
+    if (!normalized) {
+      return;
+    }
+
+    if (!selectedEquipments.includes(normalized)) {
+      updateEquipments([...selectedEquipments, normalized]);
+    }
+
+    setCustomEquipmentInput("");
   }
 
   return (
@@ -500,59 +559,182 @@ export default function ExerciseEditorFields({
         title="Exercise setup"
         description="Define the equipment and exercise type used for tracking."
       >
-        <div className="grid gap-5 sm:grid-cols-2">
+        <div className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="exercise-equipment">Equipment</Label>
+            <Label>Equipment</Label>
 
-            <select
-              id="exercise-equipment"
-              disabled={disabled}
-              className={NATIVE_SELECT_CLASS}
-              value={exercise.equipment ?? ""}
-              onChange={(e) =>
-                update({
-                  equipment:
-                    e.target.value === ""
-                      ? undefined
-                      : (e.target.value as ExerciseDefinition["equipment"]),
-                })
-              }
-            >
-              <option value="">Select equipment</option>
+            {selectedEquipments.length > 0 ? (
+              <div className="flex flex-wrap gap-1.5">
+                {selectedEquipments.map((equipment) => (
+                  <SelectedValue
+                    key={equipment}
+                    disabled={disabled}
+                    onRemove={() => toggleEquipment(equipment)}
+                  >
+                    {formatExerciseEquipmentLabel(equipment)}
+                  </SelectedValue>
+                ))}
+              </div>
+            ) : (
+              <p className="text-muted-foreground text-xs">
+                No equipment selected.
+              </p>
+            )}
 
-              {EXERCISE_EQUIPMENT_OPTIONS.map((equipment) => (
-                <option key={equipment} value={equipment}>
-                  {formatExerciseEquipmentLabel(equipment)}
-                </option>
-              ))}
-            </select>
+            <Popover open={equipmentOpen} onOpenChange={setEquipmentOpen}>
+              <PopoverTrigger
+                render={
+                  <button
+                    type="button"
+                    disabled={disabled}
+                    className="w-full text-left outline-none"
+                  />
+                }
+              >
+                <MultiSelectTrigger
+                  selectedCount={selectedEquipments.length}
+                  placeholder="Select one or more equipment"
+                  disabled={disabled}
+                  open={equipmentOpen}
+                />
+              </PopoverTrigger>
+
+              <PopoverContent
+                className="w-[--radix-popover-trigger-width] p-0"
+                align="start"
+              >
+                <Command>
+                  <CommandInput placeholder="Search equipment..." />
+
+                  <CommandList>
+                    <CommandEmpty>No equipment found.</CommandEmpty>
+
+                    <CommandGroup>
+                      {resolvedEquipmentOptions.map((equipment) => {
+                        const selected = selectedEquipments.includes(equipment);
+
+                        return (
+                          <CommandItem
+                            key={equipment}
+                            value={formatExerciseEquipmentLabel(equipment)}
+                            onSelect={() => toggleEquipment(equipment)}
+                          >
+                            <Check
+                              className={`mr-2 h-4 w-4 ${
+                                selected ? "opacity-100" : "opacity-0"
+                              }`}
+                            />
+
+                            <span>
+                              {formatExerciseEquipmentLabel(equipment)}
+                            </span>
+                          </CommandItem>
+                        );
+                      })}
+                    </CommandGroup>
+                  </CommandList>
+                </Command>
+
+                <div className="border-t p-2">
+                  <div className="flex gap-2">
+                    <Input
+                      value={customEquipmentInput}
+                      disabled={disabled}
+                      onChange={(event) =>
+                        setCustomEquipmentInput(event.target.value)
+                      }
+                      placeholder="Add custom equipment"
+                      className="h-9"
+                    />
+
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      disabled={disabled || customEquipmentInput.trim() === ""}
+                      onClick={addCustomEquipment}
+                    >
+                      Add
+                    </Button>
+                  </div>
+                </div>
+              </PopoverContent>
+            </Popover>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="exercise-type">Type</Label>
+          <div className="grid gap-5 sm:grid-cols-2">
+            <div className="space-y-2">
+              <Label htmlFor="measurement-mode">Measurement mode</Label>
 
-            <select
-              id="exercise-type"
-              disabled={disabled}
-              className={NATIVE_SELECT_CLASS}
-              value={exercise.type ?? ""}
-              onChange={(e) =>
-                update({
-                  type:
-                    e.target.value === ""
-                      ? undefined
-                      : (e.target.value as ExerciseDefinition["type"]),
-                })
-              }
-            >
-              <option value="">Select type</option>
+              <select
+                id="measurement-mode"
+                disabled={disabled}
+                className={NATIVE_SELECT_CLASS}
+                value={exercise.measurementMode ?? "external_load"}
+                onChange={(e) => {
+                  const mode = e.target
+                    .value as ExerciseDefinition["measurementMode"];
 
-              {EXERCISE_TYPE_OPTIONS.map((type) => (
-                <option key={type} value={type}>
-                  {titleCaseWorkoutValue(type)}
-                </option>
-              ))}
-            </select>
+                  const nextUnit =
+                    mode === "bodyweight_height"
+                      ? ["in", "cm", "m"].includes(exercise.weightTracking.unit)
+                        ? exercise.weightTracking.unit
+                        : "in"
+                      : ["kg", "lb"].includes(exercise.weightTracking.unit)
+                        ? exercise.weightTracking.unit
+                        : "kg";
+
+                  update({
+                    measurementMode: mode,
+                    tracking: {
+                      ...exercise.tracking,
+                      weight: true,
+                    },
+                    weightTracking: {
+                      ...exercise.weightTracking,
+                      mode:
+                        mode === "bodyweight_height"
+                          ? "bodyweight"
+                          : exercise.weightTracking.mode,
+                      unit: nextUnit,
+                    },
+                  });
+                }}
+              >
+                {EXERCISE_MEASUREMENT_MODE_OPTIONS.map((mode) => (
+                  <option key={mode} value={mode}>
+                    {titleCaseWorkoutValue(mode)}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="exercise-type">Type</Label>
+
+              <select
+                id="exercise-type"
+                disabled={disabled}
+                className={NATIVE_SELECT_CLASS}
+                value={exercise.type ?? ""}
+                onChange={(e) =>
+                  update({
+                    type:
+                      e.target.value === ""
+                        ? undefined
+                        : (e.target.value as ExerciseDefinition["type"]),
+                  })
+                }
+              >
+                <option value="">Select type</option>
+
+                {EXERCISE_TYPE_OPTIONS.map((type) => (
+                  <option key={type} value={type}>
+                    {titleCaseWorkoutValue(type)}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
         </div>
       </Section>
@@ -569,8 +751,11 @@ export default function ExerciseEditorFields({
           {[
             {
               key: "weight",
-              label: "Weight",
-              description: "Track the weight used for each set.",
+              label: primaryMetricLabel,
+              description:
+                primaryMetricLabel === "Height"
+                  ? "Track the height used for each set."
+                  : "Track the weight used for each set.",
             },
             {
               key: "reps",
@@ -629,12 +814,12 @@ export default function ExerciseEditorFields({
       ───────────────────────────────────── */}
 
       <Section
-        title="Weight tracking"
-        description="Configure how weight should be recorded for this exercise."
+        title="Primary metric tracking"
+        description="Configure how the primary training metric should be recorded for this exercise."
       >
         <div className="grid gap-5 sm:grid-cols-2">
           <div className="space-y-2">
-            <Label htmlFor="weight-unit">Weight unit</Label>
+            <Label htmlFor="weight-unit">{primaryMetricLabel} unit</Label>
 
             <select
               id="weight-unit"
@@ -651,7 +836,12 @@ export default function ExerciseEditorFields({
                 })
               }
             >
-              {EXERCISE_WEIGHT_UNIT_OPTIONS.map((unit) => (
+              {EXERCISE_WEIGHT_UNIT_OPTIONS.filter((unit) =>
+                (exercise.measurementMode ?? "external_load") ===
+                "bodyweight_height"
+                  ? ["in", "cm", "m"].includes(unit)
+                  : ["kg", "lb"].includes(unit),
+              ).map((unit) => (
                 <option key={unit} value={unit}>
                   {unit.toUpperCase()}
                 </option>
@@ -688,7 +878,9 @@ export default function ExerciseEditorFields({
 
         <div className="grid gap-5 sm:grid-cols-2">
           <div className="space-y-2">
-            <Label htmlFor="current-weight">Current weight</Label>
+            <Label htmlFor="current-weight">
+              Current {primaryMetricLabel.toLowerCase()}
+            </Label>
 
             <Input
               id="current-weight"
@@ -707,7 +899,9 @@ export default function ExerciseEditorFields({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="target-weight">Target weight</Label>
+            <Label htmlFor="target-weight">
+              Target {primaryMetricLabel.toLowerCase()}
+            </Label>
 
             <Input
               id="target-weight"

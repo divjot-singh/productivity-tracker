@@ -9,6 +9,7 @@ import { toast } from "sonner";
 
 import { apiRequest } from "@/lib/api/client";
 import { useRequireAuth } from "@/lib/hooks/useRequireAuth";
+import { getPrimaryMetricLabel } from "@/lib/workouts/constants";
 import {
   ExerciseDefinition,
   WorkoutCombination,
@@ -325,6 +326,9 @@ export default function WorkoutDateInsightsPage() {
                 : null;
 
             const weightUnit = exercise?.weightTracking.unit ?? "kg";
+            const primaryMetricLabel = getPrimaryMetricLabel(
+              exercise?.measurementMode,
+            );
 
             const avgEffort =
               exerciseEntry.sets.reduce(
@@ -365,7 +369,7 @@ export default function WorkoutDateInsightsPage() {
                       </p>
 
                       <p className="text-muted-foreground text-[11px]">
-                        Top weight
+                        Top {primaryMetricLabel.toLowerCase()}
                       </p>
                     </div>
                   </div>

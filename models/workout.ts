@@ -1,6 +1,7 @@
 import {
   ExerciseCategory,
   ExerciseEquipment,
+  ExerciseMeasurementMode,
   ExerciseMuscleGroup,
   ExerciseProgressionStrategy,
   ExerciseType,
@@ -37,6 +38,8 @@ export interface ExerciseDefinition {
   categories: ExerciseCategory[];
   muscleGroups: ExerciseMuscleGroup[];
   equipment?: ExerciseEquipment;
+  equipments?: ExerciseEquipment[];
+  measurementMode?: ExerciseMeasurementMode;
   type?: ExerciseType;
   description?: string;
   notes: string[];
