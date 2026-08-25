@@ -1,12 +1,89 @@
 import { parseExerciseVisualizationKey } from "@/lib/visualizations/exercise-keys";
 import { ExerciseHistoryData, VisualizationProvider } from "./provider-types";
 
+function getWorkoutVolumeValue(workout: {
+  exercises: Array<{
+    sets: Array<{
+      weight: number | null;
+      reps: number | null;
+    }>;
+  }>;
+}) {
+  return workout.exercises.reduce(
+    (exerciseSum, exerciseEntry) =>
+      exerciseSum +
+      exerciseEntry.sets.reduce((setSum, setEntry) => {
+        if (setEntry.weight === null || setEntry.reps === null) {
+          return setSum;
+        }
+
+        return setSum + setEntry.weight * setEntry.reps;
+      }, 0),
+    0,
+  );
+}
+
+function getWorkoutAverageEffortValue(workout: {
+  exercises: Array<{
+    sets: Array<{
+      effort: number | null;
+    }>;
+  }>;
+}) {
+  let effortCount = 0;
+
+  const totalEffort = workout.exercises.reduce(
+    (exerciseSum, exerciseEntry) =>
+      exerciseSum +
+      exerciseEntry.sets.reduce((setSum, setEntry) => {
+        if (setEntry.effort === null) {
+          return setSum;
+        }
+
+        effortCount += 1;
+        return setSum + setEntry.effort;
+      }, 0),
+    0,
+  );
+
+  if (effortCount === 0) {
+    return 0;
+  }
+
+  return Number((totalEffort / effortCount).toFixed(1));
+}
+
 export const exerciseProvider: VisualizationProvider<ExerciseHistoryData> = {
   async getData({ visualization, exercises, workouts, combinations }) {
     const parsedKey = parseExerciseVisualizationKey(visualization.key);
 
     if (!parsedKey) {
       throw new Error(`Invalid exercise key '${visualization.key}'.`);
+    }
+
+    if (parsedKey.entityType === "workout") {
+      const values = workouts
+        .map((workout) => ({
+          date: workout.date,
+          value:
+            parsedKey.metric === "averageEffort"
+              ? getWorkoutAverageEffortValue(workout)
+              : getWorkoutVolumeValue(workout),
+        }))
+        .sort((a, b) => a.date.localeCompare(b.date));
+
+      return {
+        id: "workout",
+        label:
+          parsedKey.metric === "averageEffort"
+            ? "Workout average effort"
+            : "Workout volume",
+        metric: parsedKey.metric,
+        target: undefined,
+        valueKind: "number",
+        unit: parsedKey.metric === "averageEffort" ? undefined : "kg",
+        values,
+      };
     }
 
     if (parsedKey.entityType === "exercise") {

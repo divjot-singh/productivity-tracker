@@ -604,17 +604,21 @@ export default function VisualizationDetailPage() {
                 <div className="relative">
                   <select
                     id="comparison"
-                    value={visualization.options?.comparison ?? "previous-day"}
+                    value={visualization.options?.comparison ?? "none"}
                     onChange={(e) =>
                       updateVisualization({
                         options: {
                           ...visualization.options,
-                          comparison: e.target.value as VisualizationComparison,
+                          comparison:
+                            e.target.value === "none"
+                              ? undefined
+                              : (e.target.value as VisualizationComparison),
                         },
                       })
                     }
                     className={NATIVE_SELECT_CLASS}
                   >
+                    <option value="none">No comparison</option>
                     <option value="previous-day">Previous day</option>
                     <option value="previous-period">Previous period</option>
                   </select>

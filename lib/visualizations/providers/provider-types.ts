@@ -7,7 +7,7 @@ import {
   WorkoutCombination,
   WorkoutEntry,
 } from "@/models/workout";
-import { ExerciseVisualizationMetricKey } from "@/lib/visualizations/exercise-keys";
+import { WorkoutVisualizationMetricKeyUnion } from "@/lib/visualizations/exercise-keys";
 
 export interface DataPoint {
   date: string;
@@ -136,7 +136,7 @@ export interface ExerciseHistoryData {
 
   label: string;
 
-  metric: ExerciseVisualizationMetricKey;
+  metric: WorkoutVisualizationMetricKeyUnion;
 
   target?: number | null;
 

@@ -1,4 +1,5 @@
 import { DailyEntry } from "@/models/entry";
+import { WorkoutEntry } from "@/models/workout";
 import { VisualizationPeriod } from "@/models/visualization";
 
 export function normalizeVisualizationKey(value: string): string {
@@ -41,4 +42,26 @@ export function expandPeriodForComparison(
     type: "days",
     value: period.value * 2,
   };
+}
+
+export function filterWorkoutsByPeriod(
+  workouts: WorkoutEntry[],
+  period: VisualizationPeriod,
+): WorkoutEntry[] {
+  const sorted = [...workouts].sort((a, b) => a.date.localeCompare(b.date));
+
+  if (sorted.length === 0) {
+    return [];
+  }
+
+  if (period.type === "all") {
+    return sorted;
+  }
+
+  const latestDate = new Date(sorted.at(-1)!.date);
+  const cutoff = new Date(latestDate);
+
+  cutoff.setDate(cutoff.getDate() - period.value + 1);
+
+  return sorted.filter((workout) => new Date(workout.date) >= cutoff);
 }

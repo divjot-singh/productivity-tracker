@@ -219,10 +219,12 @@ export function normalizeVisualizationOptions(
   const normalized: VisualizationOptions = {};
 
   if (allowed.comparison) {
-    normalized.comparison =
-      options?.comparison && COMPARISON_VALUES.includes(options.comparison)
-        ? options.comparison
-        : "previous-day";
+    if (
+      options?.comparison !== undefined &&
+      COMPARISON_VALUES.includes(options.comparison)
+    ) {
+      normalized.comparison = options.comparison;
+    }
   }
 
   if (allowed.streakRule && options?.streakRule) {
@@ -336,13 +338,21 @@ export function validateVisualizationDefinition(
             `Exercise '${parsedKey.entityId}' referenced in key does not exist.`,
           );
         }
+      } else if (parsedKey.entityType === "combination") {
+        if (
+          context?.combinationIds?.length &&
+          !context.combinationIds.includes(parsedKey.entityId)
+        ) {
+          errors.push(
+            `Combination '${parsedKey.entityId}' referenced in key does not exist.`,
+          );
+        }
       } else if (
+        parsedKey.entityType === "workout" &&
         context?.combinationIds?.length &&
-        !context.combinationIds.includes(parsedKey.entityId)
+        parsedKey.entityId !== "workout"
       ) {
-        errors.push(
-          `Combination '${parsedKey.entityId}' referenced in key does not exist.`,
-        );
+        errors.push(`Workout key '${definition.key}' is invalid.`);
       }
     }
   }
@@ -397,7 +407,7 @@ function validateOptions(
     options.comparison !== undefined &&
     !COMPARISON_VALUES.includes(options.comparison)
   ) {
-    return "Option 'comparison' must be either 'previous-day' or 'previous-period'.";
+    return "Option 'comparison' must be either 'previous-day', 'previous-period', or be omitted.";
   }
 
   if (

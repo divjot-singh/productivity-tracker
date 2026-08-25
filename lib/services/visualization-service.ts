@@ -17,6 +17,7 @@ import { ProviderContext } from "../visualizations/providers/provider-types";
 import {
   filterEntriesByPeriod,
   expandPeriodForComparison,
+  filterWorkoutsByPeriod,
 } from "../visualizations/utils";
 
 export class VisualizationService {
@@ -45,12 +46,16 @@ export class VisualizationService {
             entries,
             requiredPeriod,
           );
+          const filteredWorkouts = filterWorkoutsByPeriod(
+            workouts,
+            requiredPeriod,
+          );
 
           const context: ProviderContext = {
             visualization: definition,
             goals,
             entries: filteredEntries,
-            workouts,
+            workouts: filteredWorkouts,
             exercises,
             combinations,
           };

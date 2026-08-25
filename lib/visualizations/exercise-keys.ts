@@ -19,13 +19,35 @@ export const EXERCISE_VISUALIZATION_METRICS = [
   },
 ] as const;
 
+export const WORKOUT_VISUALIZATION_METRICS = [
+  {
+    key: "volume",
+    label: "Workout volume",
+  },
+  {
+    key: "averageEffort",
+    label: "Workout average effort",
+  },
+] as const;
+
 export type ExerciseVisualizationMetricKey =
   (typeof EXERCISE_VISUALIZATION_METRICS)[number]["key"];
 
-export type WorkoutVisualizationEntityType = "exercise" | "combination";
+export type WorkoutVisualizationMetricKey =
+  (typeof WORKOUT_VISUALIZATION_METRICS)[number]["key"];
+
+export type WorkoutVisualizationMetricKeyUnion =
+  ExerciseVisualizationMetricKey | WorkoutVisualizationMetricKey;
+
+export type WorkoutVisualizationEntityType =
+  "exercise" | "combination" | "workout";
 
 const METRIC_KEYS = new Set<string>(
   EXERCISE_VISUALIZATION_METRICS.map((metric) => metric.key),
+);
+
+const WORKOUT_METRIC_KEYS = new Set<string>(
+  WORKOUT_VISUALIZATION_METRICS.map((metric) => metric.key),
 );
 
 export function composeExerciseVisualizationKey(
@@ -42,14 +64,36 @@ export function composeCombinationVisualizationKey(
   return `combination:${combinationId}::${metric}`;
 }
 
+export function composeWorkoutVisualizationKey(
+  metric: WorkoutVisualizationMetricKey,
+): string {
+  return `workout::${metric}`;
+}
+
 export function parseExerciseVisualizationKey(key: string): {
   entityType: WorkoutVisualizationEntityType;
   entityId: string;
-  metric: ExerciseVisualizationMetricKey;
+  metric: WorkoutVisualizationMetricKeyUnion;
 } | null {
   const [rawEntity, metric] = key.split("::");
 
-  if (!rawEntity || !metric || !METRIC_KEYS.has(metric)) {
+  if (!rawEntity || !metric) {
+    return null;
+  }
+
+  if (rawEntity === "workout") {
+    if (!WORKOUT_METRIC_KEYS.has(metric)) {
+      return null;
+    }
+
+    return {
+      entityType: "workout",
+      entityId: "workout",
+      metric: metric as WorkoutVisualizationMetricKey,
+    };
+  }
+
+  if (!METRIC_KEYS.has(metric)) {
     return null;
   }
 
@@ -99,6 +143,11 @@ export function getExerciseVisualizationKeyOptions(
   exercises: ExerciseDefinition[],
   combinations: WorkoutCombination[],
 ): Array<{ value: string; label: string }> {
+  const workoutOptions = WORKOUT_VISUALIZATION_METRICS.map((metric) => ({
+    value: composeWorkoutVisualizationKey(metric.key),
+    label: `Workout: ${metric.label}`,
+  }));
+
   const exerciseOptions = exercises.flatMap((exercise) =>
     EXERCISE_VISUALIZATION_METRICS.map((metric) => ({
       value: composeExerciseVisualizationKey(exercise.id, metric.key),
@@ -113,5 +162,5 @@ export function getExerciseVisualizationKeyOptions(
     })),
   );
 
-  return [...exerciseOptions, ...combinationOptions];
+  return [...workoutOptions, ...exerciseOptions, ...combinationOptions];
 }

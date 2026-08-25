@@ -174,9 +174,13 @@ export const VISUALIZATION_HELP_TOPICS: VisualizationHelpTopic[] = [
     title: "Comparison",
     whatItMeans: "What your current value is compared against.",
     howItWorks:
-      "Comparison adds context by showing whether you are improving or dropping.",
-    example: "Compare with previous day or previous period.",
+      "Comparison adds context by showing whether you are improving or dropping, or you can turn it off entirely.",
+    example: "Compare with previous day, previous period, or no comparison.",
     optionDetails: [
+      {
+        label: "No Comparison",
+        description: "Shows the main value without any change badge.",
+      },
       {
         label: "Previous Day",
         description: "Compares today with the immediately previous day.",
