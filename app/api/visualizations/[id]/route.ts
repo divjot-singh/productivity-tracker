@@ -112,7 +112,7 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
 
     if (combination) {
       updated.options = normalizeVisualizationOptions(
-        body.options ?? updated.options,
+        "options" in body ? body.options : updated.options,
         combination.options,
       );
     }

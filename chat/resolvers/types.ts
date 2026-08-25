@@ -1,6 +1,11 @@
 import type { ChatResponseDraft } from "@/models/chat/chat-response";
 import type { DailyEntry } from "@/models/entry";
 import type { MetricDefinition } from "@/models/metric";
+import type {
+  ExerciseDefinition,
+  WorkoutCombination,
+  WorkoutEntry,
+} from "@/models/workout";
 import type { DeterministicIntent } from "../intents/types";
 
 export interface DateRange {
@@ -17,6 +22,9 @@ export interface ResolverContext {
   dateTo: string;
   entries: DailyEntry[];
   goals: MetricDefinition[];
+  workouts: WorkoutEntry[];
+  exercises: ExerciseDefinition[];
+  combinations: WorkoutCombination[];
 }
 
 export type DeterministicResolver = (

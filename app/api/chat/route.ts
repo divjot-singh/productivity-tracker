@@ -130,7 +130,9 @@ function isChatRequestBody(value: unknown): value is ChatRequest {
     const filters = body.filters as ChatRequest["filters"];
     if (
       filters?.domains !== undefined &&
-      !["entries", "goals", "visualizations", "all"].includes(filters.domains)
+      !["entries", "goals", "visualizations", "workouts", "all"].includes(
+        filters.domains,
+      )
     ) {
       return false;
     }

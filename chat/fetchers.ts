@@ -65,9 +65,17 @@ import type { DailyEntry } from "@/models/entry";
 import type { MetricCategory } from "@/models/metric";
 import type { MetricDefinition } from "@/models/metric";
 import type { VisualizationDefinition } from "@/models/visualization";
+import type {
+  ExerciseDefinition,
+  WorkoutCombination,
+  WorkoutEntry,
+} from "@/models/workout";
 import { getEntries } from "@/repositories/entry.server.repository";
+import { getCombinations } from "@/repositories/combinations.server.repository";
+import { getExercises } from "@/repositories/exercises.server.repository";
 import { getGoals } from "@/repositories/goals.server.repository";
 import { getVisualizationDefinitions } from "@/repositories/visualization.server.repository";
+import { getWorkouts } from "@/repositories/workouts.server.repository";
 import { Keywords } from "./keywords";
 
 const DEFAULT_WINDOW_DAYS = 84;
@@ -92,6 +100,9 @@ interface RawFetchResult {
   entries: DailyEntry[];
   goals: MetricDefinition[];
   visualizations: VisualizationDefinition[];
+  workouts: WorkoutEntry[];
+  exercises: ExerciseDefinition[];
+  combinations: WorkoutCombination[];
 }
 
 export class Fetcher {
@@ -440,6 +451,14 @@ export class Fetcher {
     }
 
     if (
+      this.keywords.workoutKeywords.some((keyword) =>
+        this.hasKeywordMatch(text, keyword),
+      )
+    ) {
+      inferred.add("workouts");
+    }
+
+    if (
       inferred.has("goals") ||
       inferred.has("visualizations") ||
       this.hasKeywordMatch(text, "trend") ||
@@ -652,6 +671,9 @@ export class Fetcher {
       entries: filteredEntries,
       goals: filteredGoals,
       visualizations: filteredVisualizations,
+      workouts: raw.workouts,
+      exercises: raw.exercises,
+      combinations: raw.combinations,
     };
   }
 
@@ -744,6 +766,22 @@ export class Fetcher {
     return getVisualizationDefinitions(plan.effectiveUserId);
   }
 
+  async fetchWorkouts(plan: FetchPlan): Promise<WorkoutEntry[]> {
+    const workouts = await getWorkouts(plan.effectiveUserId);
+
+    return workouts.filter(
+      (workout) => workout.date >= plan.dateFrom && workout.date <= plan.dateTo,
+    );
+  }
+
+  fetchExercises(plan: FetchPlan): Promise<ExerciseDefinition[]> {
+    return getExercises(plan.effectiveUserId, { includeInactive: true });
+  }
+
+  fetchCombinations(plan: FetchPlan): Promise<WorkoutCombination[]> {
+    return getCombinations(plan.effectiveUserId, { includeInactive: true });
+  }
+
   async fetchRawDocuments(plan: FetchPlan): Promise<RawFetchResult> {
     const includeAll = plan.domains.includes("all");
 
@@ -764,12 +802,38 @@ export class Fetcher {
         ? this.fetchVisualizations(plan)
         : Promise.resolve<VisualizationDefinition[]>([]);
 
-    const [entries, goals, visualizations] = await Promise.all([
-      entriesPromise,
-      goalsPromise,
-      visualizationsPromise,
-    ]);
+    const workoutsPromise =
+      includeAll || plan.domains.includes("workouts")
+        ? this.fetchWorkouts(plan)
+        : Promise.resolve<WorkoutEntry[]>([]);
 
-    return this.applyMetadataFilters(plan, { entries, goals, visualizations });
+    const exercisesPromise =
+      includeAll || plan.domains.includes("workouts")
+        ? this.fetchExercises(plan)
+        : Promise.resolve<ExerciseDefinition[]>([]);
+
+    const combinationsPromise =
+      includeAll || plan.domains.includes("workouts")
+        ? this.fetchCombinations(plan)
+        : Promise.resolve<WorkoutCombination[]>([]);
+
+    const [entries, goals, visualizations, workouts, exercises, combinations] =
+      await Promise.all([
+        entriesPromise,
+        goalsPromise,
+        visualizationsPromise,
+        workoutsPromise,
+        exercisesPromise,
+        combinationsPromise,
+      ]);
+
+    return this.applyMetadataFilters(plan, {
+      entries,
+      goals,
+      visualizations,
+      workouts,
+      exercises,
+      combinations,
+    });
   }
 }

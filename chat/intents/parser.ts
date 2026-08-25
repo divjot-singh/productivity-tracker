@@ -3,6 +3,47 @@ import type { DeterministicIntent } from "./types";
 export function parseDeterministicIntent(message: string): DeterministicIntent {
   const text = message.toLowerCase();
 
+  const hasWorkoutIntent =
+    /\b(workout|exercise|exercises|combination|combinations|deadlift|bench|bench press|squat|push|pull|legs|chest|back|shoulders|arms|sets|reps|volume|effort|target)\b/.test(
+      text,
+    );
+
+  if (hasWorkoutIntent) {
+    if (
+      /\b(target|close|progress toward|how close)\b/.test(text) &&
+      /\b(weight|target|bench|deadlift|squat|press|exercise)\b/.test(text)
+    ) {
+      return "workout_target_progress";
+    }
+
+    if (
+      /\b(best|heaviest|highest|pr|personal record|max)\b/.test(text) &&
+      /\b(deadlift|bench|press|squat|exercise|workout)\b/.test(text)
+    ) {
+      return "workout_best_performance";
+    }
+
+    if (/\b(volume|effort)\b/.test(text)) {
+      return "workout_volume_analysis";
+    }
+
+    if (
+      /\b(how many times|when did i last|last time|what workouts did i do|did i train|workout history|history)\b/.test(
+        text,
+      )
+    ) {
+      return "workout_history";
+    }
+
+    if (
+      /\b(progress|progressed|progressing|improved|improving|stronger|strength|trend)\b/.test(
+        text,
+      )
+    ) {
+      return "workout_progress";
+    }
+  }
+
   const hasMutationActionIntent =
     /\b(delete|remove)\b.*\b(entry|goal|log|record)\b/.test(text) ||
     /\b(update|edit|change)\b.*\b(entry|goal|log|record|score|xp)\b/.test(

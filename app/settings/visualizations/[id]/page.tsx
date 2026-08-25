@@ -268,10 +268,11 @@ export default function VisualizationDetailPage() {
         key: isCompositeStreak
           ? INTERNAL_COMPOSITE_STREAK_KEY
           : visualization.key.trim(),
-        options: normalizeVisualizationOptions(
-          visualization.options,
-          combination.options,
-        ),
+        options:
+          normalizeVisualizationOptions(
+            visualization.options,
+            combination.options,
+          ) ?? {},
       };
 
       await apiRequest(user, `/api/visualizations/${id}`, {

@@ -22,6 +22,11 @@ import { createShortWeeklyReviewResolver } from "./handlers/short-weekly-review"
 import { createTopGoalsProgressResolver } from "./handlers/top-goals-progress";
 import { createWeekComparisonResolver } from "./handlers/week-comparison";
 import { createWeekVsLastWeekEntriesResolver } from "./handlers/week-vs-last-week-entries";
+import { createWorkoutAnalyticsResolver } from "./handlers/workout-analytics";
+import { createWorkoutBestPerformanceResolver } from "./handlers/workout-best-performance";
+import { createWorkoutHistoryResolver } from "./handlers/workout-history";
+import { createWorkoutProgressResolver } from "./handlers/workout-progress";
+import { createWorkoutTargetProgressResolver } from "./handlers/workout-target-progress";
 
 export function createDeterministicResolverRegistry(
   helpers: ResolverHelpers,
@@ -49,5 +54,10 @@ export function createDeterministicResolverRegistry(
     clarify_focus_next: clarifyFocusNextResolver,
     clarify_show_progress: clarifyShowProgressResolver,
     clarify_less_productive: clarifyLessProductiveResolver,
+    workout_progress: createWorkoutProgressResolver(),
+    workout_best_performance: createWorkoutBestPerformanceResolver(),
+    workout_volume_analysis: createWorkoutAnalyticsResolver(),
+    workout_history: createWorkoutHistoryResolver(),
+    workout_target_progress: createWorkoutTargetProgressResolver(),
   };
 }

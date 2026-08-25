@@ -6,7 +6,7 @@ export interface ChatRequest {
 }
 
 export interface ChatRequestFilters {
-  domains?: "entries" | "goals" | "visualizations" | "all";
+  domains?: "entries" | "goals" | "visualizations" | "workouts" | "all";
   dateFrom?: string;
   dateTo?: string;
   goalIds?: string[];
@@ -17,6 +17,7 @@ export interface ChatRequestFilters {
   maxScore?: number;
 }
 
-export type ChatDomainType = "entries" | "goals" | "visualizations" | "all";
+export type ChatDomainType =
+  "entries" | "goals" | "visualizations" | "workouts" | "all";
 
-export type ChatDomains = "entries" | "goals" | "visualizations";
+export type ChatDomains = "entries" | "goals" | "visualizations" | "workouts";

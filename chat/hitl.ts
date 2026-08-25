@@ -66,6 +66,8 @@ export class Hitl {
       /\b(update|edit|change)\b.*\b(entry|goal|log|record|score|xp)\b/,
       /\b(create|add)\b.*\b(entry|goal|log|record)\b/,
       /\b(mark|set)\b.*\b(done|complete|completed)\b/,
+      /\b(add|create|log|save)\b.*\b(workout|exercise|set|combination)\b/,
+      /\b(update|edit|change|remove|delete)\b.*\b(workout|exercise|set|combination)\b/,
     ];
 
     return mutationCommandPatterns.some((pattern) => pattern.test(text));

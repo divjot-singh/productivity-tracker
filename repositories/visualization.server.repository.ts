@@ -1,4 +1,5 @@
 import { adminDb } from "@/lib/firebase-admin";
+import { removeUndefinedDeep } from "@/lib/firestore/sanitize";
 
 import { VisualizationDefinition } from "@/models/visualization";
 
@@ -84,11 +85,13 @@ export async function updateVisualization(
 
   await ref.set(
     {
-      ...removeUndefined(visualization as unknown as Record<string, unknown>),
+      ...removeUndefinedDeep(
+        visualization as unknown as Record<string, unknown>,
+      ),
       updatedAt: new Date(),
     },
     {
-      merge: true,
+      merge: false,
     },
   );
 

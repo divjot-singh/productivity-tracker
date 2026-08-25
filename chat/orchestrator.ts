@@ -31,6 +31,11 @@ import type { ChatRequestFilters } from "@/models/chat/chat-request";
 import type { ChatResponseDraft } from "@/models/chat/chat-response";
 import type { DailyEntry } from "@/models/entry";
 import type { MetricDefinition } from "@/models/metric";
+import type {
+  ExerciseDefinition,
+  WorkoutCombination,
+  WorkoutEntry,
+} from "@/models/workout";
 import { Fetcher } from "./fetchers";
 import { AnswerGenerator } from "./answer-generator";
 import { Normalizer } from "./normalizers";
@@ -63,6 +68,9 @@ export class Orchestrator {
     dateTo: string,
     entries: DailyEntry[],
     goals: MetricDefinition[],
+    workouts: WorkoutEntry[],
+    exercises: ExerciseDefinition[],
+    combinations: WorkoutCombination[],
   ): ChatResponseDraft | null {
     const intent = parseDeterministicIntent(message);
     const resolver = this.resolverRegistry[intent];
@@ -78,6 +86,9 @@ export class Orchestrator {
       dateTo,
       entries,
       goals,
+      workouts,
+      exercises,
+      combinations,
     });
   }
 
@@ -119,6 +130,9 @@ export class Orchestrator {
       fetchPlan.dateTo,
       rawDocs.entries,
       goalsForDeterministic,
+      rawDocs.workouts,
+      rawDocs.exercises,
+      rawDocs.combinations,
     );
     if (intentRoutedDeterministicResponse) {
       return intentRoutedDeterministicResponse;

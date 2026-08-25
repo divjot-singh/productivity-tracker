@@ -18,4 +18,9 @@ export type DeterministicIntent =
   | "clarify_focus_next"
   | "clarify_show_progress"
   | "clarify_less_productive"
+  | "workout_progress"
+  | "workout_best_performance"
+  | "workout_volume_analysis"
+  | "workout_history"
+  | "workout_target_progress"
   | "unknown";
