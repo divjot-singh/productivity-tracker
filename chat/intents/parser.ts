@@ -59,6 +59,15 @@ export function parseDeterministicIntent(message: string): DeterministicIntent {
     );
 
   if (hasWorkoutIntent) {
+    const hasRemainingExercisesQuestion =
+      /\b(remaining|left|not\s+done|haven\s*'?\s*t\s+done|havent\s+done|not\s+trained|not\s+worked\s+on)\b/.test(
+        text,
+      ) && /\b(exercise|exercises|workout|workouts|lift|lifts)\b/.test(text);
+
+    if (hasRemainingExercisesQuestion) {
+      return "workout_remaining_exercises";
+    }
+
     const hasTargetProgressLanguage =
       /\b(target|targets|close|closest|closer|far|farther|farthest|furthest|distance|progress toward|how close|completion|completed)\b/.test(
         text,

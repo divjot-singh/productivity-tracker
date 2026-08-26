@@ -120,6 +120,15 @@ describe("workout exercise resolver", () => {
     );
   });
 
+  it("routes remaining not-done exercise questions to the remaining-exercises resolver", () => {
+    assert.equal(
+      parseDeterministicIntent(
+        "what are the remaining exercises i havent done yet.",
+      ),
+      "workout_remaining_exercises",
+    );
+  });
+
   it("computes session metrics by exact exercise id", () => {
     const workout = {
       id: "today-squat",

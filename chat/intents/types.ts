@@ -23,4 +23,5 @@ export type DeterministicIntent =
   | "workout_volume_analysis"
   | "workout_history"
   | "workout_target_progress"
+  | "workout_remaining_exercises"
   | "unknown";

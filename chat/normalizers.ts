@@ -424,7 +424,7 @@ export class Normalizer {
     uid: string,
     exercise: ExerciseDefinition,
     workouts: WorkoutEntry[],
-  ): NormalizedDocument | null {
+  ): NormalizedDocument {
     const subject = {
       kind: "exercise" as const,
       label: exercise.name,
@@ -432,18 +432,17 @@ export class Normalizer {
       exercise,
     };
     const sessions = buildSessionMetrics(workouts, subject);
-    if (sessions.length === 0) {
-      return null;
-    }
-
-    const prSession = sessions.reduce((best, session) =>
-      session.topWeight > best.topWeight ? session : best,
-    );
+    const prSession =
+      sessions.length > 0
+        ? sessions.reduce((best, session) =>
+            session.topWeight > best.topWeight ? session : best,
+          )
+        : null;
 
     const targetWeight =
       typeof exercise.targetWeight === "number" ? exercise.targetWeight : null;
     const completionPercent =
-      targetWeight && targetWeight > 0
+      prSession && targetWeight && targetWeight > 0
         ? Math.min(100, Math.round((prSession.topWeight / targetWeight) * 100))
         : null;
 
@@ -472,8 +471,12 @@ export class Normalizer {
 
     const text = [
       `${exercise.name} — personal record`,
-      `Top weight: ${prSession.topWeight} kg (on ${prSession.date})`,
-      `PR session volume: ${Math.round(prSession.volume)}, reps: ${prSession.totalReps}, sets: ${prSession.totalSets}, avg effort: ${prSession.averageEffort ?? "n/a"}`,
+      prSession
+        ? `Top weight: ${prSession.topWeight} kg (on ${prSession.date})`
+        : "No recorded weighted sessions yet.",
+      prSession
+        ? `PR session volume: ${Math.round(prSession.volume)}, reps: ${prSession.totalReps}, sets: ${prSession.totalSets}, avg effort: ${prSession.averageEffort ?? "n/a"}`
+        : null,
       targetWeight !== null ? `Target weight: ${targetWeight} kg` : null,
       completionPercent !== null
         ? `Target completion: ${completionPercent}%`
@@ -486,7 +489,7 @@ export class Normalizer {
     return {
       id: `workout-exercise-${exercise.id}`,
       domain: "workouts",
-      timestamp: prSession.date,
+      timestamp: prSession?.date ?? new Date().toISOString(),
       sourcePath: `users/${uid}/workouts/exercise/${exercise.id}`,
       title: `${exercise.name} PR`,
       text,
@@ -495,14 +498,81 @@ export class Normalizer {
       structuredAttributes: {
         exerciseId: exercise.id,
         exerciseName: exercise.name,
-        topWeight: prSession.topWeight,
-        date: prSession.date,
-        volume: Math.round(prSession.volume),
-        totalReps: prSession.totalReps,
-        totalSets: prSession.totalSets,
-        averageEffort: prSession.averageEffort ?? "n/a",
+        hasPerformed: sessions.length > 0,
+        topWeight: prSession?.topWeight ?? 0,
+        date: prSession?.date ?? "",
+        volume: prSession ? Math.round(prSession.volume) : 0,
+        totalReps: prSession?.totalReps ?? 0,
+        totalSets: prSession?.totalSets ?? 0,
+        averageEffort: prSession?.averageEffort ?? "n/a",
         targetWeight: targetWeight ?? "",
         completionPercent: completionPercent ?? "",
+      },
+    };
+  }
+
+  normalizeWorkoutCombination(
+    uid: string,
+    combination: WorkoutCombination,
+    exerciseMap: Map<string, ExerciseDefinition>,
+    workouts: WorkoutEntry[],
+  ): NormalizedDocument {
+    const sessions = workouts.filter((workout) =>
+      workout.combinationIds.includes(combination.id),
+    );
+    const latest = sessions
+      .map((workout) => workout.date)
+      .sort((left, right) => right.localeCompare(left))[0];
+
+    const exerciseNames = combination.exerciseIds
+      .map((exerciseId) => exerciseMap.get(exerciseId)?.name ?? exerciseId)
+      .join(", ");
+
+    const tags = new Set<string>([
+      "workout",
+      "domain:workouts",
+      "workout-combination",
+      `combination:${combination.id}`,
+    ]);
+
+    const keywords = new Set<string>([
+      ...this.keywords.workoutKeywords,
+      combination.id.toLowerCase(),
+      ...this.tokenizeLabel(combination.name),
+      ...combination.exerciseIds.flatMap((exerciseId) =>
+        this.tokenizeLabel(exerciseMap.get(exerciseId)?.name ?? exerciseId),
+      ),
+      "combination",
+      "routine",
+      "program",
+    ]);
+
+    const text = [
+      `${combination.name} — workout combination`,
+      combination.description ? `Description: ${combination.description}` : null,
+      `Exercises: ${exerciseNames}`,
+      `Sessions recorded: ${sessions.length}`,
+      latest ? `Last performed: ${latest}` : "Not performed yet.",
+    ]
+      .filter(Boolean)
+      .join("\n");
+
+    return {
+      id: `workout-combination-${combination.id}`,
+      domain: "workouts",
+      timestamp: latest ?? new Date().toISOString(),
+      sourcePath: `users/${uid}/combinations/${combination.id}`,
+      title: combination.name,
+      text,
+      tags: [...tags],
+      keywords: [...keywords],
+      structuredAttributes: {
+        combinationId: combination.id,
+        combinationName: combination.name,
+        hasPerformed: sessions.length > 0,
+        exerciseCount: combination.exerciseIds.length,
+        sessionsRecorded: sessions.length,
+        latestDate: latest ?? "",
       },
     };
   }
@@ -606,11 +676,9 @@ export class Normalizer {
       raw.visualizations.map((viz) => this.normalizeVisualization(uid, viz)),
     );
 
-    const normalizedWorkoutExercises = raw.exercises
-      .map((exercise) =>
-        this.normalizeWorkoutExercise(uid, exercise, raw.workouts),
-      )
-      .filter((doc): doc is NormalizedDocument => doc !== null);
+    const normalizedWorkoutExercises = raw.exercises.map((exercise) =>
+      this.normalizeWorkoutExercise(uid, exercise, raw.workouts),
+    );
 
     const exerciseMap = new Map(
       raw.exercises.map((exercise) => [exercise.id, exercise]),
@@ -621,12 +689,21 @@ export class Normalizer {
     const normalizedWorkoutSessions = raw.workouts.map((workout) =>
       this.normalizeWorkoutSession(uid, workout, exerciseMap, combinationMap),
     );
+    const normalizedWorkoutCombinations = raw.combinations.map((combination) =>
+      this.normalizeWorkoutCombination(
+        uid,
+        combination,
+        exerciseMap,
+        raw.workouts,
+      ),
+    );
 
     return [
       ...normalizedEntries,
       ...normalizedGoals,
       ...normalizedVisualizations,
       ...normalizedWorkoutExercises,
+      ...normalizedWorkoutCombinations,
       ...normalizedWorkoutSessions,
     ];
   }

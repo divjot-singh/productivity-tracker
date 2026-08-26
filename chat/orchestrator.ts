@@ -48,6 +48,9 @@ import { createDeterministicResolverRegistry } from "./resolvers/registry";
 import type { ResolverRegistry } from "./resolvers/types";
 
 const TOP_K_EVIDENCE = 100; // number of top evidence docs to consider for answer generation
+const DETERMINISTIC_WORKOUT_INTENTS = new Set<DeterministicIntent>([
+  "workout_remaining_exercises",
+]);
 
 export class Orchestrator {
   private readonly resolverRegistry: ResolverRegistry;
@@ -151,7 +154,10 @@ export class Orchestrator {
     // Non-workout deterministic intents keep returning immediately. Workout
     // intents flow through the model pipeline and only fall back to the
     // deterministic template when the pipeline has no usable evidence.
-    if (deterministicDraft && !isWorkoutIntent) {
+    if (
+      deterministicDraft &&
+      (!isWorkoutIntent || DETERMINISTIC_WORKOUT_INTENTS.has(intent))
+    ) {
       return deterministicDraft;
     }
 

@@ -27,6 +27,7 @@ import { createWorkoutBestPerformanceResolver } from "./handlers/workout-best-pe
 import { createWorkoutHistoryResolver } from "./handlers/workout-history";
 import { createWorkoutProgressResolver } from "./handlers/workout-progress";
 import { createWorkoutTargetProgressResolver } from "./handlers/workout-target-progress";
+import { createWorkoutRemainingExercisesResolver } from "./handlers/workout-remaining-exercises";
 
 export function createDeterministicResolverRegistry(
   helpers: ResolverHelpers,
@@ -59,5 +60,6 @@ export function createDeterministicResolverRegistry(
     workout_volume_analysis: createWorkoutAnalyticsResolver(),
     workout_history: createWorkoutHistoryResolver(),
     workout_target_progress: createWorkoutTargetProgressResolver(),
+    workout_remaining_exercises: createWorkoutRemainingExercisesResolver(),
   };
 }
