@@ -42,6 +42,7 @@ import { Normalizer } from "./normalizers";
 import { Scorer } from "./scorer";
 import { Hitl } from "./hitl";
 import { parseDeterministicIntent } from "./intents/parser";
+import type { DeterministicIntent } from "./intents/types";
 import { createResolverHelpers } from "./resolvers/helpers";
 import { createDeterministicResolverRegistry } from "./resolvers/registry";
 import type { ResolverRegistry } from "./resolvers/types";
@@ -62,6 +63,7 @@ export class Orchestrator {
   };
 
   private resolveDeterministicByIntent(
+    intent: DeterministicIntent,
     userId: string,
     message: string,
     dateFrom: string,
@@ -72,7 +74,6 @@ export class Orchestrator {
     exercises: ExerciseDefinition[],
     combinations: WorkoutCombination[],
   ): ChatResponseDraft | null {
-    const intent = parseDeterministicIntent(message);
     const resolver = this.resolverRegistry[intent];
     if (!resolver) {
       return null;
@@ -90,6 +91,16 @@ export class Orchestrator {
       exercises,
       combinations,
     });
+  }
+
+  private isUnansweredDraft(draft: ChatResponseDraft): boolean {
+    if ("refusalReason" in draft) {
+      return true;
+    }
+    if ("answer" in draft && /insufficient evidence/i.test(draft.answer)) {
+      return true;
+    }
+    return false;
   }
 
   async orchestrate({
@@ -123,7 +134,10 @@ export class Orchestrator {
         ? rawDocs.goals
         : await fetcher.fetchGoals(fetchPlan);
 
-    const intentRoutedDeterministicResponse = this.resolveDeterministicByIntent(
+    const intent = parseDeterministicIntent(message);
+    const isWorkoutIntent = intent.startsWith("workout");
+    const deterministicDraft = this.resolveDeterministicByIntent(
+      intent,
       userId,
       message,
       fetchPlan.dateFrom,
@@ -134,8 +148,11 @@ export class Orchestrator {
       rawDocs.exercises,
       rawDocs.combinations,
     );
-    if (intentRoutedDeterministicResponse) {
-      return intentRoutedDeterministicResponse;
+    // Non-workout deterministic intents keep returning immediately. Workout
+    // intents flow through the model pipeline and only fall back to the
+    // deterministic template when the pipeline has no usable evidence.
+    if (deterministicDraft && !isWorkoutIntent) {
+      return deterministicDraft;
     }
 
     const normalizedDocs = await normalizer.normalizeAll(userId, rawDocs);
@@ -183,6 +200,17 @@ export class Orchestrator {
       modelProvider: provider,
       conversationContext,
     });
+
+    // Keep templates as a fallback: when a workout question produces no usable
+    // evidence in the retrieval pipeline, return the deterministic draft.
+    if (
+      isWorkoutIntent &&
+      deterministicDraft &&
+      this.isUnansweredDraft(draftResponse)
+    ) {
+      return deterministicDraft;
+    }
+
     return {
       ...draftResponse,
     };

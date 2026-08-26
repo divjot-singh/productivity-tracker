@@ -54,7 +54,7 @@ export function parseDeterministicIntent(message: string): DeterministicIntent {
   }
 
   const hasWorkoutIntent =
-    /\b(workout|exercise|exercises|combination|combinations|deadlift|bench|bench press|squat|push|pull|legs|chest|back|shoulders|arms|sets|reps|volume|effort|target|lift|lifts)\b/.test(
+    /\b(workout|exercise|exercises|combination|combinations|deadlift|bench|bench press|squat|squats|push|pull|legs|chest|back|shoulders|arms|sets|reps|volume|effort|target|lift|lifts|pr|prs|personal record|personal records|personal best|curl|curls|row|rows|fly|flye|flyes|flies|raise|raises|extension|extensions|pulldown|pushdown|thrust|thrusts|carry|carries|crunch|crunches|jump|jumps|press|presses|dip|dips|lunge|lunges|calf|calves|hamstring|hamstrings|quad|quads|glute|glutes|abs|core|pec|pecs|lat|lats|tricep|triceps|bicep|biceps|rdl|woodchop|pallof|deadbug)\b/.test(
       text,
     );
 
@@ -70,6 +70,20 @@ export function parseDeterministicIntent(message: string): DeterministicIntent {
       /\b(all|every)\b/.test(text) &&
       /\b(exercise|exercises)\b/.test(text) &&
       /\b(top|highest|lowest|bottom|completion|target)\b/.test(text);
+
+    const hasAllExercisePrRequest =
+      /\b(all|every|each)\b/.test(text) &&
+      /\b(exercise|exercises|lift|lifts)\b/.test(text) &&
+      /\b(pr|prs|personal record|personal records|personal best|record|records|heaviest)\b/.test(
+        text,
+      );
+
+    // A combined "all PRs + their target completion" request is answered by the
+    // best-performance resolver (it renders PRs with optional target columns),
+    // so it must win over the pure target-progress ranking route.
+    if (hasAllExercisePrRequest) {
+      return "workout_best_performance";
+    }
 
     if (hasTargetProgressLanguage || hasAllExerciseLeaderboardLanguage) {
       return "workout_target_progress";

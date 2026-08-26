@@ -78,6 +78,17 @@ function detectTopLiftsRanking(message: string): number | null {
   return 3;
 }
 
+function detectAllExercisePrs(message: string): boolean {
+  const text = message.toLowerCase();
+  return (
+    /\b(all|every|each)\b/.test(text) &&
+    /\b(exercise|exercises|lift|lifts)\b/.test(text) &&
+    /\b(pr|prs|personal record|personal records|personal best|record|records|heaviest)\b/.test(
+      text,
+    )
+  );
+}
+
 interface PrSet {
   weight: number;
   reps: number | null;
@@ -141,9 +152,18 @@ export const createWorkoutBestPerformanceResolver =
         context.dateTo,
       );
 
+      // When the user asks whether lifts are "good" for their body weight but
+      // gives no bodyweight number, we can't compute relative strength — prompt
+      // for it instead of silently returning only the PRs.
+      const bodyweightPromptNote =
+        asksAboutBodyweight && !bodyWeightKg
+          ? '\n\n_To judge whether these are good relative to your body weight, tell me your current bodyweight (e.g. "for my 83.5 kg body weight")._'
+          : "";
+
       if (!primaryExercise && requestedExercises.length === 0) {
         const topLiftsCount = detectTopLiftsRanking(context.message);
-        if (topLiftsCount && !asksAboutBodyweight) {
+        const wantsAllPrs = detectAllExercisePrs(context.message);
+        if ((topLiftsCount || wantsAllPrs) && !asksAboutBodyweight) {
           const rankedLifts = context.exercises
             .map((exercise) => {
               const subject = {
@@ -174,21 +194,44 @@ export const createWorkoutBestPerformanceResolver =
             };
           }
 
-          const topLifts = rankedLifts.slice(0, topLiftsCount);
+          const limit = wantsAllPrs ? rankedLifts.length : (topLiftsCount ?? 3);
+          const topLifts = rankedLifts.slice(0, limit);
+          const wantsTarget =
+            /\b(target|targets|completion|percentage|percent)\b/.test(
+              context.message.toLowerCase(),
+            );
+
+          const heading = wantsAllPrs
+            ? "## All Exercise PRs"
+            : `## Top ${topLifts.length} Lifts by Weight`;
+          const headerRow = wantsTarget
+            ? "| Rank | Exercise | Top Weight | Date | Target Completion | Remaining |"
+            : "| Rank | Exercise | Top Weight | Date |";
+          const dividerRow = wantsTarget
+            ? "| --- | --- | ---: | --- | ---: | ---: |"
+            : "| --- | --- | ---: | --- |";
+
           const liftRows = topLifts
-            .map(
-              ({ exercise, best }, index) =>
-                `| ${index + 1} | ${exercise.name} | ${best.topWeight} kg | ${best.date} |`,
-            )
+            .map(({ exercise, best }, index) => {
+              const baseCols = `| ${index + 1} | ${exercise.name} | ${best.topWeight} kg | ${best.date} |`;
+              if (!wantsTarget) {
+                return baseCols;
+              }
+              const target = exercise.targetWeight;
+              if (target === null || target === undefined || target <= 0) {
+                return `${baseCols} n/a | n/a |`;
+              }
+              const completion = Math.min(
+                100,
+                Math.round((best.topWeight / target) * 100),
+              );
+              const remaining = Math.max(0, target - best.topWeight);
+              return `${baseCols} ${completion}% (${best.topWeight}/${target} kg) | ${remaining} kg |`;
+            })
             .join("\n");
 
           return {
-            answer: [
-              `## Top ${topLifts.length} Lifts by Weight`,
-              "| Rank | Exercise | Top Weight | Date |",
-              "| --- | --- | ---: | --- |",
-              liftRows,
-            ].join("\n"),
+            answer: [heading, headerRow, dividerRow, liftRows].join("\n"),
             evidence: topLifts.flatMap(({ sessions, subject }) =>
               buildWorkoutEvidence(
                 context.userId,
@@ -357,18 +400,19 @@ export const createWorkoutBestPerformanceResolver =
           : [];
 
         return {
-          answer: [
-            `## ${exercise.name} PR`,
-            `Your **${exercise.name}** PR is **${best.topWeight} kg**, set on **${best.date}**.`,
-            ...prSetLines,
-            "### Session",
-            `- **Session volume:** ${Math.round(best.volume)}`,
-            `- **Total sets:** ${best.totalSets}`,
-            `- **Average effort:** ${best.averageEffort ?? "n/a"}`,
-            "| # | Date | Top Weight (kg) | Volume | Sets | Avg Effort |",
-            "| --- | --- | ---: | ---: | ---: | ---: |",
-            ...formatSessionTable(sessions),
-          ].join("\n"),
+          answer:
+            [
+              `## ${exercise.name} PR`,
+              `Your **${exercise.name}** PR is **${best.topWeight} kg**, set on **${best.date}**.`,
+              ...prSetLines,
+              "### Session",
+              `- **Session volume:** ${Math.round(best.volume)}`,
+              `- **Total sets:** ${best.totalSets}`,
+              `- **Average effort:** ${best.averageEffort ?? "n/a"}`,
+              "| # | Date | Top Weight (kg) | Volume | Sets | Avg Effort |",
+              "| --- | --- | ---: | ---: | ---: | ---: |",
+              ...formatSessionTable(sessions),
+            ].join("\n") + bodyweightPromptNote,
           evidence: buildWorkoutEvidence(
             context.userId,
             sessions,
@@ -421,11 +465,12 @@ export const createWorkoutBestPerformanceResolver =
       }
 
       return {
-        answer: [
-          "## Best PRs",
-          "Your strongest recorded lifts in this period were:",
-          rows,
-        ].join("\n"),
+        answer:
+          [
+            "## Best PRs",
+            "Your strongest recorded lifts in this period were:",
+            rows,
+          ].join("\n") + bodyweightPromptNote,
         evidence: sections.flatMap(({ sessions, subject }) =>
           buildWorkoutEvidence(
             context.userId,
