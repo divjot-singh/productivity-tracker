@@ -61,21 +61,70 @@ const CATEGORY_ALIASES: Record<string, string[]> = {
   functional: ["functional"],
 };
 
-const EXERCISE_ALIASES: Record<string, string[]> = {
-  deadlift: ["deadlift", "deadlifts"],
-  db_bench_press: [
-    "bench",
-    "bench press",
-    "dumbbell bench",
-    "dumbbell bench press",
-  ],
-  incline_db_press: [
-    "incline bench",
-    "incline press",
-    "incline dumbbell press",
-  ],
-  barbell_squat: ["squat", "squats", "barbell squat"],
+// Curated gym slang / abbreviations mapped to canonical name phrases.
+// These are matched against exercise NAMES (not ids), so they are robust to
+// per-user exercise ids (Firestore stores UUIDs, different for every user).
+const SLANG_SYNONYMS: Record<string, string> = {
+  dl: "deadlift",
+  rdl: "romanian deadlift",
+  sldl: "romanian deadlift",
+  squad: "squat",
+  ohp: "overhead press",
+  bp: "bench press",
 };
+
+// Words that name a specific variant of a lift. If the user says one of these
+// and a competing exercise for the same mention has it in its name, the
+// non-variant matches are dropped (e.g. "incline bench" -> Incline ... Press).
+const VARIANT_QUALIFIERS = new Set([
+  "incline",
+  "inclined",
+  "decline",
+  "declined",
+  "romanian",
+  "bulgarian",
+  "sumo",
+  "front",
+  "hack",
+  "seated",
+  "standing",
+  "close",
+  "wide",
+  "reverse",
+  "overhead",
+  "deficit",
+  "paused",
+  "single",
+  "unilateral",
+  "split",
+  "hammer",
+  "preacher",
+  "goblet",
+  "assisted",
+]);
+
+// Words that force the plain / base version of a lift.
+const BASE_LIFT_QUALIFIERS = new Set([
+  "conventional",
+  "standard",
+  "regular",
+  "normal",
+  "plain",
+]);
+
+// Structural words that should never count as a matchable exercise-name token
+// (e.g. "Clean and Press" must not match the connector "and").
+const NAME_STOPWORDS = new Set([
+  "and",
+  "the",
+  "a",
+  "an",
+  "of",
+  "or",
+  "with",
+  "to",
+  "for",
+]);
 
 function normalizeText(value: string): string {
   return value
@@ -109,40 +158,196 @@ function aliasScore(message: string, alias: string): number {
   return normalizedAlias.split(" ").length * 10 + normalizedAlias.length;
 }
 
-function getExerciseAliases(exercise: ExerciseDefinition): string[] {
-  const aliases = new Set<string>([
-    exercise.name,
-    exercise.id.replace(/_/g, " "),
-    ...(EXERCISE_ALIASES[exercise.id] ?? []),
-  ]);
+function singularizeToken(token: string): string {
+  if (token.length > 3 && token.endsWith("s") && !token.endsWith("ss")) {
+    return token.slice(0, -1);
+  }
+  return token;
+}
 
-  return [...aliases];
+function tokenizeName(value: string): string[] {
+  return normalizeText(value)
+    .split(" ")
+    .filter(Boolean)
+    .map(singularizeToken)
+    .filter((token) => !NAME_STOPWORDS.has(token));
+}
+
+function tokenizeMessage(message: string): string[] {
+  const tokens = normalizeText(message).split(" ").filter(Boolean);
+  const expanded: string[] = [];
+
+  for (const token of tokens) {
+    const synonym = SLANG_SYNONYMS[token];
+    if (synonym) {
+      for (const part of synonym.split(" ")) {
+        expanded.push(singularizeToken(part));
+      }
+    } else {
+      expanded.push(singularizeToken(token));
+    }
+  }
+
+  return expanded;
+}
+
+function levenshtein(a: string, b: string): number {
+  const dist: number[][] = Array.from({ length: a.length + 1 }, () =>
+    new Array<number>(b.length + 1).fill(0),
+  );
+
+  for (let i = 0; i <= a.length; i += 1) dist[i][0] = i;
+  for (let j = 0; j <= b.length; j += 1) dist[0][j] = j;
+
+  for (let i = 1; i <= a.length; i += 1) {
+    for (let j = 1; j <= b.length; j += 1) {
+      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+      dist[i][j] = Math.min(
+        dist[i - 1][j] + 1,
+        dist[i][j - 1] + 1,
+        dist[i - 1][j - 1] + cost,
+      );
+    }
+  }
+
+  return dist[a.length][b.length];
+}
+
+// Two tokens match if equal, or (for longer tokens) within one edit — this is
+// the "moderate / light typo" tolerance (e.g. "inclined"~"incline").
+function tokensMatch(nameToken: string, messageToken: string): boolean {
+  if (nameToken === messageToken) return true;
+  if (nameToken.length < 6 || messageToken.length < 6) return false;
+  if (Math.abs(nameToken.length - messageToken.length) > 1) return false;
+  return levenshtein(nameToken, messageToken) <= 1;
+}
+
+interface ExerciseNameMatch {
+  exercise: ExerciseDefinition;
+  score: number;
+  coveredIndices: Set<number>;
+  nameTokens: string[];
+}
+
+export function resolveExercisesFromMessage(
+  message: string,
+  exercises: ExerciseDefinition[],
+): ExerciseDefinition[] {
+  const messageTokens = tokenizeMessage(message);
+  if (messageTokens.length === 0) {
+    return [];
+  }
+
+  const hasBaseQualifier = messageTokens.some((token) =>
+    BASE_LIFT_QUALIFIERS.has(token),
+  );
+
+  const matches: ExerciseNameMatch[] = [];
+
+  for (const exercise of exercises) {
+    const nameTokens = tokenizeName(exercise.name);
+    if (nameTokens.length === 0) {
+      continue;
+    }
+
+    let matched = 0;
+    const coveredIndices = new Set<number>();
+
+    for (const nameToken of nameTokens) {
+      for (let i = 0; i < messageTokens.length; i += 1) {
+        if (coveredIndices.has(i)) {
+          continue;
+        }
+        if (tokensMatch(nameToken, messageTokens[i])) {
+          matched += 1;
+          coveredIndices.add(i);
+          break;
+        }
+      }
+    }
+
+    if (matched === 0) {
+      continue;
+    }
+
+    const unsaid = nameTokens.length - matched;
+    const fullPhrasePresent = ` ${messageTokens.join(" ")} `.includes(
+      ` ${nameTokens.join(" ")} `,
+    );
+    const isVariant = nameTokens.some((token) => VARIANT_QUALIFIERS.has(token));
+    const score =
+      matched * 100 -
+      unsaid * 40 +
+      (fullPhrasePresent ? 500 : 0) -
+      (hasBaseQualifier && isVariant ? 300 : 0);
+
+    matches.push({ exercise, score, coveredIndices, nameTokens });
+  }
+
+  if (matches.length === 0) {
+    return [];
+  }
+
+  // Qualifier gating: if the user named a variant (e.g. "incline", "romanian")
+  // and a competing match sharing the same mention has that word in its name,
+  // drop the matches that lack it so the specific variant wins.
+  const messageQualifiers = messageTokens.filter((token) =>
+    VARIANT_QUALIFIERS.has(token),
+  );
+
+  const gated = matches.filter((match) => {
+    for (const qualifier of messageQualifiers) {
+      const selfHasQualifier = match.nameTokens.some((token) =>
+        tokensMatch(token, qualifier),
+      );
+      if (selfHasQualifier) {
+        continue;
+      }
+      const overlappedQualified = matches.some(
+        (other) =>
+          other !== match &&
+          other.nameTokens.some((token) => tokensMatch(token, qualifier)) &&
+          [...other.coveredIndices].some((otherIndex) =>
+            [...match.coveredIndices].some(
+              (index) => Math.abs(otherIndex - index) <= 1,
+            ),
+          ),
+      );
+      if (overlappedQualified) {
+        return false;
+      }
+    }
+    return true;
+  });
+
+  // Closest match wins per mention: greedily keep the highest-scoring match and
+  // skip any weaker match that overlaps message tokens already claimed. This
+  // yields one exercise per mentioned concept (Deadlift, not Romanian Deadlift).
+  const ordered = [...gated].sort((left, right) => right.score - left.score);
+  const kept: ExerciseNameMatch[] = [];
+  const claimedIndices = new Set<number>();
+
+  for (const match of ordered) {
+    const overlaps = [...match.coveredIndices].some((index) =>
+      claimedIndices.has(index),
+    );
+    if (overlaps) {
+      continue;
+    }
+    kept.push(match);
+    for (const index of match.coveredIndices) {
+      claimedIndices.add(index);
+    }
+  }
+
+  return kept.map((match) => match.exercise);
 }
 
 export function resolveExerciseFromMessage(
   message: string,
   exercises: ExerciseDefinition[],
 ): ExerciseDefinition | null {
-  const normalizedMessage = normalizeText(message);
-  let bestMatch: { exercise: ExerciseDefinition; score: number } | null = null;
-
-  for (const exercise of exercises) {
-    let score = 0;
-
-    for (const alias of getExerciseAliases(exercise)) {
-      score = Math.max(score, aliasScore(normalizedMessage, alias));
-    }
-
-    if (score === 0) {
-      continue;
-    }
-
-    if (!bestMatch || score > bestMatch.score) {
-      bestMatch = { exercise, score };
-    }
-  }
-
-  return bestMatch?.exercise ?? null;
+  return resolveExercisesFromMessage(message, exercises)[0] ?? null;
 }
 
 export function resolveCombinationFromMessage(
@@ -277,10 +482,21 @@ function getRelevantEntries(
     return workout.exercises;
   }
 
+  // Exercise ids are canonical (Firestore doc ids). Match entries by exact id,
+  // with a normalized-equality fallback for legacy id formatting differences.
   const exerciseIdSet = new Set(subject.exerciseIds);
-  return workout.exercises.filter((entry) =>
-    exerciseIdSet.has(entry.exerciseId),
+  const normalizedIdSet = new Set(
+    subject.exerciseIds.map((exerciseId) => normalizeText(exerciseId)),
   );
+
+  return workout.exercises.filter((entry) => {
+    if (exerciseIdSet.has(entry.exerciseId)) {
+      return true;
+    }
+
+    const entryKey = normalizeText(entry.exerciseId);
+    return entryKey.length > 0 && normalizedIdSet.has(entryKey);
+  });
 }
 
 function getTopWeight(entries: WorkoutExerciseEntry[]): number {

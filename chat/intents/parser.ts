@@ -3,22 +3,107 @@ import type { DeterministicIntent } from "./types";
 export function parseDeterministicIntent(message: string): DeterministicIntent {
   const text = message.toLowerCase();
 
+  const isBareExerciseFollowUp =
+    /^(?:what\s+is\s+my\s+)?(?:barbell\s+)?(?:squat|bench(?:\s+press)?|deadlift)\??$/.test(
+      text,
+    ) || /^(?:barbell\s+)?(?:squat|bench(?:\s+press)?|deadlift)\??$/.test(text);
+
+  if (isBareExerciseFollowUp) {
+    return "workout_best_performance";
+  }
+
+  const hasBodyweightStrengthQuestion =
+    /\b(body weight|bodyweight|bw|relative strength|good enough|good for my weight|good for my body weight|are they good|are they strong enough|are they good enough)\b/.test(
+      text,
+    ) ||
+    /\b(good enough|enough for my body weight|relative strength|are they good|are they strong enough|are they good enough)\b/.test(
+      text,
+    ) ||
+    /\b(strong enough for my size|good for my size|for my size|for my mass|relative to my mass|for my body mass)\b/.test(
+      text,
+    );
+
+  const hasPRQuestionLanguage =
+    /\b(pr|personal record|personal best|best|heaviest|highest|max|strongest|stronger)\b/.test(
+      text,
+    ) ||
+    /\b(top\s+\d+\s+lifts|top\s+three\s+lifts|top\s+five\s+lifts|top\s+three\s+exercises|top\s+three\s+weights|top\s+three\s+lifts\s+by\s+weight|top\s+three\s+by\s+weight|heaviest\s+lift|heaviest\s+lifts)\b/.test(
+      text,
+    ) ||
+    /\b(heaviest\s+bench|heaviest\s+squat|heaviest\s+deadlift|bench,?\s*squat,?\s*and\s*deadlift|squat\s+and\s+deadlift|bench\s+and\s+deadlift)\b/.test(
+      text,
+    );
+
+  const hasTopLiftByWeightQuestion =
+    /\b(top\s+(?:\d+|three|five)\s+lifts(?:\s+by\s+weight)?|top\s+(?:\d+|three|five)\s+by\s+weight|heaviest\s+lift|heaviest\s+lifts)\b/.test(
+      text,
+    ) && /\b(lift|lifts|exercise|exercises|weight)\b/.test(text);
+
+  if (hasBodyweightStrengthQuestion || hasTopLiftByWeightQuestion) {
+    return "workout_best_performance";
+  }
+
+  const hasExerciseFollowUpQuestion =
+    /\bwhat\s+about\b.*\b(?:barbell\s+)?(?:squat|bench(?:\s+press)?|deadlift)s?\??\b/.test(
+      text,
+    ) ||
+    /\b(?:barbell\s+)?(?:squat|bench(?:\s+press)?|deadlift)s?\??\b/.test(text);
+
+  if (hasExerciseFollowUpQuestion) {
+    return "workout_best_performance";
+  }
+
   const hasWorkoutIntent =
-    /\b(workout|exercise|exercises|combination|combinations|deadlift|bench|bench press|squat|push|pull|legs|chest|back|shoulders|arms|sets|reps|volume|effort|target)\b/.test(
+    /\b(workout|exercise|exercises|combination|combinations|deadlift|bench|bench press|squat|push|pull|legs|chest|back|shoulders|arms|sets|reps|volume|effort|target|lift|lifts)\b/.test(
       text,
     );
 
   if (hasWorkoutIntent) {
-    if (
-      /\b(target|close|progress toward|how close)\b/.test(text) &&
-      /\b(weight|target|bench|deadlift|squat|press|exercise)\b/.test(text)
-    ) {
+    const hasTargetProgressLanguage =
+      /\b(target|targets|close|closest|closer|far|farther|farthest|furthest|distance|progress toward|how close|completion|completed)\b/.test(
+        text,
+      ) &&
+      /\b(weight|target|targets|bench|deadlift|squat|press|exercise|exercises)\b/.test(
+        text,
+      );
+    const hasAllExerciseLeaderboardLanguage =
+      /\b(all|every)\b/.test(text) &&
+      /\b(exercise|exercises)\b/.test(text) &&
+      /\b(top|highest|lowest|bottom|completion|target)\b/.test(text);
+
+    if (hasTargetProgressLanguage || hasAllExerciseLeaderboardLanguage) {
       return "workout_target_progress";
     }
 
     if (
-      /\b(best|heaviest|highest|pr|personal record|max)\b/.test(text) &&
-      /\b(deadlift|bench|press|squat|exercise|workout)\b/.test(text)
+      (hasPRQuestionLanguage || hasBodyweightStrengthQuestion) &&
+      (/\b(deadlift|bench|press|squat|exercise|workout|lift|lifts|pr|personal record)\b/.test(
+        text,
+      ) ||
+        hasBodyweightStrengthQuestion)
+    ) {
+      return "workout_best_performance";
+    }
+
+    if (
+      /\b(top\b|highest\b|best\b|strongest\b|heaviest\b)\b/.test(text) &&
+      /\b(lift|lifts|exercise|exercises|weight)\b/.test(text)
+    ) {
+      return "workout_best_performance";
+    }
+
+    if (
+      /\b(what\s+about|what\s+is\s+my|what\s+are\s+my|check\s+my|how\s+about|tell\s+me\s+about)\b/.test(
+        text,
+      ) &&
+      /\b(squat|barbell\s+squat|barbell\s+squats)\b/.test(text)
+    ) {
+      return "workout_best_performance";
+    }
+
+    if (
+      /\b(squat|barbell\s+squat|barbell\s+squats)\b/.test(text) &&
+      /\b(pr|best|heaviest|top|highest|what\s+about|check|my)\b/.test(text)
     ) {
       return "workout_best_performance";
     }
