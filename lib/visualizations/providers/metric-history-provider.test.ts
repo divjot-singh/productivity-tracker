@@ -29,15 +29,123 @@ describe("metricHistoryProvider weekly aggregation", () => {
     ] as any;
 
     const entries = [
-      { date: "2026-08-17", breakdown: [{ metricId: "g-weight-training", value: true, score: 1, weight: 1, bonus: 0, xp: 0 }] },
-      { date: "2026-08-18", breakdown: [{ metricId: "g-weight-training", value: true, score: 1, weight: 1, bonus: 0, xp: 0 }] },
-      { date: "2026-08-19", breakdown: [{ metricId: "g-weight-training", value: true, score: 1, weight: 1, bonus: 0, xp: 0 }] },
-      { date: "2026-08-20", breakdown: [{ metricId: "g-weight-training", value: false, score: 0, weight: 1, bonus: 0, xp: 0 }] },
-      { date: "2026-08-21", breakdown: [{ metricId: "g-weight-training", value: true, score: 1, weight: 1, bonus: 0, xp: 0 }] },
-      { date: "2026-08-22", breakdown: [{ metricId: "g-weight-training", value: true, score: 1, weight: 1, bonus: 0, xp: 0 }] },
-      { date: "2026-08-23", breakdown: [{ metricId: "g-weight-training", value: false, score: 0, weight: 1, bonus: 0, xp: 0 }] },
-      { date: "2026-08-24", breakdown: [{ metricId: "g-weight-training", value: true, score: 1, weight: 1, bonus: 0, xp: 0 }] },
-      { date: "2026-08-25", breakdown: [{ metricId: "g-weight-training", value: true, score: 1, weight: 1, bonus: 0, xp: 0 }] },
+      {
+        date: "2026-08-17",
+        breakdown: [
+          {
+            metricId: "g-weight-training",
+            value: true,
+            score: 1,
+            weight: 1,
+            bonus: 0,
+            xp: 0,
+          },
+        ],
+      },
+      {
+        date: "2026-08-18",
+        breakdown: [
+          {
+            metricId: "g-weight-training",
+            value: true,
+            score: 1,
+            weight: 1,
+            bonus: 0,
+            xp: 0,
+          },
+        ],
+      },
+      {
+        date: "2026-08-19",
+        breakdown: [
+          {
+            metricId: "g-weight-training",
+            value: true,
+            score: 1,
+            weight: 1,
+            bonus: 0,
+            xp: 0,
+          },
+        ],
+      },
+      {
+        date: "2026-08-20",
+        breakdown: [
+          {
+            metricId: "g-weight-training",
+            value: false,
+            score: 0,
+            weight: 1,
+            bonus: 0,
+            xp: 0,
+          },
+        ],
+      },
+      {
+        date: "2026-08-21",
+        breakdown: [
+          {
+            metricId: "g-weight-training",
+            value: true,
+            score: 1,
+            weight: 1,
+            bonus: 0,
+            xp: 0,
+          },
+        ],
+      },
+      {
+        date: "2026-08-22",
+        breakdown: [
+          {
+            metricId: "g-weight-training",
+            value: true,
+            score: 1,
+            weight: 1,
+            bonus: 0,
+            xp: 0,
+          },
+        ],
+      },
+      {
+        date: "2026-08-23",
+        breakdown: [
+          {
+            metricId: "g-weight-training",
+            value: false,
+            score: 0,
+            weight: 1,
+            bonus: 0,
+            xp: 0,
+          },
+        ],
+      },
+      {
+        date: "2026-08-24",
+        breakdown: [
+          {
+            metricId: "g-weight-training",
+            value: true,
+            score: 1,
+            weight: 1,
+            bonus: 0,
+            xp: 0,
+          },
+        ],
+      },
+      {
+        date: "2026-08-25",
+        breakdown: [
+          {
+            metricId: "g-weight-training",
+            value: true,
+            score: 1,
+            weight: 1,
+            bonus: 0,
+            xp: 0,
+          },
+        ],
+      },
     ] as any;
 
     const data = await metricHistoryProvider.getData({

@@ -144,9 +144,7 @@ function aggregateWeeklyMetricHistory(
             ? Number((bucket.numericSum / bucket.count).toFixed(2))
             : 0,
       score: Number((bucket.scoreSum / Math.max(1, bucket.count)).toFixed(2)),
-      weight: Number(
-        (bucket.weightSum / Math.max(1, bucket.count)).toFixed(2),
-      ),
+      weight: Number((bucket.weightSum / Math.max(1, bucket.count)).toFixed(2)),
       bonus: Number((bucket.bonusSum / Math.max(1, bucket.count)).toFixed(2)),
       xp: Number((bucket.xpSum / Math.max(1, bucket.count)).toFixed(2)),
     }));

@@ -62,7 +62,6 @@ export function createDeterministicResolverRegistry(
     workout_history: createWorkoutHistoryResolver(),
     workout_target_progress: createWorkoutTargetProgressResolver(),
     workout_remaining_exercises: createWorkoutRemainingExercisesResolver(),
-    goal_weight_training_cycles:
-      createWorkoutWeightTrainingCyclesResolver(),
+    goal_weight_training_cycles: createWorkoutWeightTrainingCyclesResolver(),
   };
 }

@@ -60,7 +60,10 @@ export const createWorkoutWeightTrainingCyclesResolver =
 
       const metricIds = resolveWeightTrainingMetricIds(goal.id);
       const entriesInRange = context.entries
-        .filter((entry) => entry.date >= context.dateFrom && entry.date <= context.dateTo)
+        .filter(
+          (entry) =>
+            entry.date >= context.dateFrom && entry.date <= context.dateTo,
+        )
         .sort((left, right) => left.date.localeCompare(right.date));
 
       if (entriesInRange.length === 0) {
@@ -121,7 +124,10 @@ export const createWorkoutWeightTrainingCyclesResolver =
         : ["| 1 | n/a | n/a | 0 | No |"];
 
       const evidence = context.entries
-        .filter((entry) => entry.date >= context.dateFrom && entry.date <= context.dateTo)
+        .filter(
+          (entry) =>
+            entry.date >= context.dateFrom && entry.date <= context.dateTo,
+        )
         .slice(0, 20)
         .map((entry) => ({
           id: entry.id || entry.date,
