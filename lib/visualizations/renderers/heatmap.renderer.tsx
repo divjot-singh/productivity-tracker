@@ -22,6 +22,10 @@ export default function HeatmapRenderer({
     () => resolveValueRange(populatedCells),
     [populatedCells],
   );
+  const isBinaryHeatmap = useMemo(
+    () => isBinaryValueHeatmap(populatedCells),
+    [populatedCells],
+  );
   const [selectedDate, setSelectedDate] = useState(
     populatedCells.at(-1)?.date ?? null,
   );
@@ -63,7 +67,11 @@ export default function HeatmapRenderer({
                     aria-label={
                       cell.label === "No data"
                         ? "No data"
-                        : `${cell.label}: ${cell.value}`
+                        : `${cell.label}: ${
+                            isBinaryHeatmap
+                              ? formatBinaryValue(cell.value)
+                              : cell.value
+                          }`
                     }
                     onClick={() => {
                       if (cell.label !== "No data") {
@@ -94,20 +102,28 @@ export default function HeatmapRenderer({
         <div className="bg-background/40 mt-4 flex items-center justify-between gap-4 rounded-2xl border border-white/8 px-3 py-3">
           <div>
             <p className="text-sm font-medium">{selectedCell.label}</p>
-            <p className="text-muted-foreground text-xs">Daily life score</p>
+            <p className="text-muted-foreground text-xs">
+              {isBinaryHeatmap ? "Daily status" : "Daily life score"}
+            </p>
           </div>
 
           <div className="text-right">
-            <p className="text-lg font-semibold">{selectedCell.value}</p>
+            <p className="text-lg font-semibold">
+              {isBinaryHeatmap
+                ? formatBinaryValue(selectedCell.value)
+                : selectedCell.value}
+            </p>
             <p className="text-muted-foreground text-[11px]">
-              {resolveIntensityLabel(selectedCell.intensity)} intensity
+              {isBinaryHeatmap
+                ? "Binary completion"
+                : `${resolveIntensityLabel(selectedCell.intensity)} intensity`}
             </p>
           </div>
         </div>
       ) : null}
 
       <div className="text-muted-foreground mt-4 flex items-center justify-between gap-3 text-xs">
-        <span>{valueRange.min.toFixed(1)}</span>
+        <span>{isBinaryHeatmap ? "No" : valueRange.min.toFixed(1)}</span>
         <div className="flex items-center gap-1.5">
           {[0.15, 0.35, 0.55, 0.75, 1].map((intensity) => (
             <span
@@ -117,14 +133,28 @@ export default function HeatmapRenderer({
             />
           ))}
         </div>
-        <span>{valueRange.max.toFixed(1)}</span>
+        <span>{isBinaryHeatmap ? "Yes" : valueRange.max.toFixed(1)}</span>
       </div>
 
       <p className="text-muted-foreground mt-3 text-xs">
-        Tap a day to inspect the score and relative intensity.
+        {isBinaryHeatmap
+          ? "Tap a day to inspect completion status."
+          : "Tap a day to inspect the score and relative intensity."}
       </p>
     </VisualizationCard>
   );
+}
+
+function isBinaryValueHeatmap(cells: HeatmapData["cells"]) {
+  if (cells.length === 0) {
+    return false;
+  }
+
+  return cells.every((cell) => cell.value === 0 || cell.value === 1);
+}
+
+function formatBinaryValue(value: number) {
+  return value >= 1 ? "Yes" : "No";
 }
 
 function buildColumns(cells: HeatmapData["cells"]) {

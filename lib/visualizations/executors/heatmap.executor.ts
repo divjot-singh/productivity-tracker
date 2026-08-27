@@ -4,24 +4,36 @@ import { VisualizationExecutor } from "./executor-types";
 
 export const heatmapExecutor: VisualizationExecutor = {
   execute(visualization, data) {
-    const providerData = data as StatProviderData;
-    const values = providerData.values.map((item) => item.value);
+    const providerData = data as {
+      values: Array<{ date: string; value: number | boolean | string }>;
+      valueKind?: "number" | "boolean" | "time";
+    };
+    const values = providerData.values.map((item) =>
+      normalizeMetricValue(item.value, providerData.valueKind),
+    );
     const maxValue = Math.max(1, ...values);
     const normalizedBounds = resolveNormalizationBounds(values);
 
     const heatmapData: HeatmapData = {
-      cells: providerData.values.map((item) => ({
-        date: item.date,
-        label: formatDate(item.date),
-        value: Number(item.value.toFixed(1)),
-        intensity: Number(
-          normalizeValue(
-            item.value,
-            normalizedBounds.min,
-            normalizedBounds.max,
-          ).toFixed(2),
-        ),
-      })),
+      cells: providerData.values.map((item) => {
+        const numericValue = normalizeMetricValue(
+          item.value,
+          providerData.valueKind,
+        );
+
+        return {
+          date: item.date,
+          label: formatDate(item.date),
+          value: Number(numericValue.toFixed(1)),
+          intensity: Number(
+            normalizeValue(
+              numericValue,
+              normalizedBounds.min,
+              normalizedBounds.max,
+            ).toFixed(2),
+          ),
+        };
+      }),
       maxValue,
     };
 
@@ -88,4 +100,27 @@ function normalizeValue(value: number, min: number, max: number) {
 
   const normalized = (value - min) / (max - min);
   return Math.max(0.08, Math.min(1, normalized));
+}
+
+function normalizeMetricValue(
+  value: number | boolean | string,
+  valueKind?: "number" | "boolean" | "time",
+) {
+  if (typeof value === "number") {
+    return value;
+  }
+
+  if (typeof value === "boolean") {
+    return value ? 1 : 0;
+  }
+
+  if (valueKind === "time") {
+    const timeMatch = /^(\d{1,2}):(\d{2})$/.exec(value);
+    if (timeMatch) {
+      return Number(timeMatch[1]) * 60 + Number(timeMatch[2]);
+    }
+  }
+
+  const numericValue = Number(value);
+  return Number.isFinite(numericValue) ? numericValue : 0;
 }
