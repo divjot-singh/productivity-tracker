@@ -66,7 +66,7 @@ export const VISUALIZATION_COMBINATIONS: Partial<
     trend: {
       widgets: ["line-chart", "bar-chart", "area-chart"],
       keys: "*",
-      aggregations: ["daily"],
+      aggregations: ["daily", "weekly"],
       options: {},
     },
     streak: {
@@ -156,7 +156,7 @@ export const VISUALIZATION_COMBINATIONS: Partial<
     heatmap: {
       widgets: ["heatmap"],
       keys: "*",
-      aggregations: ["daily"],
+      aggregations: ["daily", "weekly"],
       options: {},
     },
     timeline: {

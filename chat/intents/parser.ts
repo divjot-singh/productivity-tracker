@@ -43,6 +43,15 @@ export function parseDeterministicIntent(message: string): DeterministicIntent {
     return "workout_best_performance";
   }
 
+  const hasWeightTrainingCycleQuestion =
+    /\b(weight\s+training)\b/.test(text) &&
+    /\b(cycle|cycles)\b/.test(text) &&
+    /\b(how\s+many|count|number\s+of)\b/.test(text);
+
+  if (hasWeightTrainingCycleQuestion) {
+    return "goal_weight_training_cycles";
+  }
+
   const hasExerciseFollowUpQuestion =
     /\bwhat\s+about\b.*\b(?:barbell\s+)?(?:squat|bench(?:\s+press)?|deadlift)s?\??\b/.test(
       text,

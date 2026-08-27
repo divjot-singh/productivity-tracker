@@ -212,6 +212,24 @@ export class Fetcher {
       }
     }
 
+    // "till X" / "until X" / "up to X" — parse end date and use default
+    // rolling window as the start boundary.
+    const untilMatch = text.match(
+      /\b(?:till|until|up\s+to|upto|through|thru|by)\s+(.+?)(?:\s*[?.,]|$)/,
+    );
+    if (untilMatch) {
+      const parsed = this.parseNaturalDate(untilMatch[1].trim(), now);
+      if (parsed) {
+        const effectiveTo = parsed <= now ? parsed : now;
+        return {
+          dateFrom: this.toYyyyMmDd(
+            this.subtractDays(effectiveTo, DEFAULT_WINDOW_DAYS - 1),
+          ),
+          dateTo: this.toYyyyMmDd(effectiveTo),
+        };
+      }
+    }
+
     if (/\btoday\b/.test(text)) {
       // If both "today" and "yesterday" appear, return 2-day range
       if (/\byesterday\b/.test(text)) {
@@ -425,6 +443,15 @@ export class Fetcher {
   private inferDomainsFromMessage(message: string): ChatDomainType[] {
     const text = message.toLowerCase();
     const inferred = new Set<ChatDomainType>();
+
+    const hasWeightTrainingCycleQuestion =
+      /\b(weight\s+training)\b/.test(text) &&
+      /\b(cycle|cycles)\b/.test(text) &&
+      /\b(how\s+many|count|number\s+of)\b/.test(text);
+
+    if (hasWeightTrainingCycleQuestion) {
+      return ["entries", "goals", "visualizations"];
+    }
 
     if (
       this.keywords.goalKeywords.some((keyword) =>

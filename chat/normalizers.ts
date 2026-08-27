@@ -549,7 +549,9 @@ export class Normalizer {
 
     const text = [
       `${combination.name} — workout combination`,
-      combination.description ? `Description: ${combination.description}` : null,
+      combination.description
+        ? `Description: ${combination.description}`
+        : null,
       `Exercises: ${exerciseNames}`,
       `Sessions recorded: ${sessions.length}`,
       latest ? `Last performed: ${latest}` : "Not performed yet.",

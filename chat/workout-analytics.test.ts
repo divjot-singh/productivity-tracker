@@ -129,6 +129,15 @@ describe("workout exercise resolver", () => {
     );
   });
 
+  it("routes weekly weight-training cycle questions to the cycle resolver", () => {
+    assert.equal(
+      parseDeterministicIntent(
+        "If we consider Monday-Sunday as a full week, how many cycles of weight training have I done till 23rd august",
+      ),
+      "goal_weight_training_cycles",
+    );
+  });
+
   it("computes session metrics by exact exercise id", () => {
     const workout = {
       id: "today-squat",
