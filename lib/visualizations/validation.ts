@@ -69,6 +69,12 @@ export const VISUALIZATION_COMBINATIONS: Partial<
       aggregations: ["daily", "weekly"],
       options: {},
     },
+    heatmap: {
+      widgets: ["heatmap"],
+      keys: "*",
+      aggregations: ["daily", "weekly"],
+      options: {},
+    },
     streak: {
       widgets: ["stat-card"],
       keys: "*",
