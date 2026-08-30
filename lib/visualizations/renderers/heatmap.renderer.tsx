@@ -8,7 +8,7 @@ import { HeatmapData } from "../types";
 import { VisualizationRendererProps } from "./renderer-types";
 import { VisualizationCard } from "./rendering-utils";
 
-const weekdayLabels = ["S", "M", "T", "W", "T", "F", "S"];
+const weekdayLabels = ["M", "T", "W", "T", "F", "S", "S"];
 
 export default function HeatmapRenderer({
   visualization,
@@ -170,7 +170,7 @@ function buildColumns(cells: HeatmapData["cells"]) {
 
   ordered.forEach((cell) => {
     const date = new Date(cell.date);
-    const dayOfWeek = date.getDay();
+    const dayOfWeek = (date.getDay() + 6) % 7;
     const weekStart = startOfWeek(date);
     const weekKey = weekStart.toISOString().slice(0, 10);
 
@@ -201,8 +201,14 @@ function buildColumns(cells: HeatmapData["cells"]) {
 
 function startOfWeek(date: Date) {
   const normalized = new Date(date);
+
   normalized.setHours(0, 0, 0, 0);
-  normalized.setDate(normalized.getDate() - normalized.getDay());
+
+  const day = normalized.getDay();
+  const diff = day === 0 ? -6 : 1 - day;
+
+  normalized.setDate(normalized.getDate() + diff);
+
   return normalized;
 }
 
