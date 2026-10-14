@@ -1,4 +1,5 @@
 import { adminDb } from "@/lib/firebase-admin";
+import { removeUndefinedDeep } from "@/lib/firestore/sanitize";
 import { mapEntry } from "@/lib/mappers/entry.mapper";
 
 import { DailyEntry } from "@/models/entry";
@@ -13,6 +14,10 @@ interface CreateEntryPayload {
   xp: number;
 
   breakdown: unknown[];
+
+  maxScore?: number;
+
+  scorePercent?: number;
 }
 
 function getEntryRef(uid: string, date: string) {
@@ -23,13 +28,13 @@ export async function createEntry(uid: string, entry: CreateEntryPayload) {
   const ref = getEntryRef(uid, entry.date);
 
   await ref.set(
-    {
+    removeUndefinedDeep({
       ...entry,
 
       createdAt: new Date(),
 
       updatedAt: new Date(),
-    },
+    }),
     {
       merge: true,
     },

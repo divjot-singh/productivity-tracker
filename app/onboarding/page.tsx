@@ -43,7 +43,7 @@ export default function OnboardingPage() {
 
         const goals = await apiRequest<MetricDefinition[]>(
           currentUser,
-          "/api/goals",
+          "/api/goals?status=all",
         );
 
         if (goals.length > 0) {

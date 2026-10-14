@@ -3,6 +3,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerUser } from "@/lib/server-auth";
 
 import { calculateScore } from "@/lib/scoring/scoring-engine";
+import { computeScorePercent } from "@/lib/mappers/entry.mapper";
+import { resolveGoalsForDate } from "@/lib/mappers/goal.mapper";
 
 import {
   createEntry,
@@ -46,7 +48,7 @@ export async function POST(request: NextRequest) {
 
     const config = await getGoals(user.uid);
 
-    const metrics = config;
+    const metrics = resolveGoalsForDate(config, date);
 
     if (!metrics?.length) {
       return NextResponse.json(
@@ -73,6 +75,10 @@ export async function POST(request: NextRequest) {
       xp: result.totalXP,
 
       breakdown: result.metrics,
+
+      maxScore: result.totalWeights,
+
+      scorePercent: computeScorePercent(result.totalScore, result.totalWeights),
     });
 
     return NextResponse.json({
@@ -81,6 +87,10 @@ export async function POST(request: NextRequest) {
       score: result.totalScore,
 
       xp: result.totalXP,
+
+      maxScore: result.totalWeights,
+
+      scorePercent: computeScorePercent(result.totalScore, result.totalWeights),
     });
   } catch (error) {
     console.error("Create entry failed", error);

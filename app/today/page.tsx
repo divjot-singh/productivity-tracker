@@ -13,6 +13,7 @@ import { useRequireAuth } from "@/lib/hooks/useRequireAuth";
 
 import { MetricDefinition, MetricValue } from "@/models/metric";
 
+import { resolveGoalsForDate } from "@/lib/mappers/goal.mapper";
 import { calculateScore } from "@/lib/scoring/scoring-engine";
 import { apiRequest } from "@/lib/api/client";
 import TodayStatusBar from "@/components/today/TodayStatusBar";
@@ -49,7 +50,7 @@ interface ExistingEntry {
 export default function TodayPage() {
   const { user } = useRequireAuth();
 
-  const [metrics, setMetrics] = useState<MetricDefinition[]>([]);
+  const [allGoals, setAllGoals] = useState<MetricDefinition[]>([]);
 
   const [values, setValues] = useState<EntryValues>({});
 
@@ -74,6 +75,11 @@ export default function TodayPage() {
 
   const selectedDateRef = useRef(selectedDate);
   const requestIdRef = useRef(0);
+
+  const metrics = useMemo(
+    () => resolveGoalsForDate(allGoals, selectedDate),
+    [allGoals, selectedDate],
+  );
 
   useEffect(() => {
     selectedDateRef.current = selectedDate;
@@ -181,9 +187,12 @@ export default function TodayPage() {
         setLoading(true);
         setError(null);
 
-        const goals = await apiRequest<MetricDefinition[]>(user, "/api/goals");
+        const goals = await apiRequest<MetricDefinition[]>(
+          user,
+          "/api/goals?status=all",
+        );
 
-        setMetrics(goals);
+        setAllGoals(goals);
       } catch (err) {
         console.error(err);
         setError("Unable to load today's configuration.");

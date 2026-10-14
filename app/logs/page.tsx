@@ -43,7 +43,7 @@ export default function LogsPage() {
       try {
         const [entriesResponse, goalsResponse] = await Promise.all([
           apiRequest<DailyEntry[]>(user, "/api/entries"),
-          apiRequest<MetricDefinition[]>(user, "/api/goals"),
+          apiRequest<MetricDefinition[]>(user, "/api/goals?status=all"),
         ]);
 
         setEntries(entriesResponse);
@@ -140,7 +140,10 @@ export default function LogsPage() {
               >,
             );
 
-            const percentage = ((entry.score ?? 0) / totalWeights) * 100;
+            const maxScore = entry.maxScore ?? totalWeights;
+            const percentage =
+              entry.scorePercent ??
+              (maxScore > 0 ? ((entry.score ?? 0) / maxScore) * 100 : 0);
             const progressClass =
               percentage >= 100
                 ? "bg-gradient-to-r from-emerald-400 to-green-500"
@@ -206,7 +209,10 @@ export default function LogsPage() {
                       </span>
 
                       <span className="text-muted-foreground mb-1 text-lg">
-                        / {totalWeights}
+                        / {maxScore}
+                        <span className="ml-2 text-sm">
+                          ({percentage.toFixed(1)}%)
+                        </span>
                       </span>
 
                       {(entry.xp ?? 0) > 0 && (
@@ -233,7 +239,14 @@ export default function LogsPage() {
                               className="bg-background flex items-center justify-between rounded-2xl border px-4 py-3"
                             >
                               <div>
-                                <p className="font-medium">{goal.label}</p>
+                                <p className="font-medium">
+                                  {goal.label}
+                                  {goal.status === "archived" && (
+                                    <span className="bg-muted text-muted-foreground ml-2 rounded-full px-2 py-0.5 text-xs font-normal">
+                                      Removed
+                                    </span>
+                                  )}
+                                </p>
 
                                 <p className="text-muted-foreground text-sm">
                                   {formatValue(item.value)}

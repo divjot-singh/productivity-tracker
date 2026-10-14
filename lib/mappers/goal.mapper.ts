@@ -29,3 +29,24 @@ export function isGoalLiveOn(
 
   return !goal.archivedAt || date <= goal.archivedAt;
 }
+
+// Goals that scored on `date`; archived goals use their pre-archive weight for days they were still live.
+export function resolveGoalsForDate(
+  goals: MetricDefinition[],
+  date: string,
+): MetricDefinition[] {
+  return goals.flatMap((goal) => {
+    if (goal.status !== "archived") return [goal];
+
+    if (!isGoalLiveOn(goal, date)) return [];
+
+    return [{ ...goal, weight: goal.previousWeight ?? goal.weight }];
+  });
+}
+
+export const LIFECYCLE_FIELDS = [
+  "status",
+  "archivedAt",
+  "previousWeight",
+  "schemaVersion",
+] as const;

@@ -1,7 +1,7 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import { mapEntry } from "./entry.mapper.ts";
-import { mapGoal, isGoalLiveOn } from "./goal.mapper.ts";
+import { mapGoal, isGoalLiveOn, resolveGoalsForDate } from "./goal.mapper.ts";
 import { mapExercise } from "./exercise.mapper.ts";
 import { toMillis } from "./timestamps.ts";
 
@@ -64,6 +64,29 @@ describe("mapGoal", () => {
 
     assert.equal(isGoalLiveOn(goal, "2026-03-10"), true);
     assert.equal(isGoalLiveOn(goal, "2026-03-11"), false);
+  });
+});
+
+describe("resolveGoalsForDate", () => {
+  const active = mapGoal({ label: "A", weight: 10 }, "a");
+  const tracker = mapGoal({ label: "Weight", weight: 0 }, "w");
+  const archived = mapGoal(
+    { label: "Old", weight: 0, status: "archived", archivedAt: "2026-03-10", previousWeight: 5 },
+    "o",
+  );
+  const goals = [active, tracker, archived];
+
+  it("scores an archived goal at its previous weight on or before archivedAt", () => {
+    const resolved = resolveGoalsForDate(goals, "2026-03-10");
+
+    assert.equal(resolved.length, 3);
+    assert.equal(resolved.find((g) => g.id === "o")?.weight, 5);
+  });
+
+  it("drops archived goals after archivedAt but keeps zero-weight active goals", () => {
+    const resolved = resolveGoalsForDate(goals, "2026-03-11");
+
+    assert.deepEqual(resolved.map((g) => g.id), ["a", "w"]);
   });
 });
 

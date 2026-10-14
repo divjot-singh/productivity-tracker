@@ -109,7 +109,7 @@ export default function VisualizationDetailPage() {
         setExercisesLoading(true);
         setCombinationsLoading(true);
         const [goalData, exerciseData, combinationData] = await Promise.all([
-          apiRequest<MetricDefinition[]>(user, "/api/goals"),
+          apiRequest<MetricDefinition[]>(user, "/api/goals?status=all"),
           apiRequest<ExerciseDefinition[]>(
             user,
             "/api/exercises?includeInactive=true",

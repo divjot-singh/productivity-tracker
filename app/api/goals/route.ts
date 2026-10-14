@@ -16,7 +16,17 @@ export async function GET(request: NextRequest) {
 
     const goals = await getGoals(user.uid);
 
-    return NextResponse.json(goals);
+    const status =
+      new URL(request.url).searchParams.get("status") ?? "active";
+
+    return NextResponse.json(
+      status === "all"
+        ? goals
+        : goals.filter(
+            (goal) =>
+              goal.status === (status === "archived" ? "archived" : "active"),
+          ),
+    );
   } catch (error) {
     console.error(error);
 

@@ -9,10 +9,12 @@ import { ICONS } from "@/lib/metric-icons";
 
 import { MetricDefinition } from "@/models/metric";
 import {
+  Archive,
   ChevronDown,
   ChevronLeft,
   type LucideIcon,
   Pencil,
+  RotateCcw,
   Trash2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -56,6 +58,9 @@ export default function GoalDetails() {
   const [isEditing, setIsEditing] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isArchiveDialogOpen, setIsArchiveDialogOpen] = useState(false);
+  const [reactivateWeight, setReactivateWeight] = useState("");
+  const [lifecycleBusy, setLifecycleBusy] = useState(false);
 
   useEffect(() => {
     async function loadGoal() {
@@ -122,6 +127,37 @@ export default function GoalDetails() {
     router.back();
   }
 
+  async function runLifecycle(
+    body: Record<string, unknown>,
+    successMessage: string,
+  ) {
+    if (!user) {
+      return;
+    }
+
+    try {
+      setLifecycleBusy(true);
+
+      await apiRequest(user, `/api/goals/${id}`, { method: "PATCH", body });
+
+      const reloaded = await apiRequest<MetricDefinition>(
+        user,
+        `/api/goals/${id}`,
+      );
+
+      setOriginalGoal(reloaded);
+      setGoal(reloaded);
+      setReactivateWeight("");
+      setIsArchiveDialogOpen(false);
+      toast.success(successMessage);
+    } catch (err) {
+      console.error(err);
+      toast.error(err instanceof Error ? err.message : "Update failed");
+    } finally {
+      setLifecycleBusy(false);
+    }
+  }
+
   async function handleDelete() {
     if (!user || !goal) {
       return;
@@ -168,7 +204,7 @@ export default function GoalDetails() {
           Back
         </button>
 
-        {!isEditing && (
+        {!isEditing && goal.status !== "archived" && (
           <Button
             variant="outline"
             size="sm"
@@ -377,6 +413,70 @@ export default function GoalDetails() {
       </div>
 
       {!isEditing && (
+        <div className="bg-card mb-6 rounded-3xl border p-6">
+          <h2 className="mb-4 text-lg font-semibold">
+            {goal.status === "archived" ? "Archived goal" : "Archive"}
+          </h2>
+
+          {goal.status === "archived" ? (
+            <div className="space-y-4">
+              <p className="text-muted-foreground text-sm">
+                Archived after {goal.archivedAt ?? "an earlier date"}. History is
+                kept and shown as removed. Enter a weight to start scoring it
+                again.
+              </p>
+
+              <div className="flex items-end gap-3">
+                <div className="flex-1 space-y-2">
+                  <Label>Weight</Label>
+
+                  <Input
+                    type="number"
+                    min={0}
+                    value={reactivateWeight}
+                    placeholder={
+                      goal.previousWeight !== undefined
+                        ? `Previously ${goal.previousWeight}`
+                        : "Weight"
+                    }
+                    onChange={(e) => setReactivateWeight(e.target.value)}
+                  />
+                </div>
+
+                <Button
+                  disabled={lifecycleBusy || reactivateWeight.trim() === ""}
+                  onClick={() =>
+                    runLifecycle(
+                      { action: "reactivate", weight: Number(reactivateWeight) },
+                      "Goal reactivated",
+                    )
+                  }
+                >
+                  <RotateCcw className="mr-1.5 h-4 w-4" />
+                  Reactivate
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <p className="text-muted-foreground text-sm">
+                Stop scoring this goal from today. Past entries keep their
+                scores and the goal is hidden from new entries.
+              </p>
+
+              <Button
+                variant="outline"
+                onClick={() => setIsArchiveDialogOpen(true)}
+              >
+                <Archive className="mr-1.5 h-4 w-4" />
+                Archive goal
+              </Button>
+            </div>
+          )}
+        </div>
+      )}
+
+      {!isEditing && goal.status === "archived" && (
         <div className="bg-card border-destructive/20 rounded-3xl border p-6">
           <h2 className="text-destructive mb-4 text-lg font-semibold">
             Danger Zone
@@ -404,6 +504,36 @@ export default function GoalDetails() {
           </div>
         </div>
       )}
+
+      <Dialog open={isArchiveDialogOpen} onOpenChange={setIsArchiveDialogOpen}>
+        <DialogContent showCloseButton={false}>
+          <DialogHeader>
+            <DialogTitle>Archive goal?</DialogTitle>
+
+            <DialogDescription>
+              This goal stops counting toward your daily maximum score from today.
+              You can reactivate it later with a new weight.
+            </DialogDescription>
+          </DialogHeader>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsArchiveDialogOpen(false)}
+              disabled={lifecycleBusy}
+            >
+              Cancel
+            </Button>
+
+            <Button
+              onClick={() => runLifecycle({ action: "archive" }, "Goal archived")}
+              disabled={lifecycleBusy}
+            >
+              {lifecycleBusy ? "Archiving..." : "Archive"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <DialogContent showCloseButton={false}>

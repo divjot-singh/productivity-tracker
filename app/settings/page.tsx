@@ -31,7 +31,10 @@ export default function SettingsPage() {
       }
 
       try {
-        const goals = await apiRequest<MetricDefinition[]>(user, "/api/goals");
+        const goals = await apiRequest<MetricDefinition[]>(
+          user,
+          "/api/goals?status=all",
+        );
         setMetrics(goals ?? []);
       } catch (e) {
         console.log(e);
@@ -46,7 +49,9 @@ export default function SettingsPage() {
   }, [user]);
 
   const grouped = useMemo(() => {
-    return metrics.reduce(
+    return metrics
+      .filter((metric) => metric.status !== "archived")
+      .reduce(
       (acc, metric) => {
         if (!acc[metric.category]) {
           acc[metric.category] = [];
@@ -59,6 +64,11 @@ export default function SettingsPage() {
       {} as Record<string, MetricDefinition[]>,
     );
   }, [metrics]);
+
+  const archived = useMemo(
+    () => metrics.filter((metric) => metric.status === "archived"),
+    [metrics],
+  );
 
   if (loading) {
     return (
@@ -105,6 +115,10 @@ export default function SettingsPage() {
               metrics={values.sort((a, b) => a.displayOrder - b.displayOrder)}
             />
           ))}
+
+          {archived.length > 0 && (
+            <Section category="archived" metrics={archived} />
+          )}
         </div>
       </div>
     </AppShell>
