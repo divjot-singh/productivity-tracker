@@ -10,6 +10,7 @@ import { buttonVariants } from "@/components/ui/button";
 import { useRequireAuth } from "@/lib/hooks/useRequireAuth";
 import { MetricDefinition } from "@/models/metric";
 import QuickActions from "@/components/settings/QuickActions";
+import InstallPrompt from "@/components/pwa/InstallPrompt";
 import SettingsSubNav from "@/components/settings/SettingsSubNav";
 import { toast } from "sonner";
 import { apiRequest } from "@/lib/api/client";
@@ -51,17 +52,17 @@ export default function SettingsPage() {
     return metrics
       .filter((metric) => metric.status !== "archived")
       .reduce(
-      (acc, metric) => {
-        if (!acc[metric.category]) {
-          acc[metric.category] = [];
-        }
+        (acc, metric) => {
+          if (!acc[metric.category]) {
+            acc[metric.category] = [];
+          }
 
-        acc[metric.category].push(metric);
+          acc[metric.category].push(metric);
 
-        return acc;
-      },
-      {} as Record<string, MetricDefinition[]>,
-    );
+          return acc;
+        },
+        {} as Record<string, MetricDefinition[]>,
+      );
   }, [metrics]);
 
   const archived = useMemo(
@@ -93,6 +94,8 @@ export default function SettingsPage() {
         <SettingsSubNav />
 
         <QuickActions />
+
+        <InstallPrompt />
         <Link
           href="/settings/weight-breakdown"
           className={cn(
