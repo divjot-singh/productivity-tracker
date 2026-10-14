@@ -308,7 +308,7 @@ export default function WorkoutCombinationsPage() {
                   )}
 
                   {usage.get(combination.id) ? (
-                    <p className="text-muted-foreground mt-2 text-[11px]">
+                    <p className="text-warn mt-2 text-[11px]">
                       Last done {usage.get(combination.id)?.last} -{" "}
                       {usage.get(combination.id)?.count} time
                       {usage.get(combination.id)?.count === 1 ? "" : "s"}

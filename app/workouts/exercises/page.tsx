@@ -189,7 +189,7 @@ export default function WorkoutExercisesPage() {
 
                 <div className="flex shrink-0 items-center gap-2">
                   {stats.get(exercise.id)?.prWeight ? (
-                    <span className="text-muted-foreground text-xs">
+                    <span className="text-warn text-xs">
                       PR {stats.get(exercise.id)?.prWeight?.value}{" "}
                       {exercise.weightTracking.unit}
                     </span>

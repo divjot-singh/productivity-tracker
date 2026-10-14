@@ -64,7 +64,18 @@ export default function TodayPage() {
 
   const [error, setError] = useState<string | null>(null);
 
-  const [selectedDate, setSelectedDate] = useState(localDate());
+  const [selectedDate, setSelectedDate] = useState(() => {
+    const requested =
+      typeof window === "undefined"
+        ? null
+        : new URLSearchParams(window.location.search).get("date");
+
+    return requested &&
+      /^\d{4}-\d{2}-\d{2}$/.test(requested) &&
+      requested <= localDate()
+      ? requested
+      : localDate();
+  });
 
   const [entryDates, setEntryDates] = useState<Set<string>>(new Set());
 

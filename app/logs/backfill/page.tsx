@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { format, subDays } from "date-fns";
 
+import ActionBar from "@/components/common/ActionBar";
 import AppShell from "@/components/layout/AppShell";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,6 +20,13 @@ const NATIVE_SELECT_CLASS =
   "border-input bg-background text-foreground focus:ring-primary/40 h-10 w-full appearance-none rounded-[10px] border px-3 text-sm transition outline-none focus:ring-1";
 
 type RowValue = EntryValue | "";
+
+const dayLabel = (date: string) =>
+  new Date(`${date}T00:00:00`).toLocaleDateString("en-GB", {
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+  });
 
 const EMPTY_OPTION_VALUE = "__EMPTY__";
 
@@ -228,9 +236,9 @@ export default function BackfillPage() {
 
   return (
     <AppShell>
-      <div className="mx-auto w-full max-w-screen-sm space-y-6 px-4 pt-4 pb-28">
+      <div className="mx-auto w-full max-w-screen-sm space-y-5 px-4 pt-4 pb-4">
         <div>
-          <h1 className="text-3xl font-bold">Backfill</h1>
+          <h1 className="text-2xl font-bold">Backfill</h1>
 
           <p className="text-muted-foreground mt-1 text-sm">
             Fill historical values for zero-weight goals
@@ -238,7 +246,7 @@ export default function BackfillPage() {
         </div>
 
         <div className="bg-card space-y-4 rounded-2xl border p-4">
-          <div className="space-y-2">
+          <div className="space-y-3">
             <Label>Goal (weight = 0)</Label>
             <select
               value={selectedGoalId}
@@ -254,7 +262,7 @@ export default function BackfillPage() {
           </div>
 
           <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-2">
+            <div className="space-y-3">
               <Label>Start date</Label>
               <Input
                 type="date"
@@ -264,7 +272,7 @@ export default function BackfillPage() {
               />
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-3">
               <Label>End date</Label>
               <Input
                 type="date"
@@ -292,45 +300,45 @@ export default function BackfillPage() {
               </p>
             </div>
 
-            <div className="max-h-[50dvh] overflow-y-auto">
-              <div className="space-y-3 p-4">
-                {dates.map((date) => (
-                  <div key={date} className="grid grid-cols-2 gap-3">
-                    <div>
-                      <Label className="text-muted-foreground text-xs">
-                        Date
-                      </Label>
-                      <Input type="date" value={date} disabled />
-                    </div>
-                    <div>
-                      <Label className="text-muted-foreground text-xs">
-                        Value
-                      </Label>
-                      {renderValueInput(
-                        selectedGoal,
-                        getRowValue(date),
-                        (nextValue) => updateRowValue(date, nextValue),
-                      )}
-                    </div>
+            <div className="divide-y">
+              {dates.map((date) => (
+                <div key={date} className="flex items-center gap-3 px-4 py-2.5">
+                  <span className="w-24 shrink-0 text-sm font-medium">
+                    {dayLabel(date)}
+                  </span>
+
+                  <div className="min-w-0 flex-1">
+                    {renderValueInput(
+                      selectedGoal,
+                      getRowValue(date),
+                      (nextValue) => updateRowValue(date, nextValue),
+                    )}
                   </div>
-                ))}
-              </div>
+                </div>
+              ))}
             </div>
           </div>
         )}
 
-        <div className="flex gap-3">
-          <Button onClick={handleSave} disabled={saving || dates.length === 0}>
-            {saving ? "Saving..." : "Save backfill"}
-          </Button>
-
+        <ActionBar>
           <Link
             href="/logs"
-            className={cn(buttonVariants({ variant: "outline" }))}
+            className={cn(
+              buttonVariants({ variant: "outline" }),
+              "h-12 flex-1",
+            )}
           >
             Back to logs
           </Link>
-        </div>
+
+          <Button
+            className="h-12 flex-[2]"
+            onClick={handleSave}
+            disabled={saving || dates.length === 0}
+          >
+            {saving ? "Saving..." : "Save backfill"}
+          </Button>
+        </ActionBar>
       </div>
     </AppShell>
   );
