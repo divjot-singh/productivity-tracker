@@ -10,6 +10,7 @@ import { toast } from "sonner";
 
 import { MetricDefinition, MetricType, ScoringType } from "@/models/metric";
 
+import ActionBar from "@/components/common/ActionBar";
 import GoalPreview from "./GoalPreview";
 import BasicsStep from "./steps/BasicsStep";
 import ScoringStep from "./steps/ScoringStep";
@@ -223,7 +224,7 @@ export default function GoalBuilder({
         />
       )}
 
-      <div className="bg-background sticky bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-40 -mx-4 flex gap-2 border-t px-4 py-3 lg:bottom-0">
+      <ActionBar>
         <Button
           variant="outline"
           className="h-12 flex-1"
@@ -250,7 +251,7 @@ export default function GoalBuilder({
             Continue
           </Button>
         )}
-      </div>
+      </ActionBar>
     </div>
   );
 }

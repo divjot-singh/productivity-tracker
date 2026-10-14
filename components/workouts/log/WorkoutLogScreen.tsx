@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { MoreHorizontal, Plus } from "lucide-react";
 import { toast } from "sonner";
 
+import ActionBar from "@/components/common/ActionBar";
 import DateSelector from "@/components/today/DateSelector";
 import { Button } from "@/components/ui/button";
 import {
@@ -845,7 +846,17 @@ export default function WorkoutLogScreen() {
             />
           ) : null}
 
-          <div className="bg-background sticky bottom-[calc(4rem+env(safe-area-inset-bottom))] z-40 -mx-4 flex gap-2 border-t px-4 py-2 lg:bottom-0">
+          {active < count - 1 && doneSets > 0 ? (
+            <button
+              type="button"
+              onClick={() => void finish()}
+              className="text-muted-foreground w-full py-1 text-center text-sm underline"
+            >
+              Finish workout now
+            </button>
+          ) : null}
+
+          <ActionBar>
             <Button
               variant="outline"
               className="h-12 flex-1"
@@ -871,17 +882,7 @@ export default function WorkoutLogScreen() {
                 Next exercise
               </Button>
             )}
-          </div>
-
-          {active < count - 1 && doneSets > 0 ? (
-            <button
-              type="button"
-              onClick={() => void finish()}
-              className="text-muted-foreground w-full py-1 text-center text-sm underline"
-            >
-              Finish workout now
-            </button>
-          ) : null}
+          </ActionBar>
         </>
       )}
 

@@ -12,9 +12,9 @@ export default function BottomNavigation() {
   return (
     <nav
       aria-label="Primary"
-      className="bg-card border-border border-t px-2 pt-2 pb-[calc(0.5rem+env(safe-area-inset-bottom))]"
+      className="bg-card border-border flex h-[var(--bottom-nav)] items-center border-t px-2 pb-[env(safe-area-inset-bottom)]"
     >
-      <div className="mx-auto flex max-w-screen-sm items-end justify-around gap-1">
+      <div className="mx-auto flex w-full max-w-screen-sm items-center justify-around gap-1">
         {NAV_TABS.map((tab) => {
           const active = isTabActive(tab, pathname);
           const Icon = tab.icon;

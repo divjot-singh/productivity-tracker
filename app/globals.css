@@ -3,6 +3,7 @@
 @import "shadcn/tailwind.css";
 
 :root {
+  --bottom-nav: calc(4rem + env(safe-area-inset-bottom));
   --background: #0d0e12;
   --foreground: #e8eaf0;
 

@@ -33,6 +33,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 
+import ActionBar from "@/components/common/ActionBar";
 import GoalPreview from "@/components/settings/GoalPreview";
 import { WeightPicker, YesNo } from "@/components/settings/GoalFields";
 import IconSelector from "@/components/settings/IconSelector";
@@ -560,26 +561,24 @@ export default function GoalDetails() {
       </Dialog>
 
       {isEditing && (
-        <div className="bg-background fixed inset-x-0 bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-40 border-t p-3 lg:bottom-0 lg:left-64">
-          <div className="mx-auto flex max-w-screen-sm gap-3">
-            <Button
-              variant="outline"
-              className="flex-1"
-              onClick={handleCancel}
-              disabled={saving}
-            >
-              Cancel
-            </Button>
+        <ActionBar withNav={false}>
+          <Button
+            variant="outline"
+            className="h-12 flex-1"
+            onClick={handleCancel}
+            disabled={saving}
+          >
+            Cancel
+          </Button>
 
-            <Button
-              className="flex-[2]"
-              onClick={handleSave}
-              disabled={saving || !hasChanges}
-            >
-              {saving ? "Saving..." : "Save Changes"}
-            </Button>
-          </div>
-        </div>
+          <Button
+            className="h-12 flex-[2]"
+            onClick={handleSave}
+            disabled={saving || !hasChanges}
+          >
+            {saving ? "Saving..." : "Save Changes"}
+          </Button>
+        </ActionBar>
       )}
     </div>
   );
