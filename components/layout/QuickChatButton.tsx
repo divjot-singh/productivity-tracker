@@ -1,0 +1,95 @@
+"use client";
+
+import { useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { ArrowRight, MessageCircle } from "lucide-react";
+
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
+import { cn } from "@/lib/utils";
+
+const SUGGESTIONS = [
+  "How did I do this week?",
+  "Which goals am I missing most?",
+  "What are my workout personal records?",
+  "How has my sleep been lately?",
+];
+
+// Quick access to the assistant from any screen; full conversations live on /chat.
+export default function QuickChatButton({
+  variant,
+}: {
+  variant: "icon" | "floating";
+}) {
+  const [open, setOpen] = useState(false);
+  const router = useRouter();
+
+  function ask(question: string) {
+    setOpen(false);
+    router.push(`/chat?q=${encodeURIComponent(question)}`);
+  }
+
+  return (
+    <>
+      <button
+        type="button"
+        aria-label="Ask Daylog"
+        title="Ask Daylog"
+        onClick={() => setOpen(true)}
+        className={cn(
+          variant === "floating"
+            ? "bg-primary text-primary-foreground fixed right-6 bottom-6 z-50 hidden h-12 w-12 items-center justify-center rounded-full shadow-lg transition hover:scale-105 hover:opacity-95 lg:flex"
+            : "text-muted-foreground hover:text-foreground hover:bg-accent flex h-9 w-9 items-center justify-center rounded-full transition-colors lg:hidden",
+        )}
+      >
+        <MessageCircle className="h-5 w-5" />
+      </button>
+
+      <Sheet open={open} onOpenChange={setOpen}>
+        <SheetContent
+          side="bottom"
+          className="bg-popover ring-foreground/10 rounded-t-2xl p-0 pb-[env(safe-area-inset-bottom)] shadow-2xl ring-1"
+        >
+          <div className="bg-muted mx-auto mt-3 h-1 w-10 rounded-full" />
+
+          <SheetHeader className="px-5 pt-4 pb-1">
+            <SheetTitle>Ask Daylog</SheetTitle>
+
+            <p className="text-muted-foreground text-sm">
+              Answers come from your own data.
+            </p>
+          </SheetHeader>
+
+          <div className="space-y-2 px-5 pb-3">
+            {SUGGESTIONS.map((question) => (
+              <button
+                key={question}
+                type="button"
+                onClick={() => ask(question)}
+                className="bg-card hover:bg-accent flex w-full items-center justify-between gap-3 rounded-xl border px-4 py-3 text-left text-sm transition-colors"
+              >
+                {question}
+                <ArrowRight className="text-muted-foreground h-4 w-4 shrink-0" />
+              </button>
+            ))}
+          </div>
+
+          <div className="px-5 pb-5">
+            <Link
+              href="/chat"
+              onClick={() => setOpen(false)}
+              className="text-primary text-sm font-medium hover:underline"
+            >
+              Open full chat
+            </Link>
+          </div>
+        </SheetContent>
+      </Sheet>
+    </>
+  );
+}

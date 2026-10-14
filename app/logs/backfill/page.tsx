@@ -71,7 +71,16 @@ export default function BackfillPage() {
         setEntriesByDate(byDate);
 
         if (zeroWeightGoals.length > 0) {
-          setSelectedGoalId((previous) => previous || zeroWeightGoals[0].id);
+          const preselected = new URLSearchParams(window.location.search).get(
+            "goal",
+          );
+
+          setSelectedGoalId(
+            (previous) =>
+              previous ||
+              zeroWeightGoals.find((goal) => goal.id === preselected)?.id ||
+              zeroWeightGoals[0].id,
+          );
         }
       } catch (error) {
         console.error(error);

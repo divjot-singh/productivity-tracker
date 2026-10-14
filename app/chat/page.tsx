@@ -641,7 +641,11 @@ export default function ChatPage() {
     : null;
 
   const [historyOpen, setHistoryOpen] = useState(false);
-  const [draft, setDraft] = useState("");
+  const [draft, setDraft] = useState(() =>
+    typeof window === "undefined"
+      ? ""
+      : (new URLSearchParams(window.location.search).get("q") ?? ""),
+  );
   const [isSending, setIsSending] = useState(false);
   const [isLoadingConversations, setIsLoadingConversations] = useState(false);
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);

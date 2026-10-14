@@ -1,8 +1,9 @@
 "use client";
 
-import { LogOut, MessageCircle, Palette, Settings } from "lucide-react";
-import Link from "next/link";
+import { LogOut, Palette, Settings } from "lucide-react";
 import { useRouter } from "next/navigation";
+
+import QuickChatButton from "@/components/layout/QuickChatButton";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
@@ -40,13 +41,7 @@ export default function TopBar() {
       <BrandLogo size={30} textClassName="text-base font-semibold" />
 
       <div className="flex items-center gap-2">
-        <Link
-          href="/chat"
-          aria-label="Open chat"
-          className="text-muted-foreground hover:text-foreground hover:bg-accent flex h-9 w-9 items-center justify-center rounded-full transition-colors lg:hidden"
-        >
-          <MessageCircle className="h-5 w-5" />
-        </Link>
+        <QuickChatButton variant="icon" />
 
         <DropdownMenu>
           <DropdownMenuTrigger>

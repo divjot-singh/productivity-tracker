@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
+import Link from "next/link";
 
 import { useRequireAuth } from "@/lib/hooks/useRequireAuth";
 import { apiRequest } from "@/lib/api/client";
@@ -11,6 +12,7 @@ import { localYesterday } from "@/lib/dates";
 import { MetricDefinition } from "@/models/metric";
 import {
   Archive,
+  CalendarDays,
   ChevronDown,
   ChevronLeft,
   type LucideIcon,
@@ -412,6 +414,22 @@ export default function GoalDetails() {
           <ReadOnlyConfig goal={goal} />
         )}
       </div>
+
+      {!isEditing && goal.status !== "archived" && goal.weight === 0 && (
+        <Link
+          href={`/logs/backfill?goal=${encodeURIComponent(goal.id)}`}
+          className="bg-card hover:bg-accent mb-6 flex items-center gap-3 rounded-3xl border p-5 transition-colors"
+        >
+          <CalendarDays className="text-primary h-5 w-5" />
+
+          <span className="flex-1">
+            <span className="block font-medium">Fill past days</span>
+            <span className="text-muted-foreground block text-sm">
+              Add values for days you missed
+            </span>
+          </span>
+        </Link>
+      )}
 
       {!isEditing && (
         <div className="bg-card mb-6 rounded-3xl border p-6">

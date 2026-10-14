@@ -81,16 +81,6 @@ export default function LogsPage() {
           <p className="text-muted-foreground mt-1 text-sm">
             Review your daily performance
           </p>
-
-          <Link
-            href="/logs/backfill"
-            className={cn(
-              buttonVariants({ variant: "outline", size: "sm" }),
-              "mt-3",
-            )}
-          >
-            Backfill zero-weight goals
-          </Link>
         </div>
 
         {goals.length === 0 && (
