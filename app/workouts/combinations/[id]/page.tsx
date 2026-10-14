@@ -4,7 +4,8 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import {
-  ChevronDown,
+  ArrowDown,
+  ArrowUp,
   ChevronLeft,
   Dumbbell,
   Pencil,
@@ -14,6 +15,7 @@ import {
   CircleAlert,
   Save,
   ChevronRight,
+  X,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -32,10 +34,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useRequireAuth } from "@/lib/hooks/useRequireAuth";
 import { apiRequest } from "@/lib/api/client";
-import {
-  formatExerciseEquipmentLabel,
-  titleCaseWorkoutValue,
-} from "@/lib/workouts/constants";
+import { titleCaseWorkoutValue } from "@/lib/workouts/constants";
 import {
   filterExercises,
   getExerciseFilterOptions,
@@ -46,9 +45,6 @@ import {
   WorkoutCombination,
   WorkoutEntry,
 } from "@/models/workout";
-
-const NATIVE_SELECT_CLASS =
-  "border-input bg-background text-foreground focus:ring-primary/40 h-9 w-full appearance-none rounded-lg border px-2 pr-9 text-xs transition outline-none focus:ring-1 disabled:cursor-not-allowed disabled:opacity-60";
 
 export default function CombinationDetailPage() {
   const { user } = useRequireAuth();
@@ -70,8 +66,8 @@ export default function CombinationDetailPage() {
   const [saving, setSaving] = useState(false);
   const [exerciseQuery, setExerciseQuery] = useState("");
   const [exerciseCategoryFilter, setExerciseCategoryFilter] = useState("");
-  const [exerciseMuscleFilter, setExerciseMuscleFilter] = useState("");
-  const [exerciseEquipmentFilter, setExerciseEquipmentFilter] = useState("");
+  const [exerciseMuscleFilter] = useState("");
+  const [exerciseEquipmentFilter] = useState("");
 
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -172,6 +168,25 @@ export default function CombinationDetailPage() {
           ? prev.exerciseIds.filter((value) => value !== exerciseId)
           : [...prev.exerciseIds, exerciseId],
       };
+    });
+  }
+
+  function moveExercise(index: number, direction: -1 | 1) {
+    setCombination((prev) => {
+      if (!prev) {
+        return prev;
+      }
+
+      const ids = [...prev.exerciseIds];
+      const target = index + direction;
+
+      if (target < 0 || target >= ids.length) {
+        return prev;
+      }
+
+      [ids[index], ids[target]] = [ids[target], ids[index]];
+
+      return { ...prev, exerciseIds: ids };
     });
   }
 
@@ -463,96 +478,78 @@ export default function CombinationDetailPage() {
                   </span>
                 </div>
 
-                <div className="mt-3 grid gap-2 sm:grid-cols-2">
-                  <Input
-                    value={exerciseQuery}
-                    onChange={(event) => setExerciseQuery(event.target.value)}
-                    placeholder="Search exercises by name"
-                    className="h-9"
-                  />
+                <Input
+                  value={exerciseQuery}
+                  onChange={(event) => setExerciseQuery(event.target.value)}
+                  placeholder="Search exercises to add"
+                  className="mt-3 h-11"
+                />
 
-                  <div className="grid grid-cols-2 gap-2">
-                    <div className="relative">
-                      <select
-                        value={exerciseCategoryFilter}
-                        onChange={(event) =>
-                          setExerciseCategoryFilter(event.target.value)
-                        }
-                        className={NATIVE_SELECT_CLASS}
-                      >
-                        <option value="">All categories</option>
-                        {exerciseFilterOptions.categories.map((value) => (
-                          <option key={value} value={value}>
-                            {titleCaseWorkoutValue(value)}
-                          </option>
-                        ))}
-                      </select>
-                      <ChevronDown className="text-muted-foreground pointer-events-none absolute top-1/2 right-3 h-4 w-4 -translate-y-1/2" />
-                    </div>
-
-                    <div className="relative">
-                      <select
-                        value={exerciseMuscleFilter}
-                        onChange={(event) =>
-                          setExerciseMuscleFilter(event.target.value)
-                        }
-                        className={NATIVE_SELECT_CLASS}
-                      >
-                        <option value="">All muscles</option>
-                        {exerciseFilterOptions.muscleGroups.map((value) => (
-                          <option key={value} value={value}>
-                            {titleCaseWorkoutValue(value)}
-                          </option>
-                        ))}
-                      </select>
-                      <ChevronDown className="text-muted-foreground pointer-events-none absolute top-1/2 right-3 h-4 w-4 -translate-y-1/2" />
-                    </div>
-
-                    <div className="relative">
-                      <select
-                        value={exerciseEquipmentFilter}
-                        onChange={(event) =>
-                          setExerciseEquipmentFilter(event.target.value)
-                        }
-                        className={NATIVE_SELECT_CLASS}
-                      >
-                        <option value="">All equipment</option>
-                        {exerciseFilterOptions.equipments.map((value) => (
-                          <option key={value} value={value}>
-                            {formatExerciseEquipmentLabel(value)}
-                          </option>
-                        ))}
-                      </select>
-                      <ChevronDown className="text-muted-foreground pointer-events-none absolute top-1/2 right-3 h-4 w-4 -translate-y-1/2" />
-                    </div>
-                  </div>
+                <div className="-mx-4 mt-2 flex [scrollbar-width:none] gap-2 overflow-x-auto px-4">
+                  {["", ...exerciseFilterOptions.categories].map((value) => (
+                    <button
+                      key={value || "all"}
+                      type="button"
+                      aria-pressed={exerciseCategoryFilter === value}
+                      onClick={() => setExerciseCategoryFilter(value)}
+                      className={`h-8 shrink-0 rounded-full border px-3.5 text-xs font-medium ${
+                        exerciseCategoryFilter === value
+                          ? "bg-primary text-primary-foreground border-transparent"
+                          : "active:bg-accent"
+                      }`}
+                    >
+                      {value ? titleCaseWorkoutValue(value) : "All"}
+                    </button>
+                  ))}
                 </div>
 
-                {/* Selected exercises */}
+                {/* Selected exercises, in workout order */}
                 {combination.exerciseIds.length > 0 ? (
-                  <div className="mt-2.5 flex flex-wrap gap-1.5">
-                    {combination.exerciseIds.map((exerciseId) => {
-                      const exercise = activeExercises.find(
-                        (item) => item.id === exerciseId,
-                      );
+                  <div className="mt-3 divide-y overflow-hidden rounded-xl border">
+                    {combination.exerciseIds.map((exerciseId, index) => (
+                      <div
+                        key={exerciseId}
+                        className="flex items-center gap-1 py-1 pr-1 pl-3"
+                      >
+                        <span className="min-w-0 flex-1 truncate text-sm font-medium">
+                          {index + 1}.{" "}
+                          {exerciseMap.get(exerciseId)?.name ?? exerciseId}
+                        </span>
 
-                      if (!exercise) {
-                        return null;
-                      }
-
-                      return (
                         <button
-                          key={exercise.id}
                           type="button"
-                          onClick={() => toggleExercise(exercise.id)}
-                          disabled={saving}
-                          className="bg-primary/10 text-primary hover:bg-primary/15 inline-flex max-w-full items-center gap-1 rounded-full px-2 py-1 text-[11px] font-medium transition-colors"
+                          aria-label="Move up"
+                          disabled={saving || index === 0}
+                          onClick={() => moveExercise(index, -1)}
+                          className="text-muted-foreground active:bg-accent flex h-10 w-10 items-center justify-center rounded-lg disabled:opacity-30"
                         >
-                          <span className="truncate">{exercise.name}</span>
-                          <span className="shrink-0 opacity-60">×</span>
+                          <ArrowUp className="h-4 w-4" />
                         </button>
-                      );
-                    })}
+
+                        <button
+                          type="button"
+                          aria-label="Move down"
+                          disabled={
+                            saving ||
+                            index === combination.exerciseIds.length - 1
+                          }
+                          onClick={() => moveExercise(index, 1)}
+                          className="text-muted-foreground active:bg-accent flex h-10 w-10 items-center justify-center rounded-lg disabled:opacity-30"
+                        >
+                          <ArrowDown className="h-4 w-4" />
+                        </button>
+
+                        <button
+                          type="button"
+                          aria-label="Remove"
+                          disabled={saving}
+                          onClick={() => toggleExercise(exerciseId)}
+                          className="text-muted-foreground active:text-destructive flex h-10 w-10 items-center justify-center rounded-lg"
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
+                      </div>
+                    ))}
                   </div>
                 ) : (
                   <p className="text-muted-foreground mt-2 text-[11px]">
@@ -562,7 +559,7 @@ export default function CombinationDetailPage() {
               </div>
 
               {/* Exercise list */}
-              <div className="max-h-72 overflow-y-auto p-2">
+              <div className="max-h-[45dvh] overflow-y-auto p-2">
                 {activeExercises.length === 0 ? (
                   <p className="text-muted-foreground p-3 text-sm">
                     No active exercises available.
@@ -871,7 +868,7 @@ export default function CombinationDetailPage() {
                       <CircleAlert className="text-muted-foreground mt-0.5 h-4 w-4 shrink-0" />
 
                       <p className="text-muted-foreground text-xs leading-relaxed">
-                        This combination can't be deleted because it is used in
+                        This combination cannot be deleted because it is used in
                         workout history on{" "}
                         {referencingWorkouts
                           .map((workout) => workout.date)

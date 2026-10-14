@@ -12,10 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useRequireAuth } from "@/lib/hooks/useRequireAuth";
 import { apiRequest } from "@/lib/api/client";
-import {
-  formatExerciseEquipmentLabel,
-  titleCaseWorkoutValue,
-} from "@/lib/workouts/constants";
+import { titleCaseWorkoutValue } from "@/lib/workouts/constants";
 import {
   filterExercises,
   getExerciseEquipmentLabel,
@@ -34,9 +31,6 @@ const DEFAULT_COMBINATION: WorkoutCombination = {
   active: true,
 };
 
-const NATIVE_SELECT_CLASS =
-  "border-input bg-background text-foreground focus:ring-primary/40 h-10 w-full appearance-none rounded-xl border px-2 pr-9 text-xs transition outline-none focus:ring-1 disabled:cursor-not-allowed disabled:opacity-60";
-
 export default function NewCombinationPage() {
   const { user } = useRequireAuth();
   const router = useRouter();
@@ -48,8 +42,8 @@ export default function NewCombinationPage() {
   const [saving, setSaving] = useState(false);
   const [exerciseQuery, setExerciseQuery] = useState("");
   const [exerciseCategoryFilter, setExerciseCategoryFilter] = useState("");
-  const [exerciseMuscleFilter, setExerciseMuscleFilter] = useState("");
-  const [exerciseEquipmentFilter, setExerciseEquipmentFilter] = useState("");
+  const [exerciseMuscleFilter] = useState("");
+  const [exerciseEquipmentFilter] = useState("");
 
   useEffect(() => {
     async function loadExercises() {
