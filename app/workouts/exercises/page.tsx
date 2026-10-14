@@ -74,15 +74,10 @@ export default function WorkoutExercisesPage() {
   }, [exercises, query]);
 
   return (
-    <div className="flex h-[calc(100dvh-14.5rem)] min-h-0 flex-col">
-      <div className="bg-background sticky top-0 z-10 border-b pb-3">
+    <div className="flex flex-col">
+      <div className="border-b pb-3">
         <div className="mb-3 flex items-center justify-between gap-3 pt-1">
-          <div>
-            <p className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
-              Workout Hub
-            </p>
-            <h2 className="text-xl font-semibold tracking-tight">Exercises</h2>
-          </div>
+          <h2 className="text-xl font-semibold tracking-tight">Exercises</h2>
 
           <Link
             href="/workouts/exercises/new"
@@ -101,7 +96,7 @@ export default function WorkoutExercisesPage() {
         />
       </div>
 
-      <div className="min-h-0 flex-1 overflow-y-auto pt-4">
+      <div className="pt-4">
         {loading ? (
           <div className="text-muted-foreground p-6 text-sm">
             Loading exercises...

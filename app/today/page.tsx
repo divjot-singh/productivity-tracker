@@ -7,7 +7,13 @@ import { format, parseISO, startOfMonth, endOfMonth } from "date-fns";
 import AppShell from "@/components/layout/AppShell";
 import PageSkeleton from "@/components/common/PageSkeleton";
 import MetricInput, { EntryFormValue } from "@/components/today/MetricInput";
-import { Button } from "@/components/ui/button";
+import { Eraser, MoreHorizontal } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
 
 import { useRequireAuth } from "@/lib/hooks/useRequireAuth";
@@ -380,14 +386,56 @@ export default function TodayPage() {
     <AppShell>
       <div className="mx-auto flex h-[calc(100dvh-5rem-4rem-env(safe-area-inset-bottom))] min-h-0 w-full max-w-screen-sm flex-col overflow-hidden lg:h-[calc(100dvh-4rem)]">
         <div className="min-h-0 flex-1 overflow-y-auto">
-          <div className="mb-2 px-4 pt-3 pb-2">
-            <h1 className="mb-1 text-xl font-bold tracking-tight">
-              {dateLabel}&apos;s Entry
-            </h1>
+          <div className="mb-2 flex items-start justify-between gap-3 px-4 pt-3 pb-2">
+            <div className="min-w-0">
+              <h1 className="mb-1 text-xl font-bold tracking-tight">
+                {dateLabel}&apos;s Entry
+              </h1>
 
-            <p className="text-muted-foreground text-xs">
-              Record your daily habits
-            </p>
+              <p className="text-muted-foreground text-xs">
+                Record your daily habits
+              </p>
+            </div>
+
+            <div className="flex shrink-0 items-center gap-1">
+              <span
+                aria-live="polite"
+                className={cn(
+                  "text-xs",
+                  saveState === "error"
+                    ? "text-destructive"
+                    : "text-muted-foreground",
+                )}
+              >
+                {saveState === "saving"
+                  ? "Saving..."
+                  : saveState === "saved"
+                    ? "Saved"
+                    : saveState === "error"
+                      ? "Not saved"
+                      : ""}
+              </span>
+
+              <DropdownMenu>
+                <DropdownMenuTrigger
+                  aria-label="Day options"
+                  className="text-muted-foreground hover:text-foreground hover:bg-accent flex h-9 w-9 items-center justify-center rounded-full transition-colors"
+                >
+                  <MoreHorizontal className="h-5 w-5" />
+                </DropdownMenuTrigger>
+
+                <DropdownMenuContent align="end" className="w-48">
+                  <DropdownMenuItem
+                    variant="destructive"
+                    disabled={!hasEntryValues(metrics, values)}
+                    onClick={handleReset}
+                  >
+                    <Eraser className="mr-2 h-4 w-4" />
+                    Clear this day
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
           </div>
 
           <div className="px-4 pb-3">
@@ -432,37 +480,6 @@ export default function TodayPage() {
                   ))}
               </section>
             ))}
-          </div>
-        </div>
-
-        {/* Footer - always visible */}
-        <div className="bg-background shrink-0 border-t p-4 pb-[calc(1rem+env(safe-area-inset-bottom))]">
-          <div className="flex items-center justify-between gap-3">
-            <p
-              aria-live="polite"
-              className={cn(
-                "text-sm",
-                saveState === "error"
-                  ? "text-destructive"
-                  : "text-muted-foreground",
-              )}
-            >
-              {saveState === "saving"
-                ? "Saving..."
-                : saveState === "saved"
-                  ? "Saved"
-                  : saveState === "error"
-                    ? "Not saved"
-                    : "Changes save automatically"}
-            </p>
-
-            <Button
-              variant="outline"
-              disabled={!hasEntryValues(metrics, values)}
-              onClick={handleReset}
-            >
-              Clear day
-            </Button>
           </div>
         </div>
       </div>

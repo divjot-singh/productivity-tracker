@@ -109,16 +109,12 @@ export default function WorkoutCombinationsPage() {
   ).length;
 
   return (
-    <div className="flex h-[calc(100dvh-14.5rem)] min-h-0 flex-col">
+    <div className="flex flex-col">
       {/* Header */}
-      <div className="bg-background sticky top-0 z-10 border-b pb-3">
+      <div className="border-b pb-3">
         <div className="mb-4 flex items-center justify-between gap-3 pt-1">
           <div className="min-w-0">
-            <p className="text-muted-foreground text-[11px] font-semibold tracking-wider uppercase">
-              Workout Hub
-            </p>
-
-            <div className="mt-0.5 flex items-center gap-2">
+            <div className="flex items-center gap-2">
               <h2 className="text-xl font-semibold tracking-tight">
                 Combinations
               </h2>
@@ -166,7 +162,7 @@ export default function WorkoutCombinationsPage() {
       </div>
 
       {/* Content */}
-      <div className="min-h-0 flex-1 overflow-y-auto pt-4">
+      <div className="pt-4">
         {loading ? (
           <div className="space-y-3">
             {[1, 2, 3].map((item) => (
