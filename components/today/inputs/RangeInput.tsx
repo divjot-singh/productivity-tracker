@@ -4,6 +4,7 @@ import { MetricDefinition, MetricValue } from "@/models/metric";
 
 import MetricCard from "../MetricCard";
 import { Input } from "@/components/ui/input";
+import { toInputNumber, toNumericOrZero } from "@/lib/today/numeric";
 
 interface Props {
   metric: MetricDefinition;
@@ -12,7 +13,7 @@ interface Props {
 }
 
 export default function RangeInput({ metric, value, onChange }: Props) {
-  const numericValue = value === "" ? 0 : Number(value);
+  const numericValue = toNumericOrZero(value);
   const matched = metric.scoring.ranges?.find(
     (range) => numericValue >= range.min && numericValue <= range.max,
   );
@@ -33,7 +34,7 @@ export default function RangeInput({ metric, value, onChange }: Props) {
           type="number"
           inputMode="decimal"
           placeholder="0"
-          value={value === "" ? "" : Number(value)}
+          value={toInputNumber(value)}
           onChange={(e) =>
             onChange(e.target.value === "" ? "" : Number(e.target.value))
           }

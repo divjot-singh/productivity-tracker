@@ -3,6 +3,7 @@
 import { MetricDefinition, MetricValue } from "@/models/metric";
 
 import { Input } from "@/components/ui/input";
+import { toInputNumber, toNumericOrZero } from "@/lib/today/numeric";
 
 import MetricCard from "../MetricCard";
 
@@ -13,7 +14,7 @@ interface Props {
 }
 
 export default function GoalInput({ metric, value, onChange }: Props) {
-  const numericValue = value === "" ? 0 : Number(value);
+  const numericValue = toNumericOrZero(value);
   const target = Number(metric.target);
 
   const progress =
@@ -41,7 +42,7 @@ export default function GoalInput({ metric, value, onChange }: Props) {
           type="number"
           inputMode="decimal"
           placeholder="0"
-          value={value === "" ? "" : Number(value)}
+          value={toInputNumber(value)}
           min={0}
           onChange={(e) =>
             onChange(e.target.value === "" ? "" : Number(e.target.value))
