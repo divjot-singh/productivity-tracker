@@ -1,7 +1,6 @@
 "use client";
 
-import { useState } from "react";
-import { ChevronDown, Info, MoreVertical, Plus } from "lucide-react";
+import { Info, MoreVertical, Plus } from "lucide-react";
 
 import {
   DropdownMenu,
@@ -9,15 +8,12 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { cn } from "@/lib/utils";
 import { getPrimaryMetricLabel } from "@/lib/workouts/constants";
 import {
-  EFFORT_GUIDE,
   detectSetRecords,
   formatSetLine,
   weightStep,
   type EditorExercise,
-  type Effort,
   type LastSession,
   type Records,
 } from "@/lib/workouts/session";
@@ -37,7 +33,6 @@ interface ExerciseCardProps {
   onToggleDone: (setIndex: number) => void;
   onRemoveSet: (setIndex: number) => void;
   onAddSet: () => void;
-  onEffort: (effort: Effort) => void;
   onMove: (direction: -1 | 1) => void;
   onRemove: () => void;
 }
@@ -55,18 +50,13 @@ export default function ExerciseCard({
   onToggleDone,
   onRemoveSet,
   onAddSet,
-  onEffort,
   onMove,
   onRemove,
 }: ExerciseCardProps) {
-  const [effortOpen, setEffortOpen] = useState(false);
-
   const unit = definition?.weightTracking.unit ?? "kg";
   const weightLabel = getPrimaryMetricLabel(definition?.measurementMode);
   const step = weightStep(unit);
   const doneCount = entry.sets.filter((set) => set.done).length;
-  const effort = entry.sets.find((set) => set.effort)?.effort ?? 3;
-  const effortLabel = EFFORT_GUIDE.find((item) => item.effort === effort);
 
   return (
     <article className="space-y-3">
@@ -153,49 +143,7 @@ export default function ExerciseCard({
         <span className="text-muted-foreground text-xs">
           {doneCount}/{entry.sets.length} done
         </span>
-
-        <button
-          type="button"
-          aria-expanded={effortOpen}
-          onClick={() => setEffortOpen((open) => !open)}
-          className="text-muted-foreground flex h-10 items-center gap-1 rounded-lg px-2 text-xs"
-        >
-          Effort: {effortLabel?.label}
-          <ChevronDown
-            className={cn(
-              "h-3.5 w-3.5 transition-transform",
-              effortOpen && "rotate-180",
-            )}
-          />
-        </button>
       </div>
-
-      {effortOpen ? (
-        <div className="space-y-1.5">
-          <div className="grid grid-cols-5 gap-1.5">
-            {EFFORT_GUIDE.map((item) => (
-              <button
-                key={item.effort}
-                type="button"
-                onClick={() => onEffort(item.effort)}
-                aria-pressed={item.effort === effort}
-                className={cn(
-                  "h-10 rounded-lg border text-sm font-medium",
-                  item.effort === effort
-                    ? "bg-primary text-primary-foreground border-transparent"
-                    : "active:bg-accent",
-                )}
-              >
-                {item.effort}
-              </button>
-            ))}
-          </div>
-
-          <p className="text-muted-foreground text-xs">
-            {effortLabel?.label} - {effortLabel?.hint}. Applies to every set.
-          </p>
-        </div>
-      ) : null}
     </article>
   );
 }

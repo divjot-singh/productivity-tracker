@@ -3,6 +3,7 @@
 import { Check, Trash2 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import { EFFORT_GUIDE } from "@/lib/workouts/session";
 import type { EditorSet, SetRecordFlags } from "@/lib/workouts/session";
 import type { WorkoutSetEntry } from "@/models/workout";
 
@@ -77,18 +78,18 @@ export default function SetRow({
 
         <button
           type="button"
+          aria-label={set.done ? "Mark set as not done" : "Mark set as done"}
           aria-pressed={set.done}
           disabled={!set.done && !canComplete}
           onClick={onToggleDone}
           className={cn(
-            "flex h-9 items-center gap-1 rounded-full border px-3 text-sm font-medium transition-colors disabled:opacity-40",
+            "flex h-9 w-9 items-center justify-center rounded-full border transition-colors disabled:opacity-40",
             set.done
               ? "bg-good text-background border-transparent"
               : "active:bg-accent",
           )}
         >
           <Check className="h-4 w-4" />
-          {set.done ? "Done" : "Done?"}
         </button>
       </div>
 
@@ -114,6 +115,34 @@ export default function SetRow({
             onChange={(reps) => onChange({ reps })}
           />
         </label>
+      </div>
+
+      <div className="space-y-1">
+        <span className="text-muted-foreground text-xs">
+          Effort:{" "}
+          {EFFORT_GUIDE.find((item) => item.effort === set.effort)?.label ??
+            "not set"}
+        </span>
+
+        <div className="grid grid-cols-5 gap-1.5">
+          {EFFORT_GUIDE.map((item) => (
+            <button
+              key={item.effort}
+              type="button"
+              aria-label={`Effort ${item.effort}, ${item.label}`}
+              aria-pressed={item.effort === set.effort}
+              onClick={() => onChange({ effort: item.effort })}
+              className={cn(
+                "h-8 rounded-lg border text-xs font-medium",
+                item.effort === set.effort
+                  ? "bg-primary text-primary-foreground border-transparent"
+                  : "text-muted-foreground active:bg-accent",
+              )}
+            >
+              {item.effort}
+            </button>
+          ))}
+        </div>
       </div>
     </div>
   );

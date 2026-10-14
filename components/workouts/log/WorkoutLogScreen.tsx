@@ -34,7 +34,6 @@ import {
   toWorkoutExercises,
   workoutVolume,
   type EditorExercise,
-  type Effort,
 } from "@/lib/workouts/session";
 import type {
   ExerciseDefinition,
@@ -455,13 +454,6 @@ export default function WorkoutLogScreen() {
     }));
   }
 
-  function setEffort(exerciseIndex: number, effort: Effort) {
-    updateExercise(exerciseIndex, (item) => ({
-      ...item,
-      sets: item.sets.map((set) => ({ ...set, effort })),
-    }));
-  }
-
   function moveExercise(index: number, direction: -1 | 1) {
     setActiveIndex(index + direction);
 
@@ -848,13 +840,12 @@ export default function WorkoutLogScreen() {
               onToggleDone={(setIndex) => toggleDone(active, setIndex)}
               onRemoveSet={(setIndex) => removeSet(active, setIndex)}
               onAddSet={() => addSet(active)}
-              onEffort={(effort) => setEffort(active, effort)}
               onMove={(direction) => moveExercise(active, direction)}
               onRemove={() => removeExercise(active)}
             />
           ) : null}
 
-          <div className="flex gap-2 pt-1">
+          <div className="bg-background sticky bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-40 -mx-4 flex gap-2 border-t px-4 py-2 lg:bottom-0">
             <Button
               variant="outline"
               className="h-12 flex-1"
