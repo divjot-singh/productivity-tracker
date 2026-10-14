@@ -84,8 +84,8 @@ export default function TrackingStep({
   )?.description;
 
   return (
-    <div className="space-y-5">
-      <div className="space-y-2">
+    <div className="space-y-6">
+      <div className="space-y-3">
         <p className="text-sm font-medium">How do you track it?</p>
 
         <div className="grid grid-cols-3 gap-2">
@@ -111,7 +111,7 @@ export default function TrackingStep({
       </div>
 
       {goal.type === "number" ? (
-        <div className="space-y-2">
+        <div className="space-y-3">
           <label htmlFor="goal-unit" className="text-sm font-medium">
             Unit
           </label>
@@ -127,18 +127,18 @@ export default function TrackingStep({
       ) : null}
 
       <div className="grid grid-cols-2 gap-3">
-        <div className="space-y-2">
+        <div className="space-y-3">
           <p className="text-sm font-medium">Target</p>
           {valueInput("target", "Target")}
         </div>
 
-        <div className="space-y-2">
+        <div className="space-y-3">
           <p className="text-sm font-medium">Starts at</p>
           {valueInput("defaultValue", "Default value")}
         </div>
       </div>
 
-      <div className="space-y-2">
+      <div className="space-y-3">
         <p className="text-sm font-medium">How important is it?</p>
 
         <WeightPicker

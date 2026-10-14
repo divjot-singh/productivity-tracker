@@ -74,12 +74,12 @@ export default function ScoringStep({
   const options = SCORING_OPTIONS[goal.type];
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-6">
       {options.length > 0 ? (
-        <div className="space-y-2">
+        <div className="space-y-3">
           <p className="text-sm font-medium">How should it be scored?</p>
 
-          <div className="space-y-2">
+          <div className="space-y-3">
             {options.map((option) => (
               <button
                 key={option.type}

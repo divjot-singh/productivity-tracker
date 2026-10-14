@@ -41,6 +41,7 @@ import {
 import { MetricDefinition } from "@/models/metric";
 import { ExerciseDefinition, WorkoutCombination } from "@/models/workout";
 import { getExerciseVisualizationKeyOptions } from "@/lib/visualizations/exercise-keys";
+import { providerLabel, scopeLabel } from "@/lib/visualizations/labels";
 import { toast } from "sonner";
 import VisualizationFieldLabel from "@/components/settings/VisualizationFieldLabel";
 
@@ -384,10 +385,10 @@ export default function VisualizationDetailPage() {
 
         <div className="mt-2 flex flex-wrap gap-1.5 text-xs">
           <span className="bg-muted rounded-full px-2.5 py-1">
-            {toTitleCase(visualization.scope)}
+            {scopeLabel(visualization.scope)}
           </span>
           <span className="bg-primary/10 text-primary rounded-full px-2.5 py-1">
-            {toTitleCase(visualization.provider)} /{" "}
+            {providerLabel(visualization.provider)} /{" "}
             {toTitleCase(visualization.executor)}
           </span>
           <span className="bg-secondary rounded-full px-2.5 py-1">
@@ -401,7 +402,7 @@ export default function VisualizationDetailPage() {
 
         {isEditing ? (
           <div className="space-y-6">
-            <div className="space-y-2">
+            <div className="space-y-3">
               <VisualizationFieldLabel topic="title" htmlFor="title">
                 Title
               </VisualizationFieldLabel>
@@ -412,7 +413,7 @@ export default function VisualizationDetailPage() {
               />
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-3">
               <VisualizationFieldLabel
                 topic="description"
                 htmlFor="description"
@@ -433,7 +434,7 @@ export default function VisualizationDetailPage() {
             </div>
 
             <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
+              <div className="space-y-3">
                 <VisualizationFieldLabel topic="scope" htmlFor="scope">
                   Scope
                 </VisualizationFieldLabel>
@@ -450,7 +451,7 @@ export default function VisualizationDetailPage() {
                   >
                     {SCOPE_OPTIONS.map((scope) => (
                       <option key={scope} value={scope}>
-                        {toTitleCase(scope)}
+                        {scopeLabel(scope)}
                       </option>
                     ))}
                   </select>
@@ -458,7 +459,7 @@ export default function VisualizationDetailPage() {
                 </div>
               </div>
 
-              <div className="space-y-2">
+              <div className="space-y-3">
                 <VisualizationFieldLabel topic="widget" htmlFor="widget">
                   Widget
                 </VisualizationFieldLabel>
@@ -484,7 +485,7 @@ export default function VisualizationDetailPage() {
               </div>
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-3">
               <VisualizationFieldLabel
                 topic="source"
                 htmlFor="provider-executor"
@@ -495,13 +496,13 @@ export default function VisualizationDetailPage() {
                 id="provider-executor"
                 className="bg-muted rounded-xl border px-3 py-2 text-sm font-medium"
               >
-                {toTitleCase(visualization.provider)} /{" "}
+                {providerLabel(visualization.provider)} /{" "}
                 {toTitleCase(visualization.executor)}
               </div>
             </div>
 
             {!isCompositeStreak && (
-              <div className="space-y-2">
+              <div className="space-y-3">
                 <VisualizationFieldLabel topic="data" htmlFor="key">
                   Data Key
                 </VisualizationFieldLabel>
@@ -526,7 +527,7 @@ export default function VisualizationDetailPage() {
             )}
 
             {combination && (
-              <div className="space-y-2">
+              <div className="space-y-3">
                 <VisualizationFieldLabel
                   topic="aggregation"
                   htmlFor="aggregation"
@@ -561,7 +562,7 @@ export default function VisualizationDetailPage() {
             />
 
             {combination?.options.comparison && (
-              <div className="space-y-2">
+              <div className="space-y-3">
                 <VisualizationFieldLabel
                   topic="comparison"
                   htmlFor="comparison"
@@ -632,7 +633,7 @@ export default function VisualizationDetailPage() {
               />
             )}
 
-            <div className="space-y-2">
+            <div className="space-y-3">
               <VisualizationFieldLabel
                 topic="displayOrder"
                 htmlFor="display-order"
@@ -652,7 +653,7 @@ export default function VisualizationDetailPage() {
               />
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-3">
               <p className="text-muted-foreground text-xs">
                 Provider and executor are derived from your scope/widget/key
                 selections and validated on save.
@@ -796,10 +797,10 @@ function ReadOnlyConfig({
   return (
     <div className="space-y-4">
       <ReadOnlyRow label="Widget" value={toTitleCase(visualization.widget)} />
-      <ReadOnlyRow label="Scope" value={toTitleCase(visualization.scope)} />
+      <ReadOnlyRow label="Scope" value={scopeLabel(visualization.scope)} />
       <ReadOnlyRow
         label="Provider"
-        value={toTitleCase(visualization.provider)}
+        value={providerLabel(visualization.provider)}
       />
       <ReadOnlyRow
         label="Executor"
@@ -830,7 +831,7 @@ function PeriodEditor({
   const isAll = period.type === "all";
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-3">
       <VisualizationFieldLabel topic="period" htmlFor="period">
         Period
       </VisualizationFieldLabel>
@@ -1154,7 +1155,7 @@ function ReadOnlyStreakRule({
   }
 
   return (
-    <div className="space-y-2 rounded-2xl border p-4">
+    <div className="space-y-3 rounded-2xl border p-4">
       <div className="flex items-center justify-between">
         <span className="text-muted-foreground text-sm">Streak rule</span>
         <span className="font-medium">
@@ -1162,7 +1163,7 @@ function ReadOnlyStreakRule({
         </span>
       </div>
 
-      <div className="space-y-2">
+      <div className="space-y-3">
         {value.conditions.map((condition, index) => (
           <div key={`${condition.goalLabel}-${index}`} className="text-sm">
             {condition.goalLabel} {formatComparator(condition.comparator)}{" "}

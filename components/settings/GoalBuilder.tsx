@@ -151,6 +151,8 @@ export default function GoalBuilder({
   function previous() {
     if (step > 0) {
       setStep((previous) => previous - 1);
+    } else {
+      router.back();
     }
   }
 
@@ -229,7 +231,7 @@ export default function GoalBuilder({
           variant="outline"
           className="h-12 flex-1"
           onClick={previous}
-          disabled={step === 0 || creating}
+          disabled={creating}
         >
           Back
         </Button>

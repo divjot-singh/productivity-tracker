@@ -51,7 +51,7 @@ export function WeightPicker({
   const presetActive = WEIGHT_PRESETS.some((preset) => preset.value === value);
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-4">
       <div className="grid grid-cols-4 gap-2">
         {WEIGHT_PRESETS.map((preset) => (
           <button
@@ -71,7 +71,7 @@ export function WeightPicker({
         ))}
       </div>
 
-      <div className="flex items-center gap-3">
+      <div className="mt-1 flex items-center gap-3 pt-1">
         <label htmlFor="goal-weight" className="text-muted-foreground text-xs">
           {presetActive ? "Points per day" : "Custom points per day"}
         </label>

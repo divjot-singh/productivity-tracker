@@ -34,6 +34,7 @@ import {
 import { MetricDefinition } from "@/models/metric";
 import { ExerciseDefinition, WorkoutCombination } from "@/models/workout";
 import { getExerciseVisualizationKeyOptions } from "@/lib/visualizations/exercise-keys";
+import { providerLabel, scopeLabel } from "@/lib/visualizations/labels";
 import { toast } from "sonner";
 
 const INTERNAL_COMPOSITE_STREAK_KEY = "__composite_streak__";
@@ -341,8 +342,8 @@ export default function NewVisualizationPage() {
           Add Visualization
         </h1>
 
-        <div className="space-y-6">
-          <div className="space-y-2">
+        <div className="space-y-7">
+          <div className="space-y-3">
             <VisualizationFieldLabel topic="title" htmlFor="title">
               Title
             </VisualizationFieldLabel>
@@ -355,7 +356,7 @@ export default function NewVisualizationPage() {
           </div>
 
           <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
+            <div className="space-y-3">
               <VisualizationFieldLabel topic="widget" htmlFor="widget">
                 Widget
               </VisualizationFieldLabel>
@@ -378,7 +379,7 @@ export default function NewVisualizationPage() {
               </div>
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-3">
               <VisualizationFieldLabel topic="scope" htmlFor="scope">
                 Scope
               </VisualizationFieldLabel>
@@ -393,7 +394,7 @@ export default function NewVisualizationPage() {
                 >
                   {SCOPE_OPTIONS.map((scope) => (
                     <option key={scope} value={scope}>
-                      {toTitleCase(scope)}
+                      {scopeLabel(scope)}
                     </option>
                   ))}
                 </select>
@@ -403,7 +404,7 @@ export default function NewVisualizationPage() {
           </div>
 
           {providerExecutorOptions.length > 1 && (
-            <div className="space-y-2">
+            <div className="space-y-3">
               <VisualizationFieldLabel
                 topic="source"
                 htmlFor="provider-executor"
@@ -426,7 +427,7 @@ export default function NewVisualizationPage() {
                       key={`${option.provider}|${option.executor}`}
                       value={`${option.provider}|${option.executor}`}
                     >
-                      {toTitleCase(option.provider)} /{" "}
+                      {providerLabel(option.provider)} /{" "}
                       {toTitleCase(option.executor)}
                     </option>
                   ))}
@@ -450,7 +451,7 @@ export default function NewVisualizationPage() {
               }
             />
           ) : (
-            <div className="space-y-2">
+            <div className="space-y-3">
               <VisualizationFieldLabel topic="data" htmlFor="key">
                 Data
               </VisualizationFieldLabel>
@@ -475,7 +476,7 @@ export default function NewVisualizationPage() {
           )}
 
           {combination && (
-            <div className="space-y-2">
+            <div className="space-y-3">
               <VisualizationFieldLabel
                 topic="aggregation"
                 htmlFor="aggregation"
@@ -510,7 +511,7 @@ export default function NewVisualizationPage() {
           />
 
           {combination?.options.comparison && (
-            <div className="space-y-2">
+            <div className="space-y-3">
               <VisualizationFieldLabel topic="comparison" htmlFor="comparison">
                 Comparison
               </VisualizationFieldLabel>
@@ -563,76 +564,63 @@ export default function NewVisualizationPage() {
             </div>
           )}
 
-          <details className="bg-card rounded-2xl border px-4 py-3">
-            <summary className="cursor-pointer text-sm font-medium">
-              More options
-            </summary>
+          <div className="space-y-3">
+            <VisualizationFieldLabel topic="description" htmlFor="description">
+              Description
+            </VisualizationFieldLabel>
+            <Textarea
+              id="description"
+              value={visualization.description ?? ""}
+              onChange={(e) =>
+                updateVisualization({
+                  description:
+                    e.target.value === "" ? undefined : e.target.value,
+                })
+              }
+              placeholder="What does this visualization show?"
+            />
+          </div>
 
-            <div className="mt-4 space-y-5">
-              <div className="space-y-2">
-                <VisualizationFieldLabel
-                  topic="description"
-                  htmlFor="description"
-                >
-                  Description
-                </VisualizationFieldLabel>
-                <Textarea
-                  id="description"
-                  value={visualization.description ?? ""}
-                  onChange={(e) =>
-                    updateVisualization({
-                      description:
-                        e.target.value === "" ? undefined : e.target.value,
-                    })
-                  }
-                  placeholder="What does this visualization show?"
-                />
-              </div>
-
-              <div className="flex items-center justify-between">
-                <div>
-                  <VisualizationFieldLabel topic="visible" htmlFor="visible">
-                    Visible
-                  </VisualizationFieldLabel>
-                  <p className="text-muted-foreground text-sm">
-                    Show on dashboard
-                  </p>
-                </div>
-                <Switch
-                  id="visible"
-                  checked={visualization.visible}
-                  onCheckedChange={(checked) =>
-                    updateVisualization({ visible: checked })
-                  }
-                />
-              </div>
-
-              <div className="space-y-2">
-                <VisualizationFieldLabel
-                  topic="displayOrder"
-                  htmlFor="display-order"
-                >
-                  Display order
-                </VisualizationFieldLabel>
-                <Input
-                  id="display-order"
-                  type="number"
-                  value={
-                    Number.isNaN(visualization.displayOrder)
-                      ? ""
-                      : visualization.displayOrder
-                  }
-                  placeholder="Auto"
-                  onChange={(e) =>
-                    updateVisualization({
-                      displayOrder:
-                        e.target.value === "" ? NaN : Number(e.target.value),
-                    })
-                  }
-                />
-              </div>
+          <div className="flex items-center justify-between">
+            <div>
+              <VisualizationFieldLabel topic="visible" htmlFor="visible">
+                Visible
+              </VisualizationFieldLabel>
+              <p className="text-muted-foreground text-sm">Show on dashboard</p>
             </div>
-          </details>
+            <Switch
+              id="visible"
+              checked={visualization.visible}
+              onCheckedChange={(checked) =>
+                updateVisualization({ visible: checked })
+              }
+            />
+          </div>
+
+          <div className="space-y-3">
+            <VisualizationFieldLabel
+              topic="displayOrder"
+              htmlFor="display-order"
+            >
+              Display order
+            </VisualizationFieldLabel>
+            <Input
+              id="display-order"
+              type="number"
+              value={
+                Number.isNaN(visualization.displayOrder)
+                  ? ""
+                  : visualization.displayOrder
+              }
+              placeholder="Auto"
+              onChange={(e) =>
+                updateVisualization({
+                  displayOrder:
+                    e.target.value === "" ? NaN : Number(e.target.value),
+                })
+              }
+            />
+          </div>
 
           <ActionBar>
             <Button
@@ -668,7 +656,7 @@ function PeriodEditor({
   const isAll = period.type === "all";
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-3">
       <VisualizationFieldLabel topic="period" htmlFor="period">
         Period
       </VisualizationFieldLabel>
