@@ -47,6 +47,12 @@ export interface DailyEntry {
    */
   breakdown?: MetricScoreBreakdown[];
 
+  /** Sum of goal weights on the day; derived from breakdown for legacy entries. */
+  maxScore?: number;
+
+  /** score / maxScore * 100, one decimal. */
+  scorePercent?: number;
+
   createdAt?: unknown;
 
   updatedAt?: unknown;
