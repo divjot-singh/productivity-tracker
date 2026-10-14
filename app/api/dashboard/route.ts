@@ -9,6 +9,7 @@ import { getVisualizationDefinitions } from "@/repositories/visualization.server
 import { getEntries } from "@/repositories/entry.server.repository";
 import { getWorkouts } from "@/repositories/workouts.server.repository";
 import { VisualizationService } from "@/lib/services/visualization-service";
+import { buildAutoVisualizations } from "@/lib/visualizations/auto-presets";
 
 // import MOCK_ENTRIES from "@/lib/mocks/generated-entries.json";
 // import { getMockEntries } from "@/lib/mocks/dashboard.mock";
@@ -52,8 +53,13 @@ export async function GET(request: NextRequest) {
 
     const service = new VisualizationService();
 
+    // Default is a dashboard generated from the user's goals; ?mode=custom uses saved definitions.
+    const mode = new URL(request.url).searchParams.get("mode");
+    const definitions =
+      mode === "custom" ? visualizations : buildAutoVisualizations(goals);
+
     const response = await service.generate(
-      visualizations,
+      definitions,
       goals,
       realEntries,
       workouts,

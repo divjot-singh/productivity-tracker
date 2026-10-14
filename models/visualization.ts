@@ -20,7 +20,7 @@ export type VisualizationExecutorType =
   | "timeline"
   | "insight";
 
-export type StatEntryKey = "score" | "xp";
+export type StatEntryKey = "score" | "scorePercent" | "maxScore" | "xp";
 
 export type VisualizationComparison = "previous-day" | "previous-period";
 
