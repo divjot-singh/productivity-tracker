@@ -1,0 +1,56 @@
+import type { WorkoutEntry } from "@/models/workout";
+import {
+  deleteExerciseStats,
+  getExerciseStats,
+  saveExerciseStats,
+} from "@/repositories/exercise-stats.server.repository";
+import { getWorkouts } from "@/repositories/workouts.server.repository";
+
+import {
+  applySession,
+  buildHistories,
+  summarizeSession,
+} from "./exercise-stats";
+
+function exerciseIdsOf(workout: WorkoutEntry | null): string[] {
+  return workout ? workout.exercises.map((entry) => entry.exerciseId) : [];
+}
+
+// Updates only the exercises touched by a save/delete; falls back to a full rebuild when a stats doc is missing.
+export async function syncExerciseStats(
+  uid: string,
+  date: string,
+  previous: WorkoutEntry | null,
+  next: WorkoutEntry | null,
+) {
+  const affected = [...new Set([...exerciseIdsOf(previous), ...exerciseIdsOf(next)])];
+
+  if (affected.length === 0) return;
+
+  let allWorkouts: WorkoutEntry[] | null = null;
+
+  for (const exerciseId of affected) {
+    const nextEntry = next?.exercises.find((entry) => entry.exerciseId === exerciseId);
+    const summary = nextEntry ? summarizeSession(date, nextEntry.sets) : null;
+    const existing = await getExerciseStats(uid, exerciseId);
+
+    let stats;
+
+    if (existing) {
+      stats = applySession(exerciseId, existing.history, date, summary);
+    } else {
+      allWorkouts ??= await getWorkouts(uid);
+
+      const others = allWorkouts.filter((workout) => workout.date !== date);
+      const history = buildHistories(others).get(exerciseId) ?? {};
+
+      stats = applySession(exerciseId, history, date, summary);
+    }
+
+    if (stats.totalSessions === 0) {
+      await deleteExerciseStats(uid, exerciseId);
+    } else {
+      await saveExerciseStats(uid, stats);
+    }
+  }
+}

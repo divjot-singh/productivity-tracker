@@ -81,6 +81,8 @@ export interface WorkoutEntry {
   date: string;
   combinationIds: string[];
   exercises: WorkoutExerciseEntry[];
+  /** Denormalised for array-contains queries; missing on older workouts. */
+  exerciseIds?: string[];
   notes?: string;
 }
 

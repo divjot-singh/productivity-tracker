@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { getServerUser } from "@/lib/server-auth";
 import { WorkoutEntry } from "@/models/workout";
+import { syncExerciseStats } from "@/lib/workouts/exercise-stats.service";
 import {
   normalizeWorkoutPayload,
   validateWorkout,
@@ -16,6 +17,20 @@ interface RouteContext {
   params: Promise<{
     date: string;
   }>;
+}
+
+// A stats failure must not fail the save; scripts/rebuild-exercise-stats.mjs repairs stale stats.
+async function syncStatsSafely(
+  uid: string,
+  date: string,
+  previous: WorkoutEntry | null,
+  next: WorkoutEntry | null,
+) {
+  try {
+    await syncExerciseStats(uid, date, previous, next);
+  } catch (error) {
+    console.error("Exercise stats sync failed", error);
+  }
 }
 
 export async function GET(request: NextRequest, { params }: RouteContext) {
@@ -62,7 +77,11 @@ export async function PUT(request: NextRequest, { params }: RouteContext) {
       return NextResponse.json({ error: errors.join(" ") }, { status: 400 });
     }
 
+    const previous = await getWorkout(user.uid, date);
+
     await upsertWorkout(user.uid, workout);
+
+    await syncStatsSafely(user.uid, date, previous, workout);
 
     return NextResponse.json(workout);
   } catch (error) {
@@ -84,7 +103,10 @@ export async function DELETE(request: NextRequest, { params }: RouteContext) {
     }
 
     const { date } = await params;
+    const previous = await getWorkout(user.uid, date);
     await deleteWorkout(user.uid, date);
+
+    await syncStatsSafely(user.uid, date, previous, null);
 
     return NextResponse.json({ success: true });
   } catch (error) {
