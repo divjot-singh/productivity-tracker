@@ -1,6 +1,6 @@
 "use client";
 
-import { LogOut, MessageCircle, Settings } from "lucide-react";
+import { LogOut, MessageCircle, Palette, Settings } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
@@ -70,6 +70,11 @@ export default function TopBar() {
             <DropdownMenuItem onClick={() => router.push("/settings")}>
               <Settings className="mr-2 h-4 w-4" />
               Settings
+            </DropdownMenuItem>
+
+            <DropdownMenuItem onClick={() => router.push("/themes")}>
+              <Palette className="mr-2 h-4 w-4" />
+              Themes
             </DropdownMenuItem>
 
             <DropdownMenuSeparator />

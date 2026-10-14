@@ -6,6 +6,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useRequireAuth } from "@/lib/hooks/useRequireAuth";
 import { apiRequest } from "@/lib/api/client";
 import { ICONS } from "@/lib/metric-icons";
+import { localYesterday } from "@/lib/dates";
 
 import { MetricDefinition } from "@/models/metric";
 import {
@@ -526,7 +527,12 @@ export default function GoalDetails() {
             </Button>
 
             <Button
-              onClick={() => runLifecycle({ action: "archive" }, "Goal archived")}
+              onClick={() =>
+                runLifecycle(
+                  { action: "archive", lastActiveDate: localYesterday() },
+                  "Goal archived",
+                )
+              }
               disabled={lifecycleBusy}
             >
               {lifecycleBusy ? "Archiving..." : "Archive"}

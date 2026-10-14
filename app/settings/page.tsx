@@ -10,7 +10,6 @@ import { buttonVariants } from "@/components/ui/button";
 import { useRequireAuth } from "@/lib/hooks/useRequireAuth";
 import { MetricDefinition } from "@/models/metric";
 import QuickActions from "@/components/settings/QuickActions";
-import ThemePicker from "@/components/settings/ThemePicker";
 import SettingsSubNav from "@/components/settings/SettingsSubNav";
 import { toast } from "sonner";
 import { apiRequest } from "@/lib/api/client";
@@ -94,8 +93,6 @@ export default function SettingsPage() {
         <SettingsSubNav />
 
         <QuickActions />
-
-        <ThemePicker />
         <Link
           href="/settings/weight-breakdown"
           className={cn(

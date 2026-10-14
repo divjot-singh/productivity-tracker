@@ -11,10 +11,6 @@ export default function ThemePicker() {
 
   return (
     <div className="mb-8">
-      <h2 className="text-muted-foreground mb-3 text-sm font-semibold tracking-wide uppercase">
-        Appearance
-      </h2>
-
       <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
         {THEMES.map((option) => {
           const active = option.id === theme;
