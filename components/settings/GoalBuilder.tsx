@@ -10,11 +10,10 @@ import { toast } from "sonner";
 
 import { MetricDefinition, MetricType, ScoringType } from "@/models/metric";
 
-import GoalDetailsStep from "./steps/GoalDetailsStep";
-import MetricTypeStep from "./steps/MetricTypeStep";
-import ReviewStep from "./steps/ReviewStep";
-import ScoringConfigStep from "./steps/ScoringConfigStep";
-import ScoringTypeStep from "./steps/ScoringTypeStep";
+import GoalPreview from "./GoalPreview";
+import BasicsStep from "./steps/BasicsStep";
+import ScoringStep from "./steps/ScoringStep";
+import TrackingStep from "./steps/TrackingStep";
 import { apiRequest } from "@/lib/api/client";
 
 function createEmptyGoal(): MetricDefinition {
@@ -46,13 +45,7 @@ function createEmptyGoal(): MetricDefinition {
   };
 }
 
-const STEPS = [
-  "Goal Details",
-  "Metric Type",
-  "Scoring Method",
-  "Configuration",
-  "Review",
-];
+const STEPS = ["Basics", "Tracking", "Scoring"];
 
 interface GoalBuilderProps {
   redirectPath?: string;
@@ -120,12 +113,9 @@ export default function GoalBuilder({
         return goal.label.trim().length > 0;
 
       case 1:
-        return !!goal.type;
+        return goal.weight >= 0;
 
-      case 2:
-        return !!goal.scoring.type;
-
-      case 3:
+      default:
         switch (goal.scoring.type) {
           case "goal":
             return goal.target !== "" && (goal.scoring.bonusRate ?? 0) >= 0;
@@ -140,7 +130,7 @@ export default function GoalBuilder({
             return (goal.scoring.time?.length ?? 0) > 0;
 
           case "options":
-            return goal.scoring.options;
+            return Boolean(goal.scoring.options?.length);
 
           case "boolean":
             return true;
@@ -148,9 +138,6 @@ export default function GoalBuilder({
           default:
             return false;
         }
-
-      default:
-        return true;
     }
   }, [goal, step]);
 
@@ -195,35 +182,33 @@ export default function GoalBuilder({
     }
   }
 
+  const last = step === STEPS.length - 1;
+
   return (
-    <div className="bg-card rounded-2xl border p-6 shadow-sm">
-      {/* Progress */}
-
-      <div className="mb-8">
-        <div className="flex items-center justify-between">
-          <p className="text-muted-foreground text-sm font-medium">
-            Step {step + 1} of {STEPS.length}
-          </p>
-
-          <p className="text-muted-foreground text-sm">{STEPS[step]}</p>
+    <div className="space-y-5">
+      <div className="space-y-2">
+        <div className="flex gap-1.5">
+          {STEPS.map((label, index) => (
+            <div
+              key={label}
+              className={`h-1.5 flex-1 rounded-full transition-colors ${
+                index <= step ? "bg-primary" : "bg-muted"
+              }`}
+            />
+          ))}
         </div>
 
-        <div className="bg-muted mt-3 h-2 overflow-hidden rounded-full">
-          <div
-            className="bg-primary h-full rounded-full transition-all duration-300"
-            style={{
-              width: `${((step + 1) / STEPS.length) * 100}%`,
-            }}
-          />
-        </div>
+        <p className="text-muted-foreground text-xs">
+          Step {step + 1} of {STEPS.length} - {STEPS[step]}
+        </p>
       </div>
 
-      {/* Content */}
+      {step > 0 ? <GoalPreview goal={goal} /> : null}
 
-      {step === 0 && <GoalDetailsStep goal={goal} updateGoal={updateGoal} />}
+      {step === 0 && <BasicsStep goal={goal} updateGoal={updateGoal} />}
 
       {step === 1 && (
-        <MetricTypeStep
+        <TrackingStep
           goal={goal}
           updateMetricType={updateMetricType}
           updateGoal={updateGoal}
@@ -231,31 +216,38 @@ export default function GoalBuilder({
       )}
 
       {step === 2 && (
-        <ScoringTypeStep goal={goal} updateScoring={updateScoring} />
+        <ScoringStep
+          goal={goal}
+          updateGoal={updateGoal}
+          updateScoring={updateScoring}
+        />
       )}
 
-      {step === 3 && <ScoringConfigStep goal={goal} updateGoal={updateGoal} />}
-
-      {step === 4 && <ReviewStep goal={goal} />}
-
-      {/* Actions */}
-
-      <div className="mt-8 flex justify-between">
+      <div className="bg-background sticky bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-40 -mx-4 flex gap-2 border-t px-4 py-3 lg:bottom-0">
         <Button
           variant="outline"
+          className="h-12 flex-1"
           onClick={previous}
           disabled={step === 0 || creating}
         >
           Back
         </Button>
 
-        {step < STEPS.length - 1 ? (
-          <Button onClick={next} disabled={!canContinue}>
-            Continue
+        {last ? (
+          <Button
+            className="h-12 flex-[2]"
+            onClick={handleSubmit}
+            disabled={creating || !canContinue}
+          >
+            {creating ? "Creating..." : "Create goal"}
           </Button>
         ) : (
-          <Button onClick={handleSubmit} disabled={creating}>
-            {creating ? "Creating..." : "Create Goal"}
+          <Button
+            className="h-12 flex-[2]"
+            onClick={next}
+            disabled={!canContinue}
+          >
+            Continue
           </Button>
         )}
       </div>

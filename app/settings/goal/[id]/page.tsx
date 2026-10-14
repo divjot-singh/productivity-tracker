@@ -13,7 +13,6 @@ import { MetricDefinition } from "@/models/metric";
 import {
   Archive,
   CalendarDays,
-  ChevronDown,
   ChevronLeft,
   type LucideIcon,
   Pencil,
@@ -34,6 +33,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 
+import GoalPreview from "@/components/settings/GoalPreview";
+import { WeightPicker, YesNo } from "@/components/settings/GoalFields";
 import IconSelector from "@/components/settings/IconSelector";
 import TargetConfig from "@/components/settings/configs/TargetConfig";
 import MultiplierConfig from "@/components/settings/configs/MultiplierConfig";
@@ -41,9 +42,6 @@ import RangeConfig from "@/components/settings/configs/RangeConfig";
 import TimeRangeConfig from "@/components/settings/configs/TimeRangeConfig";
 import OptionsConfig from "@/components/settings/configs/OptionConfig";
 import BooleanConfig from "@/components/settings/configs/BooleanConfig";
-
-const NATIVE_SELECT_CLASS =
-  "border-input bg-background text-foreground focus:ring-primary/40 h-12 w-full appearance-none rounded-[10px] border px-4 pr-12 text-lg transition outline-none focus:ring-1";
 
 export default function GoalDetails() {
   const { user } = useRequireAuth();
@@ -198,66 +196,54 @@ export default function GoalDetails() {
 
   return (
     <div className="relative p-4 pb-24">
-      <div className="absolute top-10 left-0 z-10 flex w-full items-center justify-between px-6">
+      <div className="mb-4 flex items-center justify-between">
         <button
           onClick={handleCancel}
-          className="text-muted-foreground hover:text-foreground inline-flex items-center gap-1 text-sm transition-colors"
+          className="text-muted-foreground hover:text-foreground inline-flex h-10 items-center gap-1 text-sm transition-colors"
         >
           <ChevronLeft size={18} />
           Back
         </button>
 
         {!isEditing && goal.status !== "archived" && (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setIsEditing(true)}
-          >
+          <Button variant="outline" onClick={() => setIsEditing(true)}>
             <Pencil className="mr-1.5 h-3.5 w-3.5" />
             Edit
           </Button>
         )}
       </div>
 
-      <div className="bg-card relative mb-6 overflow-hidden rounded-3xl border">
-        <div className="from-primary/15 via-primary/5 to-background h-28 bg-gradient-to-r" />
+      <div className="bg-card mb-4 flex items-start gap-3 rounded-2xl border p-4">
+        <div className="bg-primary/10 flex h-12 w-12 shrink-0 items-center justify-center rounded-xl">
+          <Icon className="text-primary h-6 w-6" />
+        </div>
 
-        <div className="-mt-10 px-6 pb-6 sm:px-8">
-          <div className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
-            <div className="flex items-center gap-5">
-              <div className="bg-background ring-background flex h-20 w-20 items-center justify-center rounded-3xl border shadow-sm ring-4">
-                <Icon className="text-primary h-10 w-10" />
-              </div>
+        <div className="min-w-0 flex-1">
+          <h1 className="text-xl leading-tight font-bold">{goal.label}</h1>
 
-              <div>
-                <h1 className="text-3xl font-bold tracking-tight">
-                  {goal.label}
-                </h1>
+          <p className="text-muted-foreground mt-1 text-sm">
+            {goal.description || "No description provided."}
+          </p>
 
-                <p className="text-muted-foreground mt-2 max-w-2xl text-sm leading-6">
-                  {goal.description || "No description provided."}
-                </p>
-              </div>
-            </div>
-
-            <div className="flex flex-wrap gap-2">
-              <div className="bg-muted rounded-full px-4 py-2 text-sm font-medium">
-                {capitalize(goal.category)}
-              </div>
-
-              <div className="bg-primary/10 text-primary rounded-full px-4 py-2 text-sm font-medium">
-                {capitalize(goal.type)}
-              </div>
-
-              <div className="bg-secondary rounded-full px-4 py-2 text-sm font-medium">
-                {goal.weight} pts
-              </div>
-            </div>
+          <div className="mt-2 flex flex-wrap gap-1.5 text-xs">
+            <span className="bg-muted rounded-full px-2.5 py-1">
+              {capitalize(goal.category)}
+            </span>
+            <span className="bg-primary/10 text-primary rounded-full px-2.5 py-1">
+              {capitalize(goal.type)}
+            </span>
+            <span className="bg-secondary rounded-full px-2.5 py-1">
+              {goal.weight} pts
+            </span>
           </div>
         </div>
       </div>
 
-      <div className="bg-card mb-6 rounded-3xl border p-6">
+      <div className="mb-4">
+        <GoalPreview goal={goal} />
+      </div>
+
+      <div className="bg-card mb-4 rounded-2xl border p-4">
         <h2 className="mb-4 text-lg font-semibold">Configuration</h2>
 
         {isEditing ? (
@@ -288,13 +274,11 @@ export default function GoalDetails() {
             </div>
 
             <div className="space-y-2">
-              <Label>Weight</Label>
+              <Label>Importance</Label>
 
-              <Input
-                type="number"
-                min={0}
+              <WeightPicker
                 value={goal.weight}
-                onChange={(e) => updateGoal({ weight: Number(e.target.value) })}
+                onChange={(weight) => updateGoal({ weight })}
               />
             </div>
 
@@ -315,19 +299,11 @@ export default function GoalDetails() {
               <Label>Target</Label>
 
               {goal.type === "boolean" ? (
-                <div className="relative">
-                  <select
-                    value={String(goal.target)}
-                    onChange={(e) =>
-                      updateGoal({ target: e.target.value === "true" })
-                    }
-                    className={NATIVE_SELECT_CLASS}
-                  >
-                    <option value="true">True</option>
-                    <option value="false">False</option>
-                  </select>
-                  <ChevronDown className="text-muted-foreground pointer-events-none absolute top-1/2 right-4 h-4 w-4 -translate-y-1/2" />
-                </div>
+                <YesNo
+                  label="target"
+                  value={goal.target === true}
+                  onChange={(next) => updateGoal({ target: next })}
+                />
               ) : goal.type === "time" ? (
                 <Input
                   type="time"
@@ -349,21 +325,11 @@ export default function GoalDetails() {
               <Label>Default Value</Label>
 
               {goal.type === "boolean" ? (
-                <div className="relative">
-                  <select
-                    value={String(goal.defaultValue)}
-                    onChange={(e) =>
-                      updateGoal({
-                        defaultValue: e.target.value === "true",
-                      })
-                    }
-                    className={NATIVE_SELECT_CLASS}
-                  >
-                    <option value="true">True</option>
-                    <option value="false">False</option>
-                  </select>
-                  <ChevronDown className="text-muted-foreground pointer-events-none absolute top-1/2 right-4 h-4 w-4 -translate-y-1/2" />
-                </div>
+                <YesNo
+                  label="defaultValue"
+                  value={goal.defaultValue === true}
+                  onChange={(next) => updateGoal({ defaultValue: next })}
+                />
               ) : goal.type === "time" ? (
                 <Input
                   type="time"
@@ -418,7 +384,7 @@ export default function GoalDetails() {
       {!isEditing && goal.status !== "archived" && goal.weight === 0 && (
         <Link
           href={`/logs/backfill?goal=${encodeURIComponent(goal.id)}`}
-          className="bg-card hover:bg-accent mb-6 flex items-center gap-3 rounded-3xl border p-5 transition-colors"
+          className="bg-card hover:bg-accent mb-4 flex items-center gap-3 rounded-2xl border p-4 transition-colors"
         >
           <CalendarDays className="text-primary h-5 w-5" />
 
@@ -432,7 +398,7 @@ export default function GoalDetails() {
       )}
 
       {!isEditing && (
-        <div className="bg-card mb-6 rounded-3xl border p-6">
+        <div className="bg-card mb-4 rounded-2xl border p-4">
           <h2 className="mb-4 text-lg font-semibold">
             {goal.status === "archived" ? "Archived goal" : "Archive"}
           </h2>
@@ -499,7 +465,7 @@ export default function GoalDetails() {
       )}
 
       {!isEditing && goal.status === "archived" && (
-        <div className="bg-card border-destructive/20 rounded-3xl border p-6">
+        <div className="bg-card border-destructive/20 rounded-2xl border p-4">
           <h2 className="text-destructive mb-4 text-lg font-semibold">
             Danger Zone
           </h2>
@@ -594,7 +560,7 @@ export default function GoalDetails() {
       </Dialog>
 
       {isEditing && (
-        <div className="bg-background fixed inset-x-0 bottom-0 z-20 border-t p-4 lg:left-64">
+        <div className="bg-background fixed inset-x-0 bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-40 border-t p-3 lg:bottom-0 lg:left-64">
           <div className="mx-auto flex max-w-screen-sm gap-3">
             <Button
               variant="outline"
