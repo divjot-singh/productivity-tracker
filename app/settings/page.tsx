@@ -13,6 +13,7 @@ import { MetricDefinition } from "@/models/metric";
 import QuickActions from "@/components/settings/QuickActions";
 import InstallPrompt from "@/components/pwa/InstallPrompt";
 import SettingsSubNav from "@/components/settings/SettingsSubNav";
+import MeHeader from "@/components/settings/MeHeader";
 import { toast } from "sonner";
 import { apiRequest } from "@/lib/api/client";
 import { cn } from "@/lib/utils";
@@ -83,12 +84,14 @@ export default function SettingsPage() {
     <AppShell>
       <div className="mx-auto w-full max-w-screen-sm px-4 pt-4 pb-28">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold tracking-tight">Settings</h1>
+          <h1 className="text-3xl font-bold tracking-tight">Me</h1>
 
           <p className="text-muted-foreground mt-1 text-sm">
-            Manage your goals and dashboard visualizations
+            Your account, goals and dashboard
           </p>
         </div>
+
+        <MeHeader />
 
         <SettingsSubNav />
 

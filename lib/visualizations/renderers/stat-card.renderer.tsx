@@ -21,7 +21,7 @@ export default function StatCardRenderer({
               comparison.direction === "up"
                 ? "text-primary"
                 : comparison.direction === "down"
-                  ? "text-accent"
+                  ? "text-warn"
                   : "text-muted-foreground",
             )}
           >

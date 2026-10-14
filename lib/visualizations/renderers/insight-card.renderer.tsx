@@ -20,7 +20,7 @@ export default function InsightCardRenderer({
           tone === "positive"
             ? "border-primary/40 bg-primary/10"
             : tone === "negative"
-              ? "border-accent/40 bg-accent/10"
+              ? "border-warn/40 bg-warn/10"
               : "bg-background/30 border-white/10",
         )}
       >

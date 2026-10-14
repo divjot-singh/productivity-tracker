@@ -1,7 +1,7 @@
 export const chartConfig = {
   primary: "var(--primary)",
 
-  accent: "var(--accent)",
+  accent: "var(--warn)",
 
   foreground: "var(--foreground)",
 

@@ -26,6 +26,7 @@ import { apiRequest } from "@/lib/api/client";
 import TodayStatusBar from "@/components/today/TodayStatusBar";
 import DateSelector from "@/components/today/DateSelector";
 import WorkoutSummaryCard from "@/components/today/WorkoutSummaryCard";
+import GettingStarted from "@/components/today/GettingStarted";
 import { buttonVariants } from "@/components/ui/button";
 import {
   getEmptyFormValues,
@@ -52,6 +53,8 @@ export default function TodayPage() {
   const { user } = useRequireAuth();
 
   const [allGoals, setAllGoals] = useState<MetricDefinition[]>([]);
+
+  const [hasAnyWorkout, setHasAnyWorkout] = useState<boolean | null>(null);
 
   const [values, setValues] = useState<EntryValues>({});
 
@@ -174,6 +177,16 @@ export default function TodayPage() {
 
     loadAll();
   }, [user, metrics, selectedDate, loadEntryForDate, loadEntryDates]);
+
+  useEffect(() => {
+    if (!user) {
+      return;
+    }
+
+    apiRequest<unknown[]>(user, "/api/workouts?limit=1")
+      .then((workouts) => setHasAnyWorkout(workouts.length > 0))
+      .catch(() => setHasAnyWorkout(true));
+  }, [user]);
 
   useEffect(() => {
     async function loadMetrics() {
@@ -447,7 +460,13 @@ export default function TodayPage() {
             />
           </div>
 
-          <div className="px-4 pb-3">
+          <div className="space-y-3 px-4 pb-3">
+            <GettingStarted
+              hasGoals={allGoals.length > 0}
+              hasEntry={entryDates.size > 0 || currentEntryExists}
+              hasWorkout={hasAnyWorkout}
+            />
+
             <WorkoutSummaryCard date={selectedDate} />
           </div>
 
