@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ChevronDown, ChevronLeft } from "lucide-react";
 
+import ActionBar from "@/components/common/ActionBar";
 import AppShell from "@/components/layout/AppShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -327,16 +328,16 @@ export default function NewVisualizationPage() {
 
   return (
     <AppShell>
-      <div className="mx-auto w-full max-w-screen-sm px-4 pt-4 pb-28">
+      <div className="mx-auto w-full max-w-screen-sm px-4 pt-4 pb-4">
         <button
           onClick={() => router.back()}
-          className="text-muted-foreground hover:text-foreground mb-6 inline-flex items-center gap-1 text-sm transition-colors"
+          className="text-muted-foreground hover:text-foreground mb-3 inline-flex items-center gap-1 text-sm transition-colors"
         >
           <ChevronLeft size={18} />
           Back
         </button>
 
-        <h1 className="mb-8 text-3xl font-bold tracking-tight">
+        <h1 className="mb-4 text-2xl font-bold tracking-tight">
           Add Visualization
         </h1>
 
@@ -350,23 +351,6 @@ export default function NewVisualizationPage() {
               value={visualization.title}
               onChange={(e) => updateVisualization({ title: e.target.value })}
               placeholder="e.g. Life Score Today"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <VisualizationFieldLabel topic="description" htmlFor="description">
-              Description
-            </VisualizationFieldLabel>
-            <Textarea
-              id="description"
-              value={visualization.description ?? ""}
-              onChange={(e) =>
-                updateVisualization({
-                  description:
-                    e.target.value === "" ? undefined : e.target.value,
-                })
-              }
-              placeholder="What does this visualization show?"
             />
           </div>
 
@@ -579,51 +563,81 @@ export default function NewVisualizationPage() {
             </div>
           )}
 
-          <div className="flex items-center justify-between">
-            <div>
-              <VisualizationFieldLabel topic="visible" htmlFor="visible">
-                Visible
-              </VisualizationFieldLabel>
-              <p className="text-muted-foreground text-sm">Show on dashboard</p>
+          <details className="bg-card rounded-2xl border px-4 py-3">
+            <summary className="cursor-pointer text-sm font-medium">
+              More options
+            </summary>
+
+            <div className="mt-4 space-y-5">
+              <div className="space-y-2">
+                <VisualizationFieldLabel
+                  topic="description"
+                  htmlFor="description"
+                >
+                  Description
+                </VisualizationFieldLabel>
+                <Textarea
+                  id="description"
+                  value={visualization.description ?? ""}
+                  onChange={(e) =>
+                    updateVisualization({
+                      description:
+                        e.target.value === "" ? undefined : e.target.value,
+                    })
+                  }
+                  placeholder="What does this visualization show?"
+                />
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div>
+                  <VisualizationFieldLabel topic="visible" htmlFor="visible">
+                    Visible
+                  </VisualizationFieldLabel>
+                  <p className="text-muted-foreground text-sm">
+                    Show on dashboard
+                  </p>
+                </div>
+                <Switch
+                  id="visible"
+                  checked={visualization.visible}
+                  onCheckedChange={(checked) =>
+                    updateVisualization({ visible: checked })
+                  }
+                />
+              </div>
+
+              <div className="space-y-2">
+                <VisualizationFieldLabel
+                  topic="displayOrder"
+                  htmlFor="display-order"
+                >
+                  Display order
+                </VisualizationFieldLabel>
+                <Input
+                  id="display-order"
+                  type="number"
+                  value={
+                    Number.isNaN(visualization.displayOrder)
+                      ? ""
+                      : visualization.displayOrder
+                  }
+                  placeholder="Auto"
+                  onChange={(e) =>
+                    updateVisualization({
+                      displayOrder:
+                        e.target.value === "" ? NaN : Number(e.target.value),
+                    })
+                  }
+                />
+              </div>
             </div>
-            <Switch
-              id="visible"
-              checked={visualization.visible}
-              onCheckedChange={(checked) =>
-                updateVisualization({ visible: checked })
-              }
-            />
-          </div>
+          </details>
 
-          <div className="space-y-2">
-            <VisualizationFieldLabel
-              topic="displayOrder"
-              htmlFor="display-order"
-            >
-              Display order
-            </VisualizationFieldLabel>
-            <Input
-              id="display-order"
-              type="number"
-              value={
-                Number.isNaN(visualization.displayOrder)
-                  ? ""
-                  : visualization.displayOrder
-              }
-              placeholder="Auto"
-              onChange={(e) =>
-                updateVisualization({
-                  displayOrder:
-                    e.target.value === "" ? NaN : Number(e.target.value),
-                })
-              }
-            />
-          </div>
-
-          <div className="flex gap-3 pt-4">
+          <ActionBar>
             <Button
               variant="outline"
-              className="flex-1"
+              className="h-12 flex-1"
               onClick={() => router.back()}
               disabled={creating}
             >
@@ -631,13 +645,13 @@ export default function NewVisualizationPage() {
             </Button>
 
             <Button
-              className="flex-2"
+              className="h-12 flex-[2]"
               onClick={handleSubmit}
               disabled={creating || !canSubmit}
             >
-              {creating ? "Creating..." : "Add Visualization"}
+              {creating ? "Creating..." : "Add visualization"}
             </Button>
-          </div>
+          </ActionBar>
         </div>
       </div>
     </AppShell>
