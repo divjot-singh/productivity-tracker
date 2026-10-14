@@ -1,7 +1,8 @@
-// Minimal service worker: caches immutable build assets and shows an offline page for failed navigations.
-// API responses are intentionally never cached here (they are per-user and need auth).
-const VERSION = "daylog-v1";
+// Caches immutable build assets and visited pages (static client shells, no user data) so the app opens offline.
+// API data is cached by the app itself in IndexedDB, keyed per user, never here.
+const VERSION = "daylog-v2";
 const STATIC_CACHE = `${VERSION}-static`;
+const PAGES_CACHE = `${VERSION}-pages`;
 const OFFLINE_URL = "/offline.html";
 
 self.addEventListener("install", (event) => {
@@ -53,11 +54,21 @@ self.addEventListener("fetch", (event) => {
 
   if (request.mode === "navigate") {
     event.respondWith(
-      fetch(request).catch(() =>
-        caches
-          .match(OFFLINE_URL)
-          .then((response) => response ?? Response.error()),
-      ),
+      fetch(request)
+        .then((response) => {
+          if (response.ok) {
+            const copy = response.clone();
+            caches.open(PAGES_CACHE).then((cache) => cache.put(request, copy));
+          }
+          return response;
+        })
+        .catch(async () => {
+          const page = await caches.match(request, { cacheName: PAGES_CACHE });
+          if (page) return page;
+
+          const offline = await caches.match(OFFLINE_URL);
+          return offline ?? Response.error();
+        }),
     );
   }
 });
