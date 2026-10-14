@@ -2,7 +2,13 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { getServerUser } from "@/lib/server-auth";
 import { WorkoutEntry } from "@/models/workout";
-import { syncExerciseStats } from "@/lib/workouts/exercise-stats.service";
+import {
+  syncExerciseStats,
+  type NewPr,
+} from "@/lib/workouts/exercise-stats.service";
+import { sendToUser } from "@/lib/notifications/push.server";
+import { getExercise } from "@/repositories/exercises.server.repository";
+import { getNotificationSettings } from "@/repositories/notifications.server.repository";
 import {
   normalizeWorkoutPayload,
   validateWorkout,
@@ -27,9 +33,34 @@ async function syncStatsSafely(
   next: WorkoutEntry | null,
 ) {
   try {
-    await syncExerciseStats(uid, date, previous, next);
+    return await syncExerciseStats(uid, date, previous, next);
   } catch (error) {
     console.error("Exercise stats sync failed", error);
+
+    return [];
+  }
+}
+
+async function notifyPrs(uid: string, prs: NewPr[]) {
+  if (prs.length === 0) return;
+
+  try {
+    const settings = await getNotificationSettings(uid);
+
+    if (!settings.types.pr.enabled) return;
+
+    for (const pr of prs) {
+      const exercise = await getExercise(uid, pr.exerciseId);
+
+      await sendToUser(uid, {
+        type: "pr",
+        title: "New personal record",
+        body: `${exercise?.name ?? "Exercise"}: ${pr.weight} kg`,
+        url: "/workouts",
+      });
+    }
+  } catch (error) {
+    console.error("PR notification failed", error);
   }
 }
 
@@ -81,7 +112,9 @@ export async function PUT(request: NextRequest, { params }: RouteContext) {
 
     await upsertWorkout(user.uid, workout);
 
-    await syncStatsSafely(user.uid, date, previous, workout);
+    const prs = await syncStatsSafely(user.uid, date, previous, workout);
+
+    await notifyPrs(user.uid, prs);
 
     return NextResponse.json(workout);
   } catch (error) {

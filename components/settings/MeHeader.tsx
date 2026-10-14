@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ChevronRight, LogOut, Palette } from "lucide-react";
+import { Bell, ChevronRight, LogOut, Palette } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -50,6 +50,15 @@ export default function MeHeader() {
         >
           <Palette size={18} className="text-muted-foreground" />
           <span className="flex-1 text-sm font-medium">Themes</span>
+          <ChevronRight size={16} className="text-muted-foreground" />
+        </Link>
+
+        <Link
+          href="/notifications"
+          className="hover:bg-accent flex items-center gap-3 p-4 transition-colors"
+        >
+          <Bell size={18} className="text-muted-foreground" />
+          <span className="flex-1 text-sm font-medium">Notifications</span>
           <ChevronRight size={16} className="text-muted-foreground" />
         </Link>
 

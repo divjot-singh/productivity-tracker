@@ -16,21 +16,32 @@ function exerciseIdsOf(workout: WorkoutEntry | null): string[] {
   return workout ? workout.exercises.map((entry) => entry.exerciseId) : [];
 }
 
+export interface NewPr {
+  exerciseId: string;
+  weight: number;
+}
+
 // Updates only the exercises touched by a save/delete; falls back to a full rebuild when a stats doc is missing.
+// Returns weight PRs beaten by this save (a first-ever session is not a PR).
 export async function syncExerciseStats(
   uid: string,
   date: string,
   previous: WorkoutEntry | null,
   next: WorkoutEntry | null,
-) {
-  const affected = [...new Set([...exerciseIdsOf(previous), ...exerciseIdsOf(next)])];
+): Promise<NewPr[]> {
+  const affected = [
+    ...new Set([...exerciseIdsOf(previous), ...exerciseIdsOf(next)]),
+  ];
+  const newPrs: NewPr[] = [];
 
-  if (affected.length === 0) return;
+  if (affected.length === 0) return newPrs;
 
   let allWorkouts: WorkoutEntry[] | null = null;
 
   for (const exerciseId of affected) {
-    const nextEntry = next?.exercises.find((entry) => entry.exerciseId === exerciseId);
+    const nextEntry = next?.exercises.find(
+      (entry) => entry.exerciseId === exerciseId,
+    );
     const summary = nextEntry ? summarizeSession(date, nextEntry.sets) : null;
     const existing = await getExerciseStats(uid, exerciseId);
 
@@ -52,5 +63,17 @@ export async function syncExerciseStats(
     } else {
       await saveExerciseStats(uid, stats);
     }
+
+    const before = existing?.prWeight?.value ?? 0;
+
+    if (
+      existing &&
+      stats.prWeight?.date === date &&
+      stats.prWeight.value > before
+    ) {
+      newPrs.push({ exerciseId, weight: stats.prWeight.value });
+    }
   }
+
+  return newPrs;
 }

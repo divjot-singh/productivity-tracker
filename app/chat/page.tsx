@@ -756,22 +756,6 @@ export default function ChatPage() {
   const autoSentRef = useRef(false);
 
   useEffect(() => {
-    if (!user || autoSentRef.current) {
-      return;
-    }
-
-    const question = new URLSearchParams(window.location.search).get("q");
-
-    if (!question) {
-      return;
-    }
-
-    autoSentRef.current = true;
-    window.history.replaceState(null, "", window.location.pathname);
-    void sendRef.current(question);
-  }, [user]);
-
-  useEffect(() => {
     const onAsk = (event: Event) => {
       void sendRef.current((event as CustomEvent<string>).detail);
     };
@@ -1025,6 +1009,23 @@ export default function ChatPage() {
   useEffect(() => {
     sendRef.current = sendMessage;
   });
+
+  // Must come after the ref sync above so the real sender is in place.
+  useEffect(() => {
+    if (!user || autoSentRef.current) {
+      return;
+    }
+
+    const question = new URLSearchParams(window.location.search).get("q");
+
+    if (!question) {
+      return;
+    }
+
+    autoSentRef.current = true;
+    window.history.replaceState(null, "", window.location.pathname);
+    void sendRef.current(question);
+  }, [user]);
 
   if (loading || !user) {
     return (
