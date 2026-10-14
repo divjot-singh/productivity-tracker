@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 
 import AppShell from "@/components/layout/AppShell";
+import PageSkeleton from "@/components/common/PageSkeleton";
 import Section from "@/components/ui/section";
 import { buttonVariants } from "@/components/ui/button";
 
@@ -73,9 +74,7 @@ export default function SettingsPage() {
   if (loading) {
     return (
       <AppShell>
-        <div className="text-muted-foreground p-6 text-sm">
-          Loading configuration...
-        </div>
+        <PageSkeleton tabs rows={5} />
       </AppShell>
     );
   }

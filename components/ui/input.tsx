@@ -7,11 +7,17 @@ function Input({
   className,
   type,
   onWheel,
+  value,
   ...props
 }: React.ComponentProps<"input">) {
+  // A NaN value (e.g. from Number("")) is invalid for React; show an empty field instead.
+  const safeValue =
+    typeof value === "number" && Number.isNaN(value) ? "" : value;
+
   return (
     <InputPrimitive
       type={type}
+      value={safeValue}
       data-slot="input"
       onWheel={(event) => {
         // Scrolling over a focused number field would otherwise change its value.

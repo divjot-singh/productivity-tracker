@@ -422,8 +422,8 @@ export default function GoalDetails() {
           {goal.status === "archived" ? (
             <div className="space-y-4">
               <p className="text-muted-foreground text-sm">
-                Archived after {goal.archivedAt ?? "an earlier date"}. History is
-                kept and shown as removed. Enter a weight to start scoring it
+                Archived after {goal.archivedAt ?? "an earlier date"}. History
+                is kept and shown as removed. Enter a weight to start scoring it
                 again.
               </p>
 
@@ -448,7 +448,10 @@ export default function GoalDetails() {
                   disabled={lifecycleBusy || reactivateWeight.trim() === ""}
                   onClick={() =>
                     runLifecycle(
-                      { action: "reactivate", weight: Number(reactivateWeight) },
+                      {
+                        action: "reactivate",
+                        weight: Number(reactivateWeight),
+                      },
                       "Goal reactivated",
                     )
                   }
@@ -512,8 +515,8 @@ export default function GoalDetails() {
             <DialogTitle>Archive goal?</DialogTitle>
 
             <DialogDescription>
-              This goal stops counting toward your daily maximum score from today.
-              You can reactivate it later with a new weight.
+              This goal stops counting toward your daily maximum score from
+              today. You can reactivate it later with a new weight.
             </DialogDescription>
           </DialogHeader>
 

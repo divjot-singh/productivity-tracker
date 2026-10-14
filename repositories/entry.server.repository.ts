@@ -61,6 +61,10 @@ export async function getEntry(
   return mapEntry(snapshot.data() as Record<string, unknown>, snapshot.id);
 }
 
+export async function deleteEntry(uid: string, date: string) {
+  await getEntryRef(uid, date).delete();
+}
+
 export async function entryExists(uid: string, date: string) {
   const ref = getEntryRef(uid, date);
 

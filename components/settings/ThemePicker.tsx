@@ -35,7 +35,7 @@ export default function ThemePicker() {
                   style={{ background: option.swatch.surface }}
                 >
                   <span
-                    className="block h-full w-full rounded-md scale-50"
+                    className="block h-full w-full scale-50 rounded-md"
                     style={{ background: option.swatch.accent }}
                   />
                 </span>

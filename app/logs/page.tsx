@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ChevronDown, CalendarDays } from "lucide-react";
 
 import AppShell from "@/components/layout/AppShell";
+import PageSkeleton from "@/components/common/PageSkeleton";
 import InsightsSubNav from "@/components/layout/InsightsSubNav";
 import { buttonVariants } from "@/components/ui/button";
 
@@ -64,7 +65,7 @@ export default function LogsPage() {
   if (loading) {
     return (
       <AppShell>
-        <div className="text-muted-foreground p-6 text-sm">Loading logs...</div>
+        <PageSkeleton tabs rows={4} />
       </AppShell>
     );
   }

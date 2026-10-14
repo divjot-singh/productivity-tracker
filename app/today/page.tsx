@@ -5,6 +5,7 @@ import Link from "next/link";
 import { format, parseISO, startOfMonth, endOfMonth } from "date-fns";
 
 import AppShell from "@/components/layout/AppShell";
+import PageSkeleton from "@/components/common/PageSkeleton";
 import MetricInput, { EntryFormValue } from "@/components/today/MetricInput";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -287,16 +288,47 @@ export default function TodayPage() {
     setSelectedDate(next);
   }
 
-  function handleReset() {
-    const previous = values;
+  async function handleReset() {
+    if (!user) {
+      return;
+    }
 
-    dirtyRef.current = true;
+    const previous = values;
+    const date = selectedDate;
+
+    dirtyRef.current = false;
     setValues(getEmptyFormValues(metrics));
+
+    if (currentEntryExists) {
+      try {
+        await apiRequest(user, `/api/entries?date=${date}`, {
+          method: "DELETE",
+        });
+
+        setCurrentEntryExists(false);
+        setEntryDates((existing) => {
+          const next = new Set(existing);
+          next.delete(date);
+          return next;
+        });
+      } catch (err) {
+        console.error(err);
+        setValues(previous);
+        toast.error("Could not clear the entry");
+        return;
+      }
+    }
+
+    setSaveState("idle");
 
     toast("Entry cleared", {
       action: {
         label: "Undo",
         onClick: () => {
+          if (selectedDateRef.current !== date) {
+            return;
+          }
+
           dirtyRef.current = true;
           setValues(previous);
         },
@@ -308,9 +340,7 @@ export default function TodayPage() {
   if (loading) {
     return (
       <AppShell>
-        <div className="text-muted-foreground p-6 text-sm">
-          Loading {dateLabel}&apos;s entry...
-        </div>
+        <PageSkeleton rows={6} />
       </AppShell>
     );
   }

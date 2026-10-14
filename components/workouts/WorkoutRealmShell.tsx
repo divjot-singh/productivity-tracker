@@ -21,11 +21,7 @@ export default function WorkoutRealmShell({
   return (
     <AppShell>
       <div className="mx-auto w-full max-w-screen-sm pb-24">
-        {showSubNav ? (
-          <div className="mb-4">
-            <WorkoutsSubNav />
-          </div>
-        ) : null}
+        {showSubNav ? <WorkoutsSubNav /> : null}
 
         {children}
       </div>
