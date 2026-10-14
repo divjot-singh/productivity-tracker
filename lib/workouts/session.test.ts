@@ -6,6 +6,8 @@ import {
   detectSetRecords,
   diffCombination,
   lastSession,
+  recentSessions,
+  sortCombinations,
   recordsExcluding,
   suggestCombinationChanges,
   toWorkoutExercises,
@@ -132,4 +134,34 @@ test("suggestions use 3 of the last 5 sessions", () => {
 
 test("createEditorSet starts not done", () => {
   assert.equal(createEditorSet().done, false);
+});
+
+test("recentSessions returns newest first", () => {
+  const workouts = [
+    workout("2026-01-01", ["a"]),
+    workout("2026-01-05", ["a"]),
+    workout("2026-01-03", ["b"]),
+  ];
+
+  assert.deepEqual(
+    recentSessions(workouts, "a", "2026-02-01", 3).map((s) => s.date),
+    ["2026-01-05", "2026-01-01"],
+  );
+});
+
+test("priority combinations come first in order", () => {
+  const names = [
+    "Arms",
+    "Legs Lite",
+    "Pull",
+    "Push/Pull Lite",
+    "Core",
+    "Legs",
+    "Push",
+  ];
+
+  assert.deepEqual(
+    sortCombinations(names.map((name) => ({ name }))).map((c) => c.name),
+    ["Push", "Pull", "Legs", "Push/Pull Lite", "Legs Lite", "Arms", "Core"],
+  );
 });

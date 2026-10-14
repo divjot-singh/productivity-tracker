@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronDown, MoreVertical, Plus } from "lucide-react";
+import { ChevronDown, Info, MoreVertical, Plus } from "lucide-react";
 
 import {
   DropdownMenu,
@@ -32,6 +32,7 @@ interface ExerciseCardProps {
   records: Records;
   canMoveUp: boolean;
   canMoveDown: boolean;
+  onInfo: () => void;
   onSetChange: (setIndex: number, partial: Partial<WorkoutSetEntry>) => void;
   onToggleDone: (setIndex: number) => void;
   onRemoveSet: (setIndex: number) => void;
@@ -41,6 +42,7 @@ interface ExerciseCardProps {
   onRemove: () => void;
 }
 
+// One exercise on screen; the details (notes, records, history) live behind the info button.
 export default function ExerciseCard({
   entry,
   definition,
@@ -48,6 +50,7 @@ export default function ExerciseCard({
   records,
   canMoveUp,
   canMoveDown,
+  onInfo,
   onSetChange,
   onToggleDone,
   onRemoveSet,
@@ -64,30 +67,30 @@ export default function ExerciseCard({
   const doneCount = entry.sets.filter((set) => set.done).length;
   const effort = entry.sets.find((set) => set.effort)?.effort ?? 3;
   const effortLabel = EFFORT_GUIDE.find((item) => item.effort === effort);
-  const target = definition?.targetWeight ?? null;
-  const notes = definition?.notes?.join(" - ");
 
   return (
-    <article className="bg-card rounded-2xl border p-3">
-      <div className="flex items-start gap-2">
+    <article className="space-y-3">
+      <div className="flex items-start gap-1">
         <div className="min-w-0 flex-1">
-          <h3 className="truncate text-sm font-semibold">
+          <h2 className="text-lg leading-tight font-semibold">
             {definition?.name ?? entry.exerciseId}
-          </h3>
+          </h2>
 
-          <p className="text-muted-foreground mt-0.5 text-xs">
-            {doneCount}/{entry.sets.length} sets
-            {records.prWeight > 0 ? ` - PR ${records.prWeight} ${unit}` : ""}
-            {records.best1RM > 0 ? ` - est. 1RM ${records.best1RM}` : ""}
-            {target ? ` - target ${target} ${unit}` : ""}
+          <p className="text-muted-foreground mt-0.5 truncate text-xs">
+            {last
+              ? `Last ${last.date.slice(5)}: ${formatSetLine(last.sets) || "-"}`
+              : "First time - no history yet"}
           </p>
-
-          {last ? (
-            <p className="text-muted-foreground mt-0.5 truncate text-xs">
-              Last ({last.date.slice(5)}): {formatSetLine(last.sets) || "-"}
-            </p>
-          ) : null}
         </div>
+
+        <button
+          type="button"
+          aria-label="Exercise details"
+          onClick={onInfo}
+          className="text-muted-foreground active:bg-accent flex h-10 w-10 shrink-0 items-center justify-center rounded-lg"
+        >
+          <Info className="h-5 w-5" />
+        </button>
 
         <DropdownMenu>
           <DropdownMenuTrigger
@@ -95,19 +98,19 @@ export default function ExerciseCard({
               <button
                 type="button"
                 aria-label="Exercise options"
-                className="text-muted-foreground active:bg-accent flex h-8 w-8 shrink-0 items-center justify-center rounded-lg"
+                className="text-muted-foreground active:bg-accent flex h-10 w-10 shrink-0 items-center justify-center rounded-lg"
               />
             }
           >
-            <MoreVertical className="h-4 w-4" />
+            <MoreVertical className="h-5 w-5" />
           </DropdownMenuTrigger>
 
           <DropdownMenuContent align="end" className="w-44">
             <DropdownMenuItem disabled={!canMoveUp} onClick={() => onMove(-1)}>
-              Move up
+              Move earlier
             </DropdownMenuItem>
             <DropdownMenuItem disabled={!canMoveDown} onClick={() => onMove(1)}>
-              Move down
+              Move later
             </DropdownMenuItem>
             <DropdownMenuItem variant="destructive" onClick={onRemove}>
               Remove exercise
@@ -116,20 +119,7 @@ export default function ExerciseCard({
         </DropdownMenu>
       </div>
 
-      {notes ? (
-        <p className="text-muted-foreground mt-1 text-xs italic">{notes}</p>
-      ) : null}
-
-      <div className="mt-2 space-y-1">
-        <div className="text-muted-foreground grid grid-cols-[2rem_1fr_1fr_2.5rem] gap-1.5 px-1 text-[10px] font-medium uppercase">
-          <span className="text-center">Set</span>
-          <span className="text-center">
-            {weightLabel} ({unit})
-          </span>
-          <span className="text-center">Reps</span>
-          <span />
-        </div>
-
+      <div className="space-y-2">
         {entry.sets.map((set, index) => (
           <SetRow
             key={set.key}
@@ -137,6 +127,7 @@ export default function ExerciseCard({
             set={set}
             weightStep={step}
             weightLabel={weightLabel}
+            unit={unit}
             flags={detectSetRecords(
               set,
               records,
@@ -149,21 +140,25 @@ export default function ExerciseCard({
         ))}
       </div>
 
-      <div className="mt-2 flex items-center justify-between gap-2">
+      <div className="flex items-center justify-between gap-2">
         <button
           type="button"
           onClick={onAddSet}
-          className="text-primary active:bg-accent flex h-9 items-center gap-1 rounded-lg px-2 text-xs font-medium"
+          className="text-primary active:bg-accent flex h-10 items-center gap-1 rounded-lg px-2 text-sm font-medium"
         >
-          <Plus className="h-3.5 w-3.5" />
+          <Plus className="h-4 w-4" />
           Add set
         </button>
+
+        <span className="text-muted-foreground text-xs">
+          {doneCount}/{entry.sets.length} done
+        </span>
 
         <button
           type="button"
           aria-expanded={effortOpen}
           onClick={() => setEffortOpen((open) => !open)}
-          className="text-muted-foreground flex h-9 items-center gap-1 rounded-lg px-2 text-xs"
+          className="text-muted-foreground flex h-10 items-center gap-1 rounded-lg px-2 text-xs"
         >
           Effort: {effortLabel?.label}
           <ChevronDown
@@ -176,7 +171,7 @@ export default function ExerciseCard({
       </div>
 
       {effortOpen ? (
-        <div className="mt-1 space-y-1.5">
+        <div className="space-y-1.5">
           <div className="grid grid-cols-5 gap-1.5">
             {EFFORT_GUIDE.map((item) => (
               <button
@@ -185,7 +180,7 @@ export default function ExerciseCard({
                 onClick={() => onEffort(item.effort)}
                 aria-pressed={item.effort === effort}
                 className={cn(
-                  "h-9 rounded-lg border text-sm font-medium",
+                  "h-10 rounded-lg border text-sm font-medium",
                   item.effort === effort
                     ? "bg-primary text-primary-foreground border-transparent"
                     : "active:bg-accent",

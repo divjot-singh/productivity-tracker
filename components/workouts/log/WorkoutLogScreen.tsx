@@ -25,9 +25,11 @@ import {
   fromWorkout,
   isWorkingDone,
   lastSession,
+  recentSessions,
   recordsExcluding,
   sessionRecords,
   sessionVolume,
+  sortCombinations,
   suggestCombinationChanges,
   toWorkoutExercises,
   workoutVolume,
@@ -44,6 +46,9 @@ import type {
 import AddExerciseSheet from "./AddExerciseSheet";
 import CombinationPanel from "./CombinationPanel";
 import ExerciseCard from "./ExerciseCard";
+import ExerciseInfoSheet from "./ExerciseInfoSheet";
+import ExerciseOverviewSheet from "./ExerciseOverviewSheet";
+import ExercisePager, { type ExerciseProgress } from "./ExercisePager";
 import FinishSummarySheet, { type FinishSummary } from "./FinishSummarySheet";
 
 interface Editor {
@@ -80,6 +85,9 @@ export default function WorkoutLogScreen() {
   const [hasSaved, setHasSaved] = useState(false);
   const [saveState, setSaveState] = useState<SaveState>("idle");
   const [addOpen, setAddOpen] = useState(false);
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [infoOpen, setInfoOpen] = useState(false);
+  const [overviewOpen, setOverviewOpen] = useState(false);
   const [summary, setSummary] = useState<FinishSummary | null>(null);
   const [summaryOpen, setSummaryOpen] = useState(false);
   const [comboBusy, setComboBusy] = useState(false);
@@ -128,7 +136,11 @@ export default function WorkoutLogScreen() {
 
         if (cancelled) return;
 
-        setCombinations((combinationData ?? []).filter((item) => item.active));
+        setCombinations(
+          sortCombinations(
+            (combinationData ?? []).filter((item) => item.active),
+          ),
+        );
         setExercises((exerciseData ?? []).filter((item) => item.active));
         setWorkouts(workoutData ?? []);
         setStats(
@@ -283,11 +295,14 @@ export default function WorkoutLogScreen() {
     if (dirtyRef.current && editorRef.current) await persist(editorRef.current);
 
     setEditor(null);
+    setActiveIndex(0);
     setDate(next);
   }
 
   function selectCombination(id: string | null) {
     const combination = combinations.find((item) => item.id === id);
+
+    setActiveIndex(0);
 
     edit((current) => {
       if (!combination) return { ...current, combinationId: null };
@@ -323,6 +338,8 @@ export default function WorkoutLogScreen() {
   }
 
   function addExercise(exerciseId: string) {
+    setActiveIndex(editorRef.current?.exercises.length ?? 0);
+
     edit((current) => ({
       ...current,
       exercises: [
@@ -446,6 +463,8 @@ export default function WorkoutLogScreen() {
   }
 
   function moveExercise(index: number, direction: -1 | 1) {
+    setActiveIndex(index + direction);
+
     edit((current) => {
       const next = [...current.exercises];
       const target = index + direction;
@@ -678,7 +697,7 @@ export default function WorkoutLogScreen() {
         },
       );
 
-      setCombinations((previous) => [...previous, created]);
+      setCombinations((previous) => sortCombinations([...previous, created]));
       edit((current) => ({ ...current, combinationId: created.id }));
       toast.success(`${name} saved`);
     } catch (error) {
@@ -726,6 +745,14 @@ export default function WorkoutLogScreen() {
   );
   const volume = Math.round(sessionVolume(editor.exercises));
   const usedIds = new Set(editor.exercises.map((item) => item.exerciseId));
+  const count = editor.exercises.length;
+  const active = Math.min(activeIndex, Math.max(0, count - 1));
+  const current = editor.exercises[active];
+  const progress: ExerciseProgress[] = editor.exercises.map((item) => {
+    const done = item.sets.filter((set) => set.done).length;
+
+    return done === 0 ? "none" : done === item.sets.length ? "done" : "partial";
+  });
 
   return (
     <div className="space-y-3 px-4 pt-3 pb-6">
@@ -781,49 +808,119 @@ export default function WorkoutLogScreen() {
         ) : null}
       </div>
 
-      {editor.exercises.length === 0 ? (
-        <p className="text-muted-foreground bg-card rounded-2xl border p-6 text-center text-sm">
-          Pick a combination above or add an exercise to start.
-        </p>
-      ) : null}
+      {count === 0 ? (
+        <div className="bg-card space-y-3 rounded-2xl border p-6 text-center">
+          <p className="text-muted-foreground text-sm">
+            Pick a combination above or add an exercise to start.
+          </p>
 
-      {editor.exercises.map((item, index) => (
-        <ExerciseCard
-          key={item.key}
-          entry={item}
-          definition={exerciseMap.get(item.exerciseId)}
-          last={lastSession(workouts, item.exerciseId, editor.date)}
-          records={recordsExcluding(stats.get(item.exerciseId), editor.date)}
-          canMoveUp={index > 0}
-          canMoveDown={index < editor.exercises.length - 1}
-          onSetChange={(setIndex, partial) =>
-            changeSet(index, setIndex, partial)
-          }
-          onToggleDone={(setIndex) => toggleDone(index, setIndex)}
-          onRemoveSet={(setIndex) => removeSet(index, setIndex)}
-          onAddSet={() => addSet(index)}
-          onEffort={(effort) => setEffort(index, effort)}
-          onMove={(direction) => moveExercise(index, direction)}
-          onRemove={() => removeExercise(index)}
-        />
-      ))}
+          <Button variant="outline" onClick={() => setAddOpen(true)}>
+            <Plus className="h-4 w-4" />
+            Add exercise
+          </Button>
+        </div>
+      ) : (
+        <>
+          <ExercisePager
+            index={active}
+            total={count}
+            progress={progress}
+            onChange={setActiveIndex}
+            onOverview={() => setOverviewOpen(true)}
+          />
 
-      <Button
-        variant="outline"
-        className="h-11 w-full"
-        onClick={() => setAddOpen(true)}
-      >
-        <Plus className="h-4 w-4" />
-        Add exercise
-      </Button>
+          {current ? (
+            <ExerciseCard
+              key={current.key}
+              entry={current}
+              definition={exerciseMap.get(current.exerciseId)}
+              last={lastSession(workouts, current.exerciseId, editor.date)}
+              records={recordsExcluding(
+                stats.get(current.exerciseId),
+                editor.date,
+              )}
+              canMoveUp={active > 0}
+              canMoveDown={active < count - 1}
+              onInfo={() => setInfoOpen(true)}
+              onSetChange={(setIndex, partial) =>
+                changeSet(active, setIndex, partial)
+              }
+              onToggleDone={(setIndex) => toggleDone(active, setIndex)}
+              onRemoveSet={(setIndex) => removeSet(active, setIndex)}
+              onAddSet={() => addSet(active)}
+              onEffort={(effort) => setEffort(active, effort)}
+              onMove={(direction) => moveExercise(active, direction)}
+              onRemove={() => removeExercise(active)}
+            />
+          ) : null}
 
-      <Button
-        className="h-11 w-full"
-        disabled={doneSets === 0}
-        onClick={() => void finish()}
-      >
-        Finish workout
-      </Button>
+          <div className="flex gap-2 pt-1">
+            <Button
+              variant="outline"
+              className="h-12 flex-1"
+              disabled={active === 0}
+              onClick={() => setActiveIndex(active - 1)}
+            >
+              Previous
+            </Button>
+
+            {active === count - 1 ? (
+              <Button
+                className="h-12 flex-1"
+                disabled={doneSets === 0}
+                onClick={() => void finish()}
+              >
+                Finish workout
+              </Button>
+            ) : (
+              <Button
+                className="h-12 flex-1"
+                onClick={() => setActiveIndex(active + 1)}
+              >
+                Next exercise
+              </Button>
+            )}
+          </div>
+
+          {active < count - 1 && doneSets > 0 ? (
+            <button
+              type="button"
+              onClick={() => void finish()}
+              className="text-muted-foreground w-full py-1 text-center text-sm underline"
+            >
+              Finish workout now
+            </button>
+          ) : null}
+        </>
+      )}
+
+      <ExerciseInfoSheet
+        open={infoOpen}
+        onOpenChange={setInfoOpen}
+        definition={current ? exerciseMap.get(current.exerciseId) : undefined}
+        records={recordsExcluding(
+          current ? stats.get(current.exerciseId) : undefined,
+          editor.date,
+        )}
+        history={
+          current
+            ? recentSessions(workouts, current.exerciseId, editor.date, 3)
+            : []
+        }
+      />
+
+      <ExerciseOverviewSheet
+        open={overviewOpen}
+        onOpenChange={setOverviewOpen}
+        items={editor.exercises.map((item) => ({
+          name: nameOf(item.exerciseId),
+          done: item.sets.filter((set) => set.done).length,
+          total: item.sets.length,
+        }))}
+        activeIndex={active}
+        onPick={setActiveIndex}
+        onAdd={() => setAddOpen(true)}
+      />
 
       <AddExerciseSheet
         open={addOpen}

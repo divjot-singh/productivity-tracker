@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { Minus, Plus } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -22,13 +23,18 @@ export default function Stepper({
   onChange,
   className,
 }: StepperProps) {
-  const adjust = (direction: 1 | -1) =>
+  // Raw text while typing, so "2." survives until blur.
+  const [draft, setDraft] = useState<string | null>(null);
+
+  const adjust = (direction: 1 | -1) => {
+    setDraft(null);
     onChange(Math.max(0, round((value ?? 0) + direction * step)));
+  };
 
   return (
     <div
       className={cn(
-        "bg-muted/40 flex h-10 items-center overflow-hidden rounded-xl border",
+        "bg-muted/40 flex h-11 items-center overflow-hidden rounded-xl border",
         className,
       )}
     >
@@ -36,34 +42,35 @@ export default function Stepper({
         type="button"
         aria-label={`Decrease ${label}`}
         onClick={() => adjust(-1)}
-        className="text-muted-foreground active:bg-accent flex h-full w-8 shrink-0 items-center justify-center"
+        className="text-muted-foreground active:bg-accent flex h-full w-10 shrink-0 items-center justify-center"
       >
         <Minus className="h-3.5 w-3.5" />
       </button>
 
       <input
-        type="number"
+        type="text"
         inputMode="decimal"
         aria-label={label}
-        value={value ?? ""}
+        value={draft ?? value ?? ""}
         placeholder="-"
-        min={0}
-        step={step}
-        onWheel={(event) => event.currentTarget.blur()}
+        onFocus={(event) => event.currentTarget.select()}
+        onBlur={() => setDraft(null)}
         onChange={(event) => {
-          const raw = event.target.value;
-          const parsed = Number(raw);
+          const raw = event.target.value.replace(",", ".");
 
-          onChange(raw === "" || !Number.isFinite(parsed) ? null : parsed);
+          if (!/^\d*\.?\d*$/.test(raw)) return;
+
+          setDraft(raw);
+          onChange(raw === "" || raw === "." ? null : Number(raw));
         }}
-        className="min-w-0 flex-1 [appearance:textfield] bg-transparent text-center text-sm font-semibold outline-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+        className="min-w-0 flex-1 bg-transparent text-center text-base font-semibold outline-none"
       />
 
       <button
         type="button"
         aria-label={`Increase ${label}`}
         onClick={() => adjust(1)}
-        className="text-muted-foreground active:bg-accent flex h-full w-8 shrink-0 items-center justify-center"
+        className="text-muted-foreground active:bg-accent flex h-full w-10 shrink-0 items-center justify-center"
       >
         <Plus className="h-3.5 w-3.5" />
       </button>

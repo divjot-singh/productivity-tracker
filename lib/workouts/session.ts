@@ -71,27 +71,57 @@ export interface LastSession {
   sets: WorkoutSetEntry[];
 }
 
-// Most recent earlier workout that recorded this exercise.
+// Most recent earlier workouts that recorded this exercise, newest first.
+export function recentSessions(
+  workouts: WorkoutEntry[],
+  exerciseId: string,
+  beforeDate: string,
+  limit: number,
+): LastSession[] {
+  return workouts
+    .filter((workout) => workout.date < beforeDate)
+    .sort((a, b) => b.date.localeCompare(a.date))
+    .flatMap((workout) => {
+      const entry = workout.exercises.find(
+        (item) => item.exerciseId === exerciseId,
+      );
+      const sets = entry?.sets.filter((set) => set.reps !== null) ?? [];
+
+      return sets.length > 0 ? [{ date: workout.date, sets }] : [];
+    })
+    .slice(0, limit);
+}
+
 export function lastSession(
   workouts: WorkoutEntry[],
   exerciseId: string,
   beforeDate: string,
 ): LastSession | null {
-  let best: LastSession | null = null;
+  return recentSessions(workouts, exerciseId, beforeDate, 1)[0] ?? null;
+}
 
-  for (const workout of workouts) {
-    if (workout.date >= beforeDate) continue;
-    if (best && workout.date <= best.date) continue;
+const PRIORITY_COMBINATIONS = [
+  "push",
+  "pull",
+  "legs",
+  "pushpulllite",
+  "legslite",
+];
 
-    const entry = workout.exercises.find(
-      (item) => item.exerciseId === exerciseId,
-    );
-    const sets = entry?.sets.filter((set) => set.reps !== null) ?? [];
+const normalizeName = (name: string) =>
+  name.toLowerCase().replace(/[^a-z]/g, "");
 
-    if (sets.length > 0) best = { date: workout.date, sets };
-  }
+// Main splits first in a fixed order, everything else after, alphabetically.
+export function sortCombinations<T extends { name: string }>(items: T[]): T[] {
+  const rank = (item: T) => {
+    const index = PRIORITY_COMBINATIONS.indexOf(normalizeName(item.name));
 
-  return best;
+    return index === -1 ? PRIORITY_COMBINATIONS.length : index;
+  };
+
+  return [...items].sort(
+    (a, b) => rank(a) - rank(b) || a.name.localeCompare(b.name),
+  );
 }
 
 export function buildExercise(
