@@ -685,8 +685,8 @@ export default function VisualizationDetailPage() {
 
             <p className="text-muted-foreground text-sm">
               {visualization.visible
-                ? "This visualization appears on the dashboard."
-                : "This visualization is hidden from the dashboard."}
+                ? "This visualization appears on Insights."
+                : "This visualization is hidden from Insights."}
             </p>
           </div>
 
@@ -719,7 +719,7 @@ export default function VisualizationDetailPage() {
               <p className="text-sm font-medium">Delete this visualization</p>
 
               <p className="text-muted-foreground mt-1 text-sm">
-                Permanently remove this visualization from your dashboard.
+                Permanently remove this visualization from your Insights.
               </p>
             </div>
 
@@ -741,7 +741,7 @@ export default function VisualizationDetailPage() {
 
             <DialogDescription>
               &ldquo;{visualization.title}&rdquo; will be permanently removed
-              from your dashboard. This action cannot be undone.
+              from your Insights. This action cannot be undone.
             </DialogDescription>
           </DialogHeader>
 

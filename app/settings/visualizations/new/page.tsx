@@ -586,7 +586,7 @@ export default function NewVisualizationPage() {
               <VisualizationFieldLabel topic="visible" htmlFor="visible">
                 Visible
               </VisualizationFieldLabel>
-              <p className="text-muted-foreground text-sm">Show on dashboard</p>
+              <p className="text-muted-foreground text-sm">Show on Insights</p>
             </div>
             <Switch
               id="visible"

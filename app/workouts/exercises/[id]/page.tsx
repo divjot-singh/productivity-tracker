@@ -15,6 +15,7 @@ import { toast } from "sonner";
 import ActionBar from "@/components/common/ActionBar";
 import { Button } from "@/components/ui/button";
 import ExerciseEditorFields from "@/components/workouts/ExerciseEditorFields";
+import ExerciseRecords from "@/components/workouts/ExerciseRecords";
 import {
   Dialog,
   DialogContent,
@@ -373,7 +374,7 @@ export default function ExerciseDetailPage() {
             Edit
           </Button>
         ) : (
-          <div className="flex items-center gap-2">
+          <div className="hidden items-center gap-2 sm:flex">
             {hasUnsavedChanges ? (
               <span className="text-muted-foreground hidden text-xs sm:block">
                 Unsaved changes
@@ -427,7 +428,7 @@ export default function ExerciseDetailPage() {
           </div>
 
           {/* Editor */}
-          <div className="bg-card rounded-2xl border p-4 shadow-sm sm:p-6">
+          <div>
             <ExerciseEditorFields
               exercise={exercise}
               equipmentOptions={equipmentOptions}
@@ -526,6 +527,12 @@ export default function ExerciseDetailPage() {
               ))}
             </div>
           </section>
+
+          <ExerciseRecords
+            exerciseId={exercise.id}
+            workouts={referencingWorkouts}
+            unit={exercise.weightTracking.unit}
+          />
 
           {/* Overview */}
           <section className="mb-8">

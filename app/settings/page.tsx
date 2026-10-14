@@ -87,7 +87,7 @@ export default function SettingsPage() {
           <h1 className="text-3xl font-bold tracking-tight">Me</h1>
 
           <p className="text-muted-foreground mt-1 text-sm">
-            Your account, goals and dashboard
+            Your account, goals and Insights
           </p>
         </div>
 

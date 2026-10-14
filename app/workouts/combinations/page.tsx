@@ -10,7 +10,12 @@ import { Input } from "@/components/ui/input";
 import { useRequireAuth } from "@/lib/hooks/useRequireAuth";
 import { apiRequest } from "@/lib/api/client";
 import { getExerciseEquipments } from "@/lib/workouts/exercise-filters";
-import { ExerciseDefinition, WorkoutCombination } from "@/models/workout";
+import { sortCombinations } from "@/lib/workouts/session";
+import {
+  ExerciseDefinition,
+  WorkoutCombination,
+  WorkoutEntry,
+} from "@/models/workout";
 import { cn } from "@/lib/utils";
 
 export default function WorkoutCombinationsPage() {
@@ -18,6 +23,7 @@ export default function WorkoutCombinationsPage() {
 
   const [combinations, setCombinations] = useState<WorkoutCombination[]>([]);
   const [exercises, setExercises] = useState<ExerciseDefinition[]>([]);
+  const [workouts, setWorkouts] = useState<WorkoutEntry[]>([]);
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(true);
 
@@ -41,8 +47,12 @@ export default function WorkoutCombinationsPage() {
           ),
         ]);
 
-        setCombinations(comboData ?? []);
+        setCombinations(sortCombinations(comboData ?? []));
         setExercises(exerciseData ?? []);
+
+        apiRequest<WorkoutEntry[]>(user, "/api/workouts")
+          .then(setWorkouts)
+          .catch(() => undefined);
       } catch (error) {
         console.error(error);
         toast.error("Failed to load combinations");
@@ -103,6 +113,26 @@ export default function WorkoutCombinationsPage() {
       return haystack.includes(normalizedQuery);
     });
   }, [combinations, exerciseMetaMap, query]);
+
+  const usage = useMemo(() => {
+    const map = new Map<string, { last: string; count: number }>();
+
+    for (const workout of workouts) {
+      for (const id of workout.combinationIds) {
+        const current = map.get(id);
+
+        map.set(id, {
+          last:
+            current && current.last > workout.date
+              ? current.last
+              : workout.date,
+          count: (current?.count ?? 0) + 1,
+        });
+      }
+    }
+
+    return map;
+  }, [workouts]);
 
   const activeCount = combinations.filter(
     (combination) => combination.active !== false,
@@ -221,10 +251,6 @@ export default function WorkoutCombinationsPage() {
                 .map((id) => exerciseMap.get(id))
                 .filter(Boolean) as ExerciseDefinition[];
 
-              const visibleExercises = combinationExercises.slice(0, 4);
-              const remainingCount =
-                combinationExercises.length - visibleExercises.length;
-
               const isActive = combination.active !== false;
 
               return (
@@ -269,48 +295,24 @@ export default function WorkoutCombinationsPage() {
                     </div>
                   </div>
 
-                  {/* Description */}
-                  {combination.description ? (
+                  {combinationExercises.length > 0 ? (
                     <p className="text-muted-foreground mt-3 line-clamp-2 text-xs leading-relaxed">
-                      {combination.description}
+                      {combinationExercises
+                        .map((exercise) => exercise.name)
+                        .join(" - ")}
                     </p>
-                  ) : null}
-
-                  {/* Exercises */}
-                  {visibleExercises.length > 0 ? (
-                    <div className="mt-3 flex flex-wrap gap-1.5">
-                      {visibleExercises.map((exercise) => (
-                        <span
-                          key={exercise.id}
-                          className="bg-muted/70 text-muted-foreground rounded-md px-2 py-1 text-[10px] font-medium"
-                        >
-                          {exercise.name}
-                        </span>
-                      ))}
-
-                      {remainingCount > 0 ? (
-                        <span className="bg-muted/70 text-muted-foreground rounded-md px-2 py-1 text-[10px] font-medium">
-                          +{remainingCount} more
-                        </span>
-                      ) : null}
-                    </div>
                   ) : (
                     <p className="text-muted-foreground mt-3 text-xs">
                       No exercises assigned
                     </p>
                   )}
 
-                  {/* Metadata */}
-                  {combination.coachingNotes || combination.warmupGuidance ? (
-                    <div className="text-muted-foreground mt-3 flex items-center gap-3 text-[10px]">
-                      {combination.warmupGuidance ? (
-                        <span>Warm-up guidance</span>
-                      ) : null}
-
-                      {combination.coachingNotes ? (
-                        <span>Coaching notes</span>
-                      ) : null}
-                    </div>
+                  {usage.get(combination.id) ? (
+                    <p className="text-muted-foreground mt-2 text-[11px]">
+                      Last done {usage.get(combination.id)?.last} -{" "}
+                      {usage.get(combination.id)?.count} time
+                      {usage.get(combination.id)?.count === 1 ? "" : "s"}
+                    </p>
                   ) : null}
                 </Link>
               );

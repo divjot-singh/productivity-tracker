@@ -139,7 +139,7 @@ export default function VisualizationsPage() {
           <h1 className="text-3xl font-bold tracking-tight">Settings</h1>
 
           <p className="text-muted-foreground mt-1 text-sm">
-            Manage your goals and dashboard visualizations
+            Manage your goals and Insights visualizations
           </p>
         </div>
 

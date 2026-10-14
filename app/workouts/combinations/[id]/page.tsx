@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 
+import ActionBar from "@/components/common/ActionBar";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -649,11 +650,11 @@ export default function CombinationDetailPage() {
             </Button>
           </div>
           {/* Mobile action bar */}
-          <div className="bg-background/95 supports-[backdrop-filter]:bg-background/80 fixed inset-x-0 bottom-[57px] z-50 border-t p-2.5 backdrop-blur">
-            <div className="mx-auto flex max-w-3xl gap-2">
+          <div className="sm:hidden">
+            <ActionBar>
               <Button
                 variant="outline"
-                className="h-10 flex-1"
+                className="h-12 flex-1"
                 onClick={handleCancelEdit}
                 disabled={saving}
               >
@@ -661,14 +662,14 @@ export default function CombinationDetailPage() {
               </Button>
 
               <Button
-                className="h-10 flex-1"
+                className="h-12 flex-1"
                 onClick={handleSave}
                 disabled={!hasChanges || saving}
               >
                 <Save className="mr-1.5 h-4 w-4" />
                 {saving ? "Saving..." : "Save changes"}
               </Button>
-            </div>
+            </ActionBar>
           </div>
         </>
       ) : (

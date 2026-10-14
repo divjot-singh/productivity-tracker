@@ -96,7 +96,7 @@ export default function Dashboard() {
         setVisualizations(response);
       } catch (err) {
         console.error(err);
-        setError("Unable to load dashboard.");
+        setError("Unable to load insights.");
       } finally {
         setLoadingDashboard(false);
       }
@@ -109,7 +109,7 @@ export default function Dashboard() {
     return (
       <AppShell>
         <PageHeader
-          title="Dashboard"
+          title="Insights"
           description="Monitor your daily consistency and long-term progress."
         />
 
@@ -136,7 +136,7 @@ export default function Dashboard() {
   return (
     <AppShell>
       <PageHeader
-        title="Dashboard"
+        title="Insights"
         description="Monitor your daily consistency and long-term progress."
       />
 
@@ -149,7 +149,7 @@ export default function Dashboard() {
       ) : visualizations.length === 0 ? (
         <div className="bg-card mt-6 rounded-2xl border p-8 text-center">
           <p className="text-muted-foreground text-sm">
-            Add a goal and log a day to see your dashboard.
+            Add a goal and log a day to see your insights.
           </p>
 
           <Link
