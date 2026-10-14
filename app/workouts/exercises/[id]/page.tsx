@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 
+import ActionBar from "@/components/common/ActionBar";
 import { Button } from "@/components/ui/button";
 import ExerciseEditorFields from "@/components/workouts/ExerciseEditorFields";
 import {
@@ -463,12 +464,12 @@ export default function ExerciseDetailPage() {
             </Button>
           </div>
 
-          {/* Mobile sticky actions */}
-          <div className="bg-background/95 supports-[backdrop-filter]:bg-background/80 fixed right-0 bottom-0 left-0 z-50 border-t p-3 backdrop-blur sm:hidden">
-            <div className="mx-auto flex max-w-3xl gap-2">
+          {/* Mobile actions */}
+          <div className="sm:hidden">
+            <ActionBar>
               <Button
                 variant="outline"
-                className="flex-1"
+                className="h-12 flex-1"
                 onClick={handleCancelEdit}
                 disabled={saving}
               >
@@ -476,13 +477,13 @@ export default function ExerciseDetailPage() {
               </Button>
 
               <Button
-                className="flex-1"
+                className="h-12 flex-1"
                 onClick={handleSave}
                 disabled={!hasUnsavedChanges || saving || hasFormErrors}
               >
                 {saving ? "Saving..." : "Save changes"}
               </Button>
-            </div>
+            </ActionBar>
           </div>
         </>
       ) : (

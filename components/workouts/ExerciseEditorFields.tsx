@@ -48,25 +48,53 @@ function toggleValue<T extends string>(values: T[], value: T): T[] {
 function Section({
   title,
   description,
+  summary,
+  defaultOpen = false,
+  forceOpen = false,
   children,
 }: {
   title: string;
   description?: string;
+  summary?: string;
+  defaultOpen?: boolean;
+  forceOpen?: boolean;
   children: React.ReactNode;
 }) {
-  return (
-    <section className="space-y-4">
-      <div>
-        <h2 className="text-sm font-semibold">{title}</h2>
+  const [open, setOpen] = useState(defaultOpen);
+  const expanded = open || forceOpen;
 
+  return (
+    <section className="bg-card rounded-2xl border">
+      <button
+        type="button"
+        aria-expanded={expanded}
+        onClick={() => setOpen((value) => !value)}
+        className="flex w-full items-center gap-3 px-4 py-3.5 text-left"
+      >
+        <span className="min-w-0 flex-1">
+          <span className="block text-sm font-semibold">{title}</span>
+
+          {!expanded && summary ? (
+            <span className="text-muted-foreground mt-0.5 block truncate text-xs">
+              {summary}
+            </span>
+          ) : null}
+        </span>
+
+        <ChevronDown
+          className={`text-muted-foreground h-4 w-4 shrink-0 transition-transform ${expanded ? "rotate-180" : ""}`}
+        />
+      </button>
+
+      <div className={expanded ? "space-y-4 px-4 pb-4" : "hidden"}>
         {description ? (
-          <p className="text-muted-foreground mt-1 text-xs leading-relaxed">
+          <p className="text-muted-foreground text-xs leading-relaxed">
             {description}
           </p>
         ) : null}
-      </div>
 
-      {children}
+        {children}
+      </div>
     </section>
   );
 }
@@ -279,13 +307,15 @@ export default function ExerciseEditorFields({
   }
 
   return (
-    <div className="space-y-10">
+    <div className="space-y-3">
       {/* ─────────────────────────────────────
           BASIC INFORMATION
       ───────────────────────────────────── */}
 
       <Section
         title="Basic information"
+        defaultOpen
+        summary={exercise.name || "Name and description"}
         description="The name and description shown throughout your workout history."
       >
         <div className="space-y-5">
@@ -327,6 +357,10 @@ export default function ExerciseEditorFields({
 
       <Section
         title="Classification"
+        defaultOpen
+        summary={
+          exercise.categories.join(", ") || "Categories and muscle groups"
+        }
         description="Organize this exercise so it can be found and grouped correctly."
       >
         <div className="space-y-6">
@@ -441,6 +475,11 @@ export default function ExerciseEditorFields({
 
       <Section
         title="Exercise setup"
+        summary={
+          [selectedEquipments.join(", "), exercise.type]
+            .filter(Boolean)
+            .join(" - ") || "Equipment and type"
+        }
         description="Define the equipment and exercise type used for tracking."
       >
         <div className="space-y-4">
@@ -577,6 +616,12 @@ export default function ExerciseEditorFields({
 
       <Section
         title="Tracking"
+        summary={
+          Object.entries(exercise.tracking)
+            .filter(([, on]) => on)
+            .map(([key]) => key)
+            .join(", ") || "Metrics"
+        }
         description="Choose which metrics should be recorded when this exercise is performed."
       >
         <div className="divide-y rounded-2xl border">
@@ -647,6 +692,7 @@ export default function ExerciseEditorFields({
 
       <Section
         title="Primary metric tracking"
+        summary={`${exercise.weightTracking.unit} - ${exercise.weightTracking.mode.replace(/_/g, " ")}`}
         description="Configure how the primary training metric should be recorded for this exercise."
       >
         <div className="grid gap-5 sm:grid-cols-2">
@@ -763,6 +809,8 @@ export default function ExerciseEditorFields({
 
       <Section
         title="Progression"
+        forceOpen={Boolean(repRangeError)}
+        summary={exercise.progression.strategy.replace(/_/g, " ")}
         description="Define how you want to progress this exercise over time."
       >
         <div className="space-y-5">
@@ -860,6 +908,7 @@ export default function ExerciseEditorFields({
       {onToggleCombination ? (
         <Section
           title="Workout combinations"
+          summary={`${selectedCombinationIds.length} selected`}
           description="Choose which workout combinations should include this exercise."
         >
           <div className="space-y-3">
@@ -924,6 +973,11 @@ export default function ExerciseEditorFields({
 
       <Section
         title="Training notes"
+        summary={
+          exercise.notes.length
+            ? `${exercise.notes.length} notes`
+            : "Coaching cues"
+        }
         description="Add coaching cues or reminders. Use one note per line."
       >
         <Textarea
