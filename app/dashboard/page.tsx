@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 
 import AppShell from "@/components/layout/AppShell";
 import PageHeader from "@/components/common/PageHeader";
+import InsightsSubNav from "@/components/layout/InsightsSubNav";
 import DashboardVisualizationRenderer from "@/components/dashboard/visualization-renderer";
 import { buttonVariants } from "@/components/ui/button";
 
@@ -38,7 +39,10 @@ export default function Dashboard() {
         setLoadingDashboard(true);
         setError(null);
 
-        const goals = await apiRequest<MetricDefinition[]>(user, "/api/goals");
+        const goals = await apiRequest<MetricDefinition[]>(
+          user,
+          "/api/goals?status=all",
+        );
 
         if (goals.length === 0 && !getOnboardingSkipped()) {
           router.replace("/onboarding");
@@ -70,6 +74,8 @@ export default function Dashboard() {
           description="Monitor your daily consistency and long-term progress."
         />
 
+        <InsightsSubNav />
+
         <div className="mt-6 grid min-w-0 gap-4 pb-28 sm:gap-6 xl:grid-cols-2">
           {Array.from({ length: 6 }).map((_, index) => (
             <div
@@ -94,6 +100,8 @@ export default function Dashboard() {
         title="Dashboard"
         description="Monitor your daily consistency and long-term progress."
       />
+
+      <InsightsSubNav />
 
       {error ? (
         <div className="border-destructive text-destructive mt-6 rounded-xl border p-4">

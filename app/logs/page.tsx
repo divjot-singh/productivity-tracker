@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ChevronDown, CalendarDays } from "lucide-react";
 
 import AppShell from "@/components/layout/AppShell";
+import InsightsSubNav from "@/components/layout/InsightsSubNav";
 import { buttonVariants } from "@/components/ui/button";
 
 import { useRequireAuth } from "@/lib/hooks/useRequireAuth";
@@ -71,6 +72,8 @@ export default function LogsPage() {
   return (
     <AppShell>
       <div className="mx-auto w-full max-w-screen-sm space-y-6 px-4 pt-4 pb-28">
+        <InsightsSubNav />
+
         <div>
           <h1 className="text-3xl font-bold">Logs</h1>
 

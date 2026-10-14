@@ -4,10 +4,18 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { MessageCircle } from "lucide-react";
 
+import { CHROMELESS_PREFIXES } from "@/lib/navigation";
+
+// Desktop-only floating entry; on mobile the chat icon lives in the top bar so it never covers page actions.
 export default function FloatingChatButton() {
   const pathname = usePathname();
 
-  if (pathname === "/chat") {
+  const hidden =
+    pathname === "/chat" ||
+    pathname.startsWith("/chat/") ||
+    CHROMELESS_PREFIXES.some((prefix) => pathname.startsWith(prefix));
+
+  if (hidden) {
     return null;
   }
 
