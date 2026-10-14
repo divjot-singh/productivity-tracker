@@ -37,7 +37,7 @@ export default function TopBar() {
       .toUpperCase() ?? "U";
 
   return (
-    <header className="bg-background border-border fixed top-0 right-0 left-0 z-50 flex h-16 items-center justify-between border-b px-4">
+    <header className="bg-background border-border fixed top-0 right-0 left-0 z-50 flex h-[var(--top-bar)] items-center justify-between border-b px-4 pt-[env(safe-area-inset-top)]">
       <BrandLogo size={30} textClassName="text-base font-semibold" />
 
       <div className="flex items-center gap-2">

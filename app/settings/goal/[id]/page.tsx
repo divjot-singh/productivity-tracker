@@ -196,7 +196,7 @@ export default function GoalDetails() {
   const hasChanges = JSON.stringify(goal) !== JSON.stringify(originalGoal);
 
   return (
-    <div className="relative p-4 pb-24">
+    <div className="relative p-4 pt-[calc(1rem+env(safe-area-inset-top))] pb-24">
       <div className="mb-4 flex items-center justify-between">
         <button
           onClick={handleCancel}

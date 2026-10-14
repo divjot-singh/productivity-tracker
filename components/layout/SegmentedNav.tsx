@@ -50,7 +50,7 @@ export default function SegmentedNav({
   const pathname = usePathname();
 
   return (
-    <div className="bg-background sticky top-16 z-30 -mx-4 px-4 pt-1 pb-3">
+    <div className="bg-background sticky top-[var(--top-bar)] z-30 -mx-4 px-4 pt-1 pb-3">
       <nav
         aria-label={label}
         className="bg-muted/60 border-border flex [scrollbar-width:none] gap-1 overflow-x-auto rounded-xl border p-1 [&::-webkit-scrollbar]:hidden"

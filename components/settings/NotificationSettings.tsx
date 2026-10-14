@@ -254,7 +254,7 @@ export default function NotificationSettings() {
                       event.target.value &&
                       update(type, { time: event.target.value })
                     }
-                    className="h-9 w-28"
+                    className="h-9 w-32 shrink-0"
                   />
                 )}
 

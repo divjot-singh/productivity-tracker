@@ -356,7 +356,7 @@ export default function VisualizationDetailPage() {
     hasValidDisplayOrder;
 
   return (
-    <div className="relative mx-auto w-full max-w-screen-sm px-4 pt-4 pb-4">
+    <div className="relative mx-auto w-full max-w-screen-sm px-4 pt-[calc(1rem+env(safe-area-inset-top))] pb-4">
       <div className="mb-4 flex items-center justify-between">
         <button
           onClick={handleCancel}

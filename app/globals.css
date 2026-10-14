@@ -3,6 +3,7 @@
 @import "shadcn/tailwind.css";
 
 :root {
+  --top-bar: calc(4rem + env(safe-area-inset-top));
   --bottom-nav: calc(4rem + env(safe-area-inset-bottom));
   --background: #0d0e12;
   --foreground: #e8eaf0;
@@ -191,14 +192,25 @@
     box-sizing: border-box;
     min-width: 0;
     max-width: 100%;
+    appearance: none;
+    -webkit-appearance: none;
+    text-align: left;
+    padding-right: 2.5rem;
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    background-size: 1.1rem;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='10'/%3E%3Cpolyline points='12 6 12 12 16 14'/%3E%3C/svg%3E");
+  }
+  /* Our clock icon replaces the browser's; the invisible indicator still opens the picker. */
+  input[type="time"]::-webkit-calendar-picker-indicator {
+    opacity: 0;
+    width: 2rem;
   }
   input[type="date"]::-webkit-calendar-picker-indicator,
-   input[type="time"]::-webkit-calendar-picker-indicator,
-   input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+  input[type="datetime-local"]::-webkit-calendar-picker-indicator {
     filter: invert(1);
   }
 }
-
 
 * {
   scroll-behavior: smooth;
@@ -215,17 +227,15 @@ body {
 }
 
 :root {
+  --chart-1: var(--primary);
 
---chart-1: var(--primary);
+  --chart-2: var(--good);
 
---chart-2: var(--good);
+  --chart-3: oklch(0.75 0.15 220);
 
---chart-3: oklch(0.75 0.15 220);
+  --chart-4: var(--warn);
 
---chart-4: var(--warn);
-
---chart-5: oklch(0.7 0.15 300);
-
+  --chart-5: oklch(0.7 0.15 300);
 }
 
 @layer utilities {
@@ -233,10 +243,3 @@ body {
     min-height: 100dvh;
   }
 }
-
-@supports (-webkit-touch-callout: none) {
-  input[type="time"] {
-    width: calc(100% - 34px);
-  }
-}
-

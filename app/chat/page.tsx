@@ -1109,7 +1109,7 @@ export default function ChatPage() {
           </div>
         </SheetContent>
 
-        <header className="bg-background/95 supports-backdrop-filter:bg-background/80 flex h-16 shrink-0 items-center justify-between border-b border-white/8 px-4 backdrop-blur sm:px-6">
+        <header className="bg-background/95 supports-backdrop-filter:bg-background/80 flex h-[var(--top-bar)] pt-[env(safe-area-inset-top)] shrink-0 items-center justify-between border-b border-white/8 px-4 backdrop-blur sm:px-6">
           <Button
             size="icon"
             variant="outline"
