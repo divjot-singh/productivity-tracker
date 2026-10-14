@@ -2,8 +2,10 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { ArrowRight, MessageCircle } from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
+import { ArrowRight, MessageCircle, Send } from "lucide-react";
+
+import { Input } from "@/components/ui/input";
 
 import {
   Sheet,
@@ -27,11 +29,27 @@ export default function QuickChatButton({
   variant: "icon" | "floating";
 }) {
   const [open, setOpen] = useState(false);
+  const [question, setQuestion] = useState("");
   const router = useRouter();
+  const pathname = usePathname();
 
-  function ask(question: string) {
+  function ask(text: string) {
+    const trimmed = text.trim();
+
+    if (!trimmed) {
+      return;
+    }
+
     setOpen(false);
-    router.push(`/chat?q=${encodeURIComponent(question)}`);
+    setQuestion("");
+
+    // The chat page is already mounted there, so hand the question over directly.
+    if (pathname.startsWith("/chat")) {
+      window.dispatchEvent(new CustomEvent("daylog:ask", { detail: trimmed }));
+      return;
+    }
+
+    router.push(`/chat?q=${encodeURIComponent(trimmed)}`);
   }
 
   return (
@@ -66,18 +84,42 @@ export default function QuickChatButton({
           </SheetHeader>
 
           <div className="space-y-2 px-5 pb-3">
-            {SUGGESTIONS.map((question) => (
+            {SUGGESTIONS.map((suggestion) => (
               <button
-                key={question}
+                key={suggestion}
                 type="button"
-                onClick={() => ask(question)}
+                onClick={() => ask(suggestion)}
                 className="bg-card hover:bg-accent flex w-full items-center justify-between gap-3 rounded-xl border px-4 py-3 text-left text-sm transition-colors"
               >
-                {question}
+                {suggestion}
                 <ArrowRight className="text-muted-foreground h-4 w-4 shrink-0" />
               </button>
             ))}
           </div>
+
+          <form
+            className="flex items-center gap-2 px-5 pb-3"
+            onSubmit={(event) => {
+              event.preventDefault();
+              ask(question);
+            }}
+          >
+            <Input
+              value={question}
+              onChange={(event) => setQuestion(event.target.value)}
+              placeholder="Ask something else..."
+              className="h-11"
+            />
+
+            <button
+              type="submit"
+              aria-label="Send question"
+              disabled={!question.trim()}
+              className="bg-primary text-primary-foreground flex h-11 w-11 shrink-0 items-center justify-center rounded-full disabled:opacity-40"
+            >
+              <Send className="h-4 w-4" />
+            </button>
+          </form>
 
           <div className="px-5 pb-5">
             <Link

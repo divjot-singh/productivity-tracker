@@ -641,11 +641,7 @@ export default function ChatPage() {
     : null;
 
   const [historyOpen, setHistoryOpen] = useState(false);
-  const [draft, setDraft] = useState(() =>
-    typeof window === "undefined"
-      ? ""
-      : (new URLSearchParams(window.location.search).get("q") ?? ""),
-  );
+  const [draft, setDraft] = useState("");
   const [isSending, setIsSending] = useState(false);
   const [isLoadingConversations, setIsLoadingConversations] = useState(false);
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
@@ -755,14 +751,48 @@ export default function ChatPage() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [visibleMessages]);
 
+  // Quick-chat questions arrive as ?q= (from other pages) or a window event (when already on chat).
+  const sendRef = useRef<(text: string) => Promise<void>>(async () => {});
+  const autoSentRef = useRef(false);
+
+  useEffect(() => {
+    if (!user || autoSentRef.current) {
+      return;
+    }
+
+    const question = new URLSearchParams(window.location.search).get("q");
+
+    if (!question) {
+      return;
+    }
+
+    autoSentRef.current = true;
+    window.history.replaceState(null, "", window.location.pathname);
+    void sendRef.current(question);
+  }, [user]);
+
+  useEffect(() => {
+    const onAsk = (event: Event) => {
+      void sendRef.current((event as CustomEvent<string>).detail);
+    };
+
+    window.addEventListener("daylog:ask", onAsk);
+
+    return () => window.removeEventListener("daylog:ask", onAsk);
+  }, []);
+
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
+    await sendMessage(draft);
+  }
+
+  async function sendMessage(text: string) {
     if (!user || isSending) {
       return;
     }
 
-    const trimmed = draft.trim();
+    const trimmed = text.trim();
     if (!trimmed) {
       return;
     }
@@ -991,6 +1021,10 @@ export default function ChatPage() {
     // Resend the message
     setDraft(message.content);
   }
+
+  useEffect(() => {
+    sendRef.current = sendMessage;
+  });
 
   if (loading || !user) {
     return (
