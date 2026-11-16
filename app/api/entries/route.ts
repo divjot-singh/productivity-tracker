@@ -62,17 +62,29 @@ export async function POST(request: NextRequest) {
     // Server side calculation
 
     const result = calculateScore(metrics, values);
+    const existing = await getEntry(user.uid, date);
+    const archivedIds = new Set(
+      metrics.filter((metric) => metric.archived).map((metric) => metric.id),
+    );
+    const archivedValues = Object.fromEntries(
+      Object.entries(existing?.values ?? {}).filter(([id]) =>
+        archivedIds.has(id),
+      ),
+    );
+    const archivedBreakdown = (existing?.breakdown ?? []).filter((item) =>
+      archivedIds.has(item.metricId),
+    );
 
     await createEntry(user.uid, {
       date,
 
-      values,
+      values: { ...values, ...archivedValues },
 
       score: result.totalScore,
 
       xp: result.totalXP,
 
-      breakdown: result.metrics,
+      breakdown: [...result.metrics, ...archivedBreakdown],
     });
 
     return NextResponse.json({

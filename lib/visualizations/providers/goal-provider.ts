@@ -34,7 +34,7 @@ export const goalProvider: VisualizationProvider<GoalProviderData> = {
             return matchesCondition(
               value,
               condition.comparator,
-              condition.value,
+              condition.useGoalTarget ? goal.target : condition.value,
             );
           });
 

@@ -18,6 +18,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import {
@@ -223,6 +224,14 @@ export default function GoalDetails() {
 
         {isEditing ? (
           <div className="space-y-6">
+            <div className="flex items-center justify-between gap-4">
+              <Label htmlFor="goal-archived">Archived</Label>
+              <Switch
+                id="goal-archived"
+                checked={goal.archived ?? false}
+                onCheckedChange={(archived) => updateGoal({ archived })}
+              />
+            </div>
             <div className="space-y-2">
               <Label>Description</Label>
 

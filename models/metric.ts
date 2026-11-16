@@ -81,6 +81,8 @@ export interface MetricDefinition {
    */
   isProtected?: boolean;
 
+  archived?: boolean;
+
   createdAt?: unknown;
   updatedAt?: unknown;
 }

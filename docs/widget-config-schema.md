@@ -1,5 +1,9 @@
 # Widget Configuration
 
+Composite streak conditions can use a fixed value or the current target of
+their referenced goal. Target-based conditions evaluate historical entries
+against the current target.
+
 Every widget contains:
 
 id

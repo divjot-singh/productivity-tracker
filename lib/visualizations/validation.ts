@@ -240,6 +240,9 @@ export function normalizeVisualizationOptions(
         goalLabel: condition.goalLabel.trim(),
         comparator: condition.comparator,
         value: condition.value,
+        ...(condition.useGoalTarget === undefined
+          ? {}
+          : { useGoalTarget: condition.useGoalTarget }),
       })),
     };
   }
@@ -456,7 +459,18 @@ function validateStreakRule(rule: StreakRule): string | null {
       return `Option 'streakRule.conditions[${index}].comparator' is invalid.`;
     }
 
-    if (condition.comparator !== "eq" && typeof condition.value !== "number") {
+    if (
+      condition.useGoalTarget !== undefined &&
+      typeof condition.useGoalTarget !== "boolean"
+    ) {
+      return `Option 'streakRule.conditions[${index}].useGoalTarget' must be a boolean.`;
+    }
+
+    if (
+      !condition.useGoalTarget &&
+      condition.comparator !== "eq" &&
+      typeof condition.value !== "number"
+    ) {
       return `Option 'streakRule.conditions[${index}].value' must be a number for comparator '${condition.comparator}'.`;
     }
   }

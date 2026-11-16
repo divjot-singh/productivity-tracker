@@ -32,6 +32,7 @@ export interface StreakRuleCondition {
   goalLabel: string;
   comparator: StreakConditionComparator;
   value: number | boolean | string;
+  useGoalTarget?: boolean;
 }
 
 export interface StreakRule {

@@ -19,14 +19,14 @@ export default function GoalInput({ metric, value, onChange }: Props) {
   const progress =
     target > 0 ? Math.min((numericValue / target) * 100, 100) : 0;
 
-  const baseScore =
-    target > 0 ? Math.min(numericValue / target, 1) * metric.weight : 0;
-
-  const exceeded = Math.max(numericValue - target, 0);
-
-  const bonus = exceeded > 0 ? (metric.scoring.bonusRate ?? 0) : 0;
-
-  const score = baseScore + bonus;
+  let score = target > 0 ? (numericValue / target) * metric.weight : 0;
+  if (metric.scoring.maxScore !== undefined) {
+    score = Math.min(score, metric.scoring.maxScore);
+  }
+  if (metric.scoring.bonusRate !== undefined) {
+    score = Math.min(score, metric.weight + metric.scoring.bonusRate);
+  }
+  const bonus = Math.max(score - metric.weight, 0);
 
   return (
     <MetricCard

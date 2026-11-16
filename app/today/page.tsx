@@ -183,7 +183,7 @@ export default function TodayPage() {
 
         const goals = await apiRequest<MetricDefinition[]>(user, "/api/goals");
 
-        setMetrics(goals);
+        setMetrics(goals.filter((goal) => !goal.archived));
       } catch (err) {
         console.error(err);
         setError("Unable to load today's configuration.");

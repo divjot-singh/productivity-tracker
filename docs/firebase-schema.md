@@ -5,6 +5,7 @@
 This document defines the Firestore database design for the Productivity Tracker application.
 
 It acts as the source of truth for:
+
 - Collections
 - Documents
 - Field definitions
@@ -30,9 +31,13 @@ It acts as the source of truth for:
 # Collection Structure
 
 users/
-    {uid}/
-        entries/
-            {yyyy-mm-dd}
+{uid}/
+goals/
+{goalId}
+visualizations/
+{visualizationId}
+entries/
+{yyyy-mm-dd}
 
 ---
 
@@ -65,8 +70,7 @@ boolean
 settings
 map
 
-goals
-map
+Goal definitions are stored in the `goals` subcollection.
 
 ---
 

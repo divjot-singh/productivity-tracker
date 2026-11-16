@@ -261,6 +261,7 @@ function ConditionRow({
           {goalType === "boolean" ? (
             <Select
               value={String(Boolean(condition.value))}
+              disabled={condition.useGoalTarget}
               onValueChange={(value) =>
                 onChange({
                   ...condition,
@@ -281,6 +282,7 @@ function ConditionRow({
             </Select>
           ) : goalType === "time" ? (
             <Input
+              disabled={condition.useGoalTarget}
               value={typeof condition.value === "string" ? condition.value : ""}
               onChange={(event) =>
                 onChange({
@@ -292,6 +294,7 @@ function ConditionRow({
           ) : (
             <Input
               type="number"
+              disabled={condition.useGoalTarget}
               value={typeof condition.value === "number" ? condition.value : ""}
               onChange={(event) =>
                 onChange({
@@ -305,6 +308,18 @@ function ConditionRow({
         </div>
       </div>
 
+      <div className="flex items-center justify-between gap-4">
+        <Label htmlFor={`goal-target-${condition.goalLabel}`}>
+          Use current goal target
+        </Label>
+        <Switch
+          id={`goal-target-${condition.goalLabel}`}
+          checked={condition.useGoalTarget ?? false}
+          onCheckedChange={(useGoalTarget) =>
+            onChange({ ...condition, useGoalTarget })
+          }
+        />
+      </div>
       <div className="flex justify-end">
         <Button
           type="button"
