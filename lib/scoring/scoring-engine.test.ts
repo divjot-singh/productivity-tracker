@@ -2,6 +2,7 @@ import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import { calculateScore } from "./scoring-engine";
 import { MetricDefinition } from "../../models/metric";
+import { mapGoal, resolveGoalsForDate } from "../mappers/goal.mapper";
 
 describe("archived goal scoring", () => {
   it("excludes archived goals from scores and available weight", () => {
@@ -15,7 +16,13 @@ describe("archived goal scoring", () => {
         scoring: { type: "boolean" },
       },
     ] as MetricDefinition[];
-    const result = calculateScore(goals, { active: true, archived: true });
+    const mapped = goals.map((goal) =>
+      mapGoal(goal as unknown as Record<string, unknown>),
+    );
+    const result = calculateScore(resolveGoalsForDate(mapped, "2026-11-16"), {
+      active: true,
+      archived: true,
+    });
     assert.equal(result.totalScore, 5);
     assert.equal(result.totalWeights, 5);
     assert.deepEqual(

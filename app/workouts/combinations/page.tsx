@@ -10,7 +10,12 @@ import { Input } from "@/components/ui/input";
 import { useRequireAuth } from "@/lib/hooks/useRequireAuth";
 import { apiRequest } from "@/lib/api/client";
 import { getExerciseEquipments } from "@/lib/workouts/exercise-filters";
-import { ExerciseDefinition, WorkoutCombination } from "@/models/workout";
+import { sortCombinations } from "@/lib/workouts/session";
+import {
+  ExerciseDefinition,
+  WorkoutCombination,
+  WorkoutEntry,
+} from "@/models/workout";
 import { cn } from "@/lib/utils";
 
 export default function WorkoutCombinationsPage() {
@@ -18,6 +23,7 @@ export default function WorkoutCombinationsPage() {
 
   const [combinations, setCombinations] = useState<WorkoutCombination[]>([]);
   const [exercises, setExercises] = useState<ExerciseDefinition[]>([]);
+  const [workouts, setWorkouts] = useState<WorkoutEntry[]>([]);
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(true);
 
@@ -41,8 +47,12 @@ export default function WorkoutCombinationsPage() {
           ),
         ]);
 
-        setCombinations(comboData ?? []);
+        setCombinations(sortCombinations(comboData ?? []));
         setExercises(exerciseData ?? []);
+
+        apiRequest<WorkoutEntry[]>(user, "/api/workouts")
+          .then(setWorkouts)
+          .catch(() => undefined);
       } catch (error) {
         console.error(error);
         toast.error("Failed to load combinations");
@@ -104,21 +114,37 @@ export default function WorkoutCombinationsPage() {
     });
   }, [combinations, exerciseMetaMap, query]);
 
+  const usage = useMemo(() => {
+    const map = new Map<string, { last: string; count: number }>();
+
+    for (const workout of workouts) {
+      for (const id of workout.combinationIds) {
+        const current = map.get(id);
+
+        map.set(id, {
+          last:
+            current && current.last > workout.date
+              ? current.last
+              : workout.date,
+          count: (current?.count ?? 0) + 1,
+        });
+      }
+    }
+
+    return map;
+  }, [workouts]);
+
   const activeCount = combinations.filter(
     (combination) => combination.active !== false,
   ).length;
 
   return (
-    <div className="flex h-[calc(100dvh-14.5rem)] min-h-0 flex-col">
+    <div className="flex flex-col">
       {/* Header */}
-      <div className="bg-background sticky top-0 z-10 border-b pb-3">
+      <div className="border-b pb-3">
         <div className="mb-4 flex items-center justify-between gap-3 pt-1">
           <div className="min-w-0">
-            <p className="text-muted-foreground text-[11px] font-semibold tracking-wider uppercase">
-              Workout Hub
-            </p>
-
-            <div className="mt-0.5 flex items-center gap-2">
+            <div className="flex items-center gap-2">
               <h2 className="text-xl font-semibold tracking-tight">
                 Combinations
               </h2>
@@ -166,7 +192,7 @@ export default function WorkoutCombinationsPage() {
       </div>
 
       {/* Content */}
-      <div className="min-h-0 flex-1 overflow-y-auto pt-4">
+      <div className="pt-4">
         {loading ? (
           <div className="space-y-3">
             {[1, 2, 3].map((item) => (
@@ -225,10 +251,6 @@ export default function WorkoutCombinationsPage() {
                 .map((id) => exerciseMap.get(id))
                 .filter(Boolean) as ExerciseDefinition[];
 
-              const visibleExercises = combinationExercises.slice(0, 4);
-              const remainingCount =
-                combinationExercises.length - visibleExercises.length;
-
               const isActive = combination.active !== false;
 
               return (
@@ -273,48 +295,24 @@ export default function WorkoutCombinationsPage() {
                     </div>
                   </div>
 
-                  {/* Description */}
-                  {combination.description ? (
+                  {combinationExercises.length > 0 ? (
                     <p className="text-muted-foreground mt-3 line-clamp-2 text-xs leading-relaxed">
-                      {combination.description}
+                      {combinationExercises
+                        .map((exercise) => exercise.name)
+                        .join(" - ")}
                     </p>
-                  ) : null}
-
-                  {/* Exercises */}
-                  {visibleExercises.length > 0 ? (
-                    <div className="mt-3 flex flex-wrap gap-1.5">
-                      {visibleExercises.map((exercise) => (
-                        <span
-                          key={exercise.id}
-                          className="bg-muted/70 text-muted-foreground rounded-md px-2 py-1 text-[10px] font-medium"
-                        >
-                          {exercise.name}
-                        </span>
-                      ))}
-
-                      {remainingCount > 0 ? (
-                        <span className="bg-muted/70 text-muted-foreground rounded-md px-2 py-1 text-[10px] font-medium">
-                          +{remainingCount} more
-                        </span>
-                      ) : null}
-                    </div>
                   ) : (
                     <p className="text-muted-foreground mt-3 text-xs">
                       No exercises assigned
                     </p>
                   )}
 
-                  {/* Metadata */}
-                  {combination.coachingNotes || combination.warmupGuidance ? (
-                    <div className="text-muted-foreground mt-3 flex items-center gap-3 text-[10px]">
-                      {combination.warmupGuidance ? (
-                        <span>Warm-up guidance</span>
-                      ) : null}
-
-                      {combination.coachingNotes ? (
-                        <span>Coaching notes</span>
-                      ) : null}
-                    </div>
+                  {usage.get(combination.id) ? (
+                    <p className="text-warn mt-2 text-[11px]">
+                      Last done {usage.get(combination.id)?.last} -{" "}
+                      {usage.get(combination.id)?.count} time
+                      {usage.get(combination.id)?.count === 1 ? "" : "s"}
+                    </p>
                   ) : null}
                 </Link>
               );

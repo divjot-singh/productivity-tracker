@@ -1,5 +1,6 @@
 import { adminDb } from "@/lib/firebase-admin";
 import { removeUndefinedDeep } from "@/lib/firestore/sanitize";
+import { mapExercise } from "@/lib/mappers/exercise.mapper";
 import { ExerciseDefinition } from "@/models/workout";
 import { FieldValue } from "firebase-admin/firestore";
 
@@ -41,10 +42,7 @@ export async function getExercise(
     return null;
   }
 
-  return {
-    ...(snapshot.data() as ExerciseDefinition),
-    id: snapshot.id,
-  };
+  return mapExercise(snapshot.data() as Record<string, unknown>, snapshot.id);
 }
 
 export async function getExercises(
@@ -65,10 +63,9 @@ export async function getExercises(
 
   const snapshot = await query.get();
 
-  return snapshot.docs.map((doc) => ({
-    ...(doc.data() as ExerciseDefinition),
-    id: doc.id,
-  }));
+  return snapshot.docs.map((doc) =>
+    mapExercise(doc.data() as Record<string, unknown>, doc.id),
+  );
 }
 
 export async function hasAnyExercises(uid: string): Promise<boolean> {

@@ -3,9 +3,12 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerUser } from "@/lib/server-auth";
 
 import { calculateScore } from "@/lib/scoring/scoring-engine";
+import { computeScorePercent } from "@/lib/mappers/entry.mapper";
+import { resolveGoalsForDate } from "@/lib/mappers/goal.mapper";
 
 import {
   createEntry,
+  deleteEntry,
   getEntries,
   getEntry,
 } from "@/repositories/entry.server.repository";
@@ -46,7 +49,7 @@ export async function POST(request: NextRequest) {
 
     const config = await getGoals(user.uid);
 
-    const metrics = config;
+    const metrics = resolveGoalsForDate(config, date);
 
     if (!metrics?.length) {
       return NextResponse.json(
@@ -63,8 +66,11 @@ export async function POST(request: NextRequest) {
 
     const result = calculateScore(metrics, values);
     const existing = await getEntry(user.uid, date);
+    const activeIds = new Set(metrics.map((metric) => metric.id));
     const archivedIds = new Set(
-      metrics.filter((metric) => metric.archived).map((metric) => metric.id),
+      config
+        .filter((metric) => !activeIds.has(metric.id))
+        .map((metric) => metric.id),
     );
     const archivedValues = Object.fromEntries(
       Object.entries(existing?.values ?? {}).filter(([id]) =>
@@ -85,6 +91,10 @@ export async function POST(request: NextRequest) {
       xp: result.totalXP,
 
       breakdown: [...result.metrics, ...archivedBreakdown],
+
+      maxScore: result.totalWeights,
+
+      scorePercent: computeScorePercent(result.totalScore, result.totalWeights),
     });
 
     return NextResponse.json({
@@ -93,6 +103,10 @@ export async function POST(request: NextRequest) {
       score: result.totalScore,
 
       xp: result.totalXP,
+
+      maxScore: result.totalWeights,
+
+      scorePercent: computeScorePercent(result.totalScore, result.totalWeights),
     });
   } catch (error) {
     console.error("Create entry failed", error);
@@ -104,6 +118,33 @@ export async function POST(request: NextRequest) {
       {
         status: 500,
       },
+    );
+  }
+}
+
+export async function DELETE(request: NextRequest) {
+  try {
+    const user = await getServerUser(request);
+
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const date = new URL(request.url).searchParams.get("date");
+
+    if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+      return NextResponse.json({ error: "Invalid date" }, { status: 400 });
+    }
+
+    await deleteEntry(user.uid, date);
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error("Delete entry failed", error);
+
+    return NextResponse.json(
+      { error: "Failed to delete entry" },
+      { status: 500 },
     );
   }
 }

@@ -77,6 +77,7 @@ export async function upsertWorkout(
   await ref.set(
     removeUndefinedDeep({
       ...workout,
+      exerciseIds: [...new Set(workout.exercises.map((e) => e.exerciseId))],
       updatedAt: new Date(),
       createdAt: new Date(),
     }),

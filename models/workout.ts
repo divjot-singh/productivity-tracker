@@ -81,7 +81,12 @@ export interface WorkoutEntry {
   date: string;
   combinationIds: string[];
   exercises: WorkoutExerciseEntry[];
+  /** Denormalised for array-contains queries; missing on older workouts. */
+  exerciseIds?: string[];
   notes?: string;
+  /** ISO timestamps set by the log screen; absent on older workouts. */
+  startedAt?: string;
+  finishedAt?: string;
 }
 
 export interface WorkoutOnboardingStatus {

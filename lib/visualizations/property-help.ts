@@ -29,7 +29,7 @@ export const VISUALIZATION_HELP_TOPICS: VisualizationHelpTopic[] = [
   {
     key: "title",
     title: "Title",
-    whatItMeans: "The display name shown on your dashboard card.",
+    whatItMeans: "The display name shown on your Insights card.",
     howItWorks:
       "This is the first thing you see on the card. Keep it short and easy to scan.",
     example: "Life Score Today",
@@ -213,7 +213,7 @@ export const VISUALIZATION_HELP_TOPICS: VisualizationHelpTopic[] = [
   {
     key: "visible",
     title: "Visible",
-    whatItMeans: "Whether this visualization appears on your dashboard.",
+    whatItMeans: "Whether this visualization appears on your Insights.",
     howItWorks:
       "Hidden visualizations stay saved but are not shown until you turn visibility back on.",
     example: "Hide experiments without deleting them.",
@@ -222,8 +222,8 @@ export const VISUALIZATION_HELP_TOPICS: VisualizationHelpTopic[] = [
     key: "displayOrder",
     title: "Display Order",
     whatItMeans:
-      "The position of this visualization among other dashboard cards.",
-    howItWorks: "Lower numbers usually appear earlier in the dashboard layout.",
+      "The position of this visualization among other Insights cards.",
+    howItWorks: "Lower numbers usually appear earlier in the Insights layout.",
     example: "1 appears before 2.",
   },
 ];

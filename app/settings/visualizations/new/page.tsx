@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ChevronDown, ChevronLeft } from "lucide-react";
 
+import ActionBar from "@/components/common/ActionBar";
 import AppShell from "@/components/layout/AppShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -33,6 +34,7 @@ import {
 import { MetricDefinition } from "@/models/metric";
 import { ExerciseDefinition, WorkoutCombination } from "@/models/workout";
 import { getExerciseVisualizationKeyOptions } from "@/lib/visualizations/exercise-keys";
+import { providerLabel, scopeLabel } from "@/lib/visualizations/labels";
 import { toast } from "sonner";
 
 const INTERNAL_COMPOSITE_STREAK_KEY = "__composite_streak__";
@@ -327,21 +329,21 @@ export default function NewVisualizationPage() {
 
   return (
     <AppShell>
-      <div className="mx-auto w-full max-w-screen-sm px-4 pt-4 pb-28">
+      <div className="mx-auto w-full max-w-screen-sm px-4 pt-4 pb-4">
         <button
           onClick={() => router.back()}
-          className="text-muted-foreground hover:text-foreground mb-6 inline-flex items-center gap-1 text-sm transition-colors"
+          className="text-muted-foreground hover:text-foreground mb-3 inline-flex items-center gap-1 text-sm transition-colors"
         >
           <ChevronLeft size={18} />
           Back
         </button>
 
-        <h1 className="mb-8 text-3xl font-bold tracking-tight">
+        <h1 className="mb-4 text-2xl font-bold tracking-tight">
           Add Visualization
         </h1>
 
-        <div className="space-y-6">
-          <div className="space-y-2">
+        <div className="space-y-7">
+          <div className="space-y-3">
             <VisualizationFieldLabel topic="title" htmlFor="title">
               Title
             </VisualizationFieldLabel>
@@ -353,25 +355,8 @@ export default function NewVisualizationPage() {
             />
           </div>
 
-          <div className="space-y-2">
-            <VisualizationFieldLabel topic="description" htmlFor="description">
-              Description
-            </VisualizationFieldLabel>
-            <Textarea
-              id="description"
-              value={visualization.description ?? ""}
-              onChange={(e) =>
-                updateVisualization({
-                  description:
-                    e.target.value === "" ? undefined : e.target.value,
-                })
-              }
-              placeholder="What does this visualization show?"
-            />
-          </div>
-
           <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
+            <div className="space-y-3">
               <VisualizationFieldLabel topic="widget" htmlFor="widget">
                 Widget
               </VisualizationFieldLabel>
@@ -394,7 +379,7 @@ export default function NewVisualizationPage() {
               </div>
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-3">
               <VisualizationFieldLabel topic="scope" htmlFor="scope">
                 Scope
               </VisualizationFieldLabel>
@@ -409,7 +394,7 @@ export default function NewVisualizationPage() {
                 >
                   {SCOPE_OPTIONS.map((scope) => (
                     <option key={scope} value={scope}>
-                      {toTitleCase(scope)}
+                      {scopeLabel(scope)}
                     </option>
                   ))}
                 </select>
@@ -419,7 +404,7 @@ export default function NewVisualizationPage() {
           </div>
 
           {providerExecutorOptions.length > 1 && (
-            <div className="space-y-2">
+            <div className="space-y-3">
               <VisualizationFieldLabel
                 topic="source"
                 htmlFor="provider-executor"
@@ -442,7 +427,7 @@ export default function NewVisualizationPage() {
                       key={`${option.provider}|${option.executor}`}
                       value={`${option.provider}|${option.executor}`}
                     >
-                      {toTitleCase(option.provider)} /{" "}
+                      {providerLabel(option.provider)} /{" "}
                       {toTitleCase(option.executor)}
                     </option>
                   ))}
@@ -466,7 +451,7 @@ export default function NewVisualizationPage() {
               }
             />
           ) : (
-            <div className="space-y-2">
+            <div className="space-y-3">
               <VisualizationFieldLabel topic="data" htmlFor="key">
                 Data
               </VisualizationFieldLabel>
@@ -491,7 +476,7 @@ export default function NewVisualizationPage() {
           )}
 
           {combination && (
-            <div className="space-y-2">
+            <div className="space-y-3">
               <VisualizationFieldLabel
                 topic="aggregation"
                 htmlFor="aggregation"
@@ -526,7 +511,7 @@ export default function NewVisualizationPage() {
           />
 
           {combination?.options.comparison && (
-            <div className="space-y-2">
+            <div className="space-y-3">
               <VisualizationFieldLabel topic="comparison" htmlFor="comparison">
                 Comparison
               </VisualizationFieldLabel>
@@ -579,12 +564,29 @@ export default function NewVisualizationPage() {
             </div>
           )}
 
+          <div className="space-y-3">
+            <VisualizationFieldLabel topic="description" htmlFor="description">
+              Description
+            </VisualizationFieldLabel>
+            <Textarea
+              id="description"
+              value={visualization.description ?? ""}
+              onChange={(e) =>
+                updateVisualization({
+                  description:
+                    e.target.value === "" ? undefined : e.target.value,
+                })
+              }
+              placeholder="What does this visualization show?"
+            />
+          </div>
+
           <div className="flex items-center justify-between">
             <div>
               <VisualizationFieldLabel topic="visible" htmlFor="visible">
                 Visible
               </VisualizationFieldLabel>
-              <p className="text-muted-foreground text-sm">Show on dashboard</p>
+              <p className="text-muted-foreground text-sm">Show on Insights</p>
             </div>
             <Switch
               id="visible"
@@ -595,7 +597,7 @@ export default function NewVisualizationPage() {
             />
           </div>
 
-          <div className="space-y-2">
+          <div className="space-y-3">
             <VisualizationFieldLabel
               topic="displayOrder"
               htmlFor="display-order"
@@ -620,10 +622,10 @@ export default function NewVisualizationPage() {
             />
           </div>
 
-          <div className="flex gap-3 pt-4">
+          <ActionBar>
             <Button
               variant="outline"
-              className="flex-1"
+              className="h-12 flex-1"
               onClick={() => router.back()}
               disabled={creating}
             >
@@ -631,13 +633,13 @@ export default function NewVisualizationPage() {
             </Button>
 
             <Button
-              className="flex-2"
+              className="h-12 flex-[2]"
               onClick={handleSubmit}
               disabled={creating || !canSubmit}
             >
-              {creating ? "Creating..." : "Add Visualization"}
+              {creating ? "Creating..." : "Add visualization"}
             </Button>
-          </div>
+          </ActionBar>
         </div>
       </div>
     </AppShell>
@@ -654,7 +656,7 @@ function PeriodEditor({
   const isAll = period.type === "all";
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-3">
       <VisualizationFieldLabel topic="period" htmlFor="period">
         Period
       </VisualizationFieldLabel>

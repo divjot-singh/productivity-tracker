@@ -2,23 +2,26 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
+import Link from "next/link";
 
 import { useRequireAuth } from "@/lib/hooks/useRequireAuth";
 import { apiRequest } from "@/lib/api/client";
 import { ICONS } from "@/lib/metric-icons";
+import { localYesterday } from "@/lib/dates";
 
 import { MetricDefinition } from "@/models/metric";
 import {
-  ChevronDown,
+  Archive,
+  CalendarDays,
   ChevronLeft,
   type LucideIcon,
   Pencil,
+  RotateCcw,
   Trash2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import {
@@ -30,6 +33,9 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 
+import ActionBar from "@/components/common/ActionBar";
+import GoalPreview from "@/components/settings/GoalPreview";
+import { WeightPicker, YesNo } from "@/components/settings/GoalFields";
 import IconSelector from "@/components/settings/IconSelector";
 import TargetConfig from "@/components/settings/configs/TargetConfig";
 import MultiplierConfig from "@/components/settings/configs/MultiplierConfig";
@@ -37,9 +43,6 @@ import RangeConfig from "@/components/settings/configs/RangeConfig";
 import TimeRangeConfig from "@/components/settings/configs/TimeRangeConfig";
 import OptionsConfig from "@/components/settings/configs/OptionConfig";
 import BooleanConfig from "@/components/settings/configs/BooleanConfig";
-
-const NATIVE_SELECT_CLASS =
-  "border-input bg-background text-foreground focus:ring-primary/40 h-12 w-full appearance-none rounded-[10px] border px-4 pr-12 text-lg transition outline-none focus:ring-1";
 
 export default function GoalDetails() {
   const { user } = useRequireAuth();
@@ -57,6 +60,9 @@ export default function GoalDetails() {
   const [isEditing, setIsEditing] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isArchiveDialogOpen, setIsArchiveDialogOpen] = useState(false);
+  const [reactivateWeight, setReactivateWeight] = useState("");
+  const [lifecycleBusy, setLifecycleBusy] = useState(false);
 
   useEffect(() => {
     async function loadGoal() {
@@ -123,6 +129,37 @@ export default function GoalDetails() {
     router.back();
   }
 
+  async function runLifecycle(
+    body: Record<string, unknown>,
+    successMessage: string,
+  ) {
+    if (!user) {
+      return;
+    }
+
+    try {
+      setLifecycleBusy(true);
+
+      await apiRequest(user, `/api/goals/${id}`, { method: "PATCH", body });
+
+      const reloaded = await apiRequest<MetricDefinition>(
+        user,
+        `/api/goals/${id}`,
+      );
+
+      setOriginalGoal(reloaded);
+      setGoal(reloaded);
+      setReactivateWeight("");
+      setIsArchiveDialogOpen(false);
+      toast.success(successMessage);
+    } catch (err) {
+      console.error(err);
+      toast.error(err instanceof Error ? err.message : "Update failed");
+    } finally {
+      setLifecycleBusy(false);
+    }
+  }
+
   async function handleDelete() {
     if (!user || !goal) {
       return;
@@ -159,79 +196,59 @@ export default function GoalDetails() {
   const hasChanges = JSON.stringify(goal) !== JSON.stringify(originalGoal);
 
   return (
-    <div className="relative p-4 pb-24">
-      <div className="absolute top-10 left-0 z-10 flex w-full items-center justify-between px-6">
+    <div className="relative p-4 pt-[calc(1rem+env(safe-area-inset-top))] pb-24">
+      <div className="mb-4 flex items-center justify-between">
         <button
           onClick={handleCancel}
-          className="text-muted-foreground hover:text-foreground inline-flex items-center gap-1 text-sm transition-colors"
+          className="text-muted-foreground hover:text-foreground inline-flex h-10 items-center gap-1 text-sm transition-colors"
         >
           <ChevronLeft size={18} />
           Back
         </button>
 
-        {!isEditing && (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setIsEditing(true)}
-          >
+        {!isEditing && goal.status !== "archived" && (
+          <Button variant="outline" onClick={() => setIsEditing(true)}>
             <Pencil className="mr-1.5 h-3.5 w-3.5" />
             Edit
           </Button>
         )}
       </div>
 
-      <div className="bg-card relative mb-6 overflow-hidden rounded-3xl border">
-        <div className="from-primary/15 via-primary/5 to-background h-28 bg-gradient-to-r" />
+      <div className="bg-card mb-4 flex items-start gap-3 rounded-2xl border p-4">
+        <div className="bg-primary/10 flex h-12 w-12 shrink-0 items-center justify-center rounded-xl">
+          <Icon className="text-primary h-6 w-6" />
+        </div>
 
-        <div className="-mt-10 px-6 pb-6 sm:px-8">
-          <div className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
-            <div className="flex items-center gap-5">
-              <div className="bg-background ring-background flex h-20 w-20 items-center justify-center rounded-3xl border shadow-sm ring-4">
-                <Icon className="text-primary h-10 w-10" />
-              </div>
+        <div className="min-w-0 flex-1">
+          <h1 className="text-xl leading-tight font-bold">{goal.label}</h1>
 
-              <div>
-                <h1 className="text-3xl font-bold tracking-tight">
-                  {goal.label}
-                </h1>
+          <p className="text-muted-foreground mt-1 text-sm">
+            {goal.description || "No description provided."}
+          </p>
 
-                <p className="text-muted-foreground mt-2 max-w-2xl text-sm leading-6">
-                  {goal.description || "No description provided."}
-                </p>
-              </div>
-            </div>
-
-            <div className="flex flex-wrap gap-2">
-              <div className="bg-muted rounded-full px-4 py-2 text-sm font-medium">
-                {capitalize(goal.category)}
-              </div>
-
-              <div className="bg-primary/10 text-primary rounded-full px-4 py-2 text-sm font-medium">
-                {capitalize(goal.type)}
-              </div>
-
-              <div className="bg-secondary rounded-full px-4 py-2 text-sm font-medium">
-                {goal.weight} pts
-              </div>
-            </div>
+          <div className="mt-2 flex flex-wrap gap-1.5 text-xs">
+            <span className="bg-muted rounded-full px-2.5 py-1">
+              {capitalize(goal.category)}
+            </span>
+            <span className="bg-primary/10 text-primary rounded-full px-2.5 py-1">
+              {capitalize(goal.type)}
+            </span>
+            <span className="bg-secondary rounded-full px-2.5 py-1">
+              {goal.weight} pts
+            </span>
           </div>
         </div>
       </div>
 
-      <div className="bg-card mb-6 rounded-3xl border p-6">
+      <div className="mb-4">
+        <GoalPreview goal={goal} />
+      </div>
+
+      <div className="bg-card mb-4 rounded-2xl border p-4">
         <h2 className="mb-4 text-lg font-semibold">Configuration</h2>
 
         {isEditing ? (
           <div className="space-y-6">
-            <div className="flex items-center justify-between gap-4">
-              <Label htmlFor="goal-archived">Archived</Label>
-              <Switch
-                id="goal-archived"
-                checked={goal.archived ?? false}
-                onCheckedChange={(archived) => updateGoal({ archived })}
-              />
-            </div>
             <div className="space-y-2">
               <Label>Description</Label>
 
@@ -258,13 +275,11 @@ export default function GoalDetails() {
             </div>
 
             <div className="space-y-2">
-              <Label>Weight</Label>
+              <Label>Importance</Label>
 
-              <Input
-                type="number"
-                min={0}
+              <WeightPicker
                 value={goal.weight}
-                onChange={(e) => updateGoal({ weight: Number(e.target.value) })}
+                onChange={(weight) => updateGoal({ weight })}
               />
             </div>
 
@@ -285,19 +300,11 @@ export default function GoalDetails() {
               <Label>Target</Label>
 
               {goal.type === "boolean" ? (
-                <div className="relative">
-                  <select
-                    value={String(goal.target)}
-                    onChange={(e) =>
-                      updateGoal({ target: e.target.value === "true" })
-                    }
-                    className={NATIVE_SELECT_CLASS}
-                  >
-                    <option value="true">True</option>
-                    <option value="false">False</option>
-                  </select>
-                  <ChevronDown className="text-muted-foreground pointer-events-none absolute top-1/2 right-4 h-4 w-4 -translate-y-1/2" />
-                </div>
+                <YesNo
+                  label="target"
+                  value={goal.target === true}
+                  onChange={(next) => updateGoal({ target: next })}
+                />
               ) : goal.type === "time" ? (
                 <Input
                   type="time"
@@ -319,21 +326,11 @@ export default function GoalDetails() {
               <Label>Default Value</Label>
 
               {goal.type === "boolean" ? (
-                <div className="relative">
-                  <select
-                    value={String(goal.defaultValue)}
-                    onChange={(e) =>
-                      updateGoal({
-                        defaultValue: e.target.value === "true",
-                      })
-                    }
-                    className={NATIVE_SELECT_CLASS}
-                  >
-                    <option value="true">True</option>
-                    <option value="false">False</option>
-                  </select>
-                  <ChevronDown className="text-muted-foreground pointer-events-none absolute top-1/2 right-4 h-4 w-4 -translate-y-1/2" />
-                </div>
+                <YesNo
+                  label="defaultValue"
+                  value={goal.defaultValue === true}
+                  onChange={(next) => updateGoal({ defaultValue: next })}
+                />
               ) : goal.type === "time" ? (
                 <Input
                   type="time"
@@ -385,8 +382,91 @@ export default function GoalDetails() {
         )}
       </div>
 
+      {!isEditing && goal.status !== "archived" && goal.weight === 0 && (
+        <Link
+          href={`/logs/backfill?goal=${encodeURIComponent(goal.id)}`}
+          className="bg-card hover:bg-accent mb-4 flex items-center gap-3 rounded-2xl border p-4 transition-colors"
+        >
+          <CalendarDays className="text-primary h-5 w-5" />
+
+          <span className="flex-1">
+            <span className="block font-medium">Fill past days</span>
+            <span className="text-muted-foreground block text-sm">
+              Add values for days you missed
+            </span>
+          </span>
+        </Link>
+      )}
+
       {!isEditing && (
-        <div className="bg-card border-destructive/20 rounded-3xl border p-6">
+        <div className="bg-card mb-4 rounded-2xl border p-4">
+          <h2 className="mb-4 text-lg font-semibold">
+            {goal.status === "archived" ? "Archived goal" : "Archive"}
+          </h2>
+
+          {goal.status === "archived" ? (
+            <div className="space-y-4">
+              <p className="text-muted-foreground text-sm">
+                Archived after {goal.archivedAt ?? "an earlier date"}. History
+                is kept and shown as removed. Enter a weight to start scoring it
+                again.
+              </p>
+
+              <div className="flex items-end gap-3">
+                <div className="flex-1 space-y-2">
+                  <Label>Weight</Label>
+
+                  <Input
+                    type="number"
+                    min={0}
+                    value={reactivateWeight}
+                    placeholder={
+                      goal.previousWeight !== undefined
+                        ? `Previously ${goal.previousWeight}`
+                        : "Weight"
+                    }
+                    onChange={(e) => setReactivateWeight(e.target.value)}
+                  />
+                </div>
+
+                <Button
+                  disabled={lifecycleBusy || reactivateWeight.trim() === ""}
+                  onClick={() =>
+                    runLifecycle(
+                      {
+                        action: "reactivate",
+                        weight: Number(reactivateWeight),
+                      },
+                      "Goal reactivated",
+                    )
+                  }
+                >
+                  <RotateCcw className="mr-1.5 h-4 w-4" />
+                  Reactivate
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <p className="text-muted-foreground text-sm">
+                Stop scoring this goal from today. Past entries keep their
+                scores and the goal is hidden from new entries.
+              </p>
+
+              <Button
+                variant="outline"
+                onClick={() => setIsArchiveDialogOpen(true)}
+              >
+                <Archive className="mr-1.5 h-4 w-4" />
+                Archive goal
+              </Button>
+            </div>
+          )}
+        </div>
+      )}
+
+      {!isEditing && goal.status === "archived" && (
+        <div className="bg-card border-destructive/20 rounded-2xl border p-4">
           <h2 className="text-destructive mb-4 text-lg font-semibold">
             Danger Zone
           </h2>
@@ -413,6 +493,41 @@ export default function GoalDetails() {
           </div>
         </div>
       )}
+
+      <Dialog open={isArchiveDialogOpen} onOpenChange={setIsArchiveDialogOpen}>
+        <DialogContent showCloseButton={false}>
+          <DialogHeader>
+            <DialogTitle>Archive goal?</DialogTitle>
+
+            <DialogDescription>
+              This goal stops counting toward your daily maximum score from
+              today. You can reactivate it later with a new weight.
+            </DialogDescription>
+          </DialogHeader>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsArchiveDialogOpen(false)}
+              disabled={lifecycleBusy}
+            >
+              Cancel
+            </Button>
+
+            <Button
+              onClick={() =>
+                runLifecycle(
+                  { action: "archive", lastActiveDate: localYesterday() },
+                  "Goal archived",
+                )
+              }
+              disabled={lifecycleBusy}
+            >
+              {lifecycleBusy ? "Archiving..." : "Archive"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <DialogContent showCloseButton={false}>
@@ -446,26 +561,24 @@ export default function GoalDetails() {
       </Dialog>
 
       {isEditing && (
-        <div className="bg-background fixed inset-x-0 bottom-0 z-20 border-t p-4 lg:left-64">
-          <div className="mx-auto flex max-w-screen-sm gap-3">
-            <Button
-              variant="outline"
-              className="flex-1"
-              onClick={handleCancel}
-              disabled={saving}
-            >
-              Cancel
-            </Button>
+        <ActionBar withNav={false}>
+          <Button
+            variant="outline"
+            className="h-12 flex-1"
+            onClick={handleCancel}
+            disabled={saving}
+          >
+            Cancel
+          </Button>
 
-            <Button
-              className="flex-[2]"
-              onClick={handleSave}
-              disabled={saving || !hasChanges}
-            >
-              {saving ? "Saving..." : "Save Changes"}
-            </Button>
-          </div>
-        </div>
+          <Button
+            className="h-12 flex-[2]"
+            onClick={handleSave}
+            disabled={saving || !hasChanges}
+          >
+            {saving ? "Saving..." : "Save Changes"}
+          </Button>
+        </ActionBar>
       )}
     </div>
   );

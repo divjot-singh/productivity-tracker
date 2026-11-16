@@ -751,14 +751,32 @@ export default function ChatPage() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [visibleMessages]);
 
+  // Quick-chat questions arrive as ?q= (from other pages) or a window event (when already on chat).
+  const sendRef = useRef<(text: string) => Promise<void>>(async () => {});
+  const autoSentRef = useRef(false);
+
+  useEffect(() => {
+    const onAsk = (event: Event) => {
+      void sendRef.current((event as CustomEvent<string>).detail);
+    };
+
+    window.addEventListener("daylog:ask", onAsk);
+
+    return () => window.removeEventListener("daylog:ask", onAsk);
+  }, []);
+
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
+    await sendMessage(draft);
+  }
+
+  async function sendMessage(text: string) {
     if (!user || isSending) {
       return;
     }
 
-    const trimmed = draft.trim();
+    const trimmed = text.trim();
     if (!trimmed) {
       return;
     }
@@ -988,6 +1006,27 @@ export default function ChatPage() {
     setDraft(message.content);
   }
 
+  useEffect(() => {
+    sendRef.current = sendMessage;
+  });
+
+  // Must come after the ref sync above so the real sender is in place.
+  useEffect(() => {
+    if (!user || autoSentRef.current) {
+      return;
+    }
+
+    const question = new URLSearchParams(window.location.search).get("q");
+
+    if (!question) {
+      return;
+    }
+
+    autoSentRef.current = true;
+    window.history.replaceState(null, "", window.location.pathname);
+    void sendRef.current(question);
+  }, [user]);
+
   if (loading || !user) {
     return (
       <main className="bg-background fixed inset-0 z-[70] flex min-h-dvh items-center justify-center">
@@ -1070,7 +1109,7 @@ export default function ChatPage() {
           </div>
         </SheetContent>
 
-        <header className="bg-background/95 supports-backdrop-filter:bg-background/80 flex h-16 shrink-0 items-center justify-between border-b border-white/8 px-4 backdrop-blur sm:px-6">
+        <header className="bg-background/95 supports-backdrop-filter:bg-background/80 flex h-[var(--top-bar)] pt-[env(safe-area-inset-top)] shrink-0 items-center justify-between border-b border-white/8 px-4 backdrop-blur sm:px-6">
           <Button
             size="icon"
             variant="outline"

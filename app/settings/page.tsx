@@ -4,13 +4,16 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 
 import AppShell from "@/components/layout/AppShell";
+import PageSkeleton from "@/components/common/PageSkeleton";
 import Section from "@/components/ui/section";
 import { buttonVariants } from "@/components/ui/button";
 
 import { useRequireAuth } from "@/lib/hooks/useRequireAuth";
 import { MetricDefinition } from "@/models/metric";
 import QuickActions from "@/components/settings/QuickActions";
+import InstallPrompt from "@/components/pwa/InstallPrompt";
 import SettingsSubNav from "@/components/settings/SettingsSubNav";
+import MeHeader from "@/components/settings/MeHeader";
 import { toast } from "sonner";
 import { apiRequest } from "@/lib/api/client";
 import { cn } from "@/lib/utils";
@@ -30,7 +33,10 @@ export default function SettingsPage() {
       }
 
       try {
-        const goals = await apiRequest<MetricDefinition[]>(user, "/api/goals");
+        const goals = await apiRequest<MetricDefinition[]>(
+          user,
+          "/api/goals?status=all",
+        );
         setMetrics(goals ?? []);
       } catch (e) {
         console.log(e);
@@ -45,26 +51,31 @@ export default function SettingsPage() {
   }, [user]);
 
   const grouped = useMemo(() => {
-    return metrics.reduce(
-      (acc, metric) => {
-        if (!acc[metric.category]) {
-          acc[metric.category] = [];
-        }
+    return metrics
+      .filter((metric) => metric.status !== "archived")
+      .reduce(
+        (acc, metric) => {
+          if (!acc[metric.category]) {
+            acc[metric.category] = [];
+          }
 
-        acc[metric.category].push(metric);
+          acc[metric.category].push(metric);
 
-        return acc;
-      },
-      {} as Record<string, MetricDefinition[]>,
-    );
+          return acc;
+        },
+        {} as Record<string, MetricDefinition[]>,
+      );
   }, [metrics]);
+
+  const archived = useMemo(
+    () => metrics.filter((metric) => metric.status === "archived"),
+    [metrics],
+  );
 
   if (loading) {
     return (
       <AppShell>
-        <div className="text-muted-foreground p-6 text-sm">
-          Loading configuration...
-        </div>
+        <PageSkeleton tabs rows={5} />
       </AppShell>
     );
   }
@@ -73,17 +84,20 @@ export default function SettingsPage() {
     <AppShell>
       <div className="mx-auto w-full max-w-screen-sm px-4 pt-4 pb-28">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold tracking-tight">Settings</h1>
+          <h1 className="text-3xl font-bold tracking-tight">Me</h1>
 
           <p className="text-muted-foreground mt-1 text-sm">
-            Manage your goals and dashboard visualizations
+            Your account, goals and Insights
           </p>
         </div>
+
+        <MeHeader />
 
         <SettingsSubNav />
 
         <QuickActions />
 
+        <InstallPrompt />
         <Link
           href="/settings/weight-breakdown"
           className={cn(
@@ -103,6 +117,10 @@ export default function SettingsPage() {
               metrics={values.sort((a, b) => a.displayOrder - b.displayOrder)}
             />
           ))}
+
+          {archived.length > 0 && (
+            <Section category="archived" metrics={archived} />
+          )}
         </div>
       </div>
     </AppShell>

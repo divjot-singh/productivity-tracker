@@ -1,5 +1,3 @@
-import Image from "next/image";
-
 interface BrandLogoProps {
   size?: number;
   textClassName?: string;
@@ -15,18 +13,33 @@ export default function BrandLogo({
 }: BrandLogoProps) {
   return (
     <div className={`flex items-center gap-2 ${className}`.trim()}>
-      <Image
-        src="/logo.png"
-        alt="Productivity Tracker logo"
+      <svg
         width={size}
         height={size}
-        priority
-        className="rounded-md object-contain"
-      />
+        viewBox="0 0 32 32"
+        role="img"
+        aria-label="Daylog logo"
+        className="text-primary"
+      >
+        <circle
+          cx="16"
+          cy="16"
+          r="10"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="3"
+        />
+        <path
+          d="M11.5 16.5 L14.5 19.5 L20.5 12.5"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="3"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </svg>
 
-      {showText ? (
-        <span className={textClassName}>Productivity Tracker</span>
-      ) : null}
+      {showText ? <span className={textClassName}>Daylog</span> : null}
     </div>
   );
 }

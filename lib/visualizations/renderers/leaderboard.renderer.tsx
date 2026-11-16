@@ -6,7 +6,7 @@ import { formatCompactNumber, VisualizationCard } from "./rendering-utils";
 
 const rankStyles = [
   "bg-primary/18 text-primary",
-  "bg-accent/16 text-accent",
+  "bg-warn/15 text-warn",
   "bg-secondary text-foreground",
 ];
 

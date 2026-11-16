@@ -157,11 +157,9 @@ export function calculateScore(
   metrics: MetricDefinition[],
   values: Record<string, MetricValue>,
 ): ScoreResult {
-  const results = metrics
-    .filter((metric) => !metric.archived)
-    .map((metric) =>
-      calculateMetricScore(metric, values[metric.id] ?? metric.defaultValue),
-    );
+  const results = metrics.map((metric) =>
+    calculateMetricScore(metric, values[metric.id] ?? metric.defaultValue),
+  );
 
   const totalScore = results.reduce((sum, metric) => sum + metric.score, 0);
 

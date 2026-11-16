@@ -39,7 +39,10 @@ export default function LoginPage() {
       return;
     }
 
-    const goals = await apiRequest<MetricDefinition[]>(user, "/api/goals");
+    const goals = await apiRequest<MetricDefinition[]>(
+      user,
+      "/api/goals?status=all",
+    );
 
     if (goals.length > 0) {
       setOnboardingSkipped(false);

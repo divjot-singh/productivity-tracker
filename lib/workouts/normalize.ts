@@ -186,6 +186,9 @@ export function normalizeCombinationPayload(
     coachingNotes: value.coachingNotes?.trim() || undefined,
     warmupGuidance: value.warmupGuidance?.trim() || undefined,
     exerciseIds: normalizeStringArray(value.exerciseIds),
+    optionalExercises: value.optionalExercises
+      ? normalizeStringArray(value.optionalExercises)
+      : undefined,
     active: value.active ?? true,
   };
 }
@@ -278,7 +281,15 @@ export function normalizeWorkoutPayload(
       typeof value.notes === "string"
         ? value.notes.trim() || undefined
         : undefined,
+    startedAt: isoOrUndefined(value.startedAt),
+    finishedAt: isoOrUndefined(value.finishedAt),
   };
+}
+
+function isoOrUndefined(value: unknown): string | undefined {
+  return typeof value === "string" && !Number.isNaN(Date.parse(value))
+    ? value
+    : undefined;
 }
 
 export function validateWorkout(workout: WorkoutEntry): string[] {

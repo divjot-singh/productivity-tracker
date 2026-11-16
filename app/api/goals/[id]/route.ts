@@ -6,12 +6,21 @@ import { getServerUser } from "@/lib/server-auth";
 
 import { MetricDefinition } from "@/models/metric";
 
+import { LIFECYCLE_FIELDS } from "@/lib/mappers/goal.mapper";
 import { goalHasHistory } from "@/repositories/entry.server.repository";
 import {
+  archiveGoal,
   deleteGoal,
   getGoal,
+  reactivateGoal,
   updateGoal,
 } from "@/repositories/goals.server.repository";
+
+const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+
+function yesterdayUtc(): string {
+  return new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+}
 
 interface RouteContext {
   params: Promise<{
@@ -89,7 +98,10 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
 
     const { id } = await params;
 
-    const body = (await request.json()) as Partial<MetricDefinition>;
+    const body = (await request.json()) as Partial<MetricDefinition> & {
+      action?: "archive" | "reactivate";
+      lastActiveDate?: string;
+    };
 
     const existingGoal = await getGoal(user.uid, id);
 
@@ -102,6 +114,65 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
           status: 404,
         },
       );
+    }
+
+    if (body.action === "archive") {
+      if (existingGoal.status === "archived") {
+        return NextResponse.json(
+          { error: "Goal is already archived" },
+          { status: 400 },
+        );
+      }
+
+      if (body.lastActiveDate && !DATE_PATTERN.test(body.lastActiveDate)) {
+        return NextResponse.json(
+          { error: "lastActiveDate must be YYYY-MM-DD" },
+          { status: 400 },
+        );
+      }
+
+      await archiveGoal(
+        user.uid,
+        existingGoal,
+        body.lastActiveDate ?? yesterdayUtc(),
+      );
+
+      return NextResponse.json({ success: true });
+    }
+
+    if (body.action === "reactivate") {
+      if (existingGoal.status !== "archived") {
+        return NextResponse.json(
+          { error: "Goal is not archived" },
+          { status: 400 },
+        );
+      }
+
+      if (
+        typeof body.weight !== "number" ||
+        !Number.isFinite(body.weight) ||
+        body.weight < 0
+      ) {
+        return NextResponse.json(
+          { error: "A weight is required to reactivate a goal" },
+          { status: 400 },
+        );
+      }
+
+      await reactivateGoal(user.uid, id, body.weight);
+
+      return NextResponse.json({ success: true });
+    }
+
+    if (existingGoal.status === "archived") {
+      return NextResponse.json(
+        { error: "Reactivate this goal before editing it" },
+        { status: 400 },
+      );
+    }
+
+    for (const field of LIFECYCLE_FIELDS) {
+      delete (body as Record<string, unknown>)[field];
     }
 
     const immutableViolations: string[] = [];
@@ -208,13 +279,24 @@ export async function DELETE(request: NextRequest, { params }: RouteContext) {
       );
     }
 
+    if (existingGoal.status !== "archived") {
+      return NextResponse.json(
+        {
+          error: "Archive this goal before deleting it.",
+        },
+        {
+          status: 400,
+        },
+      );
+    }
+
     const hasHistory = await goalHasHistory(user.uid, id);
 
     if (hasHistory) {
       return NextResponse.json(
         {
           error:
-            "This goal cannot be deleted because it has historical entries.",
+            "This goal has historical entries, so it can only be archived.",
         },
         {
           status: 400,

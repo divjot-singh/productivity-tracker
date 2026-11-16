@@ -2,19 +2,17 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ChevronDown, ChevronLeft } from "lucide-react";
+import { ArrowDown, ArrowUp, ChevronLeft, X } from "lucide-react";
 import { toast } from "sonner";
 
+import ActionBar from "@/components/common/ActionBar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useRequireAuth } from "@/lib/hooks/useRequireAuth";
 import { apiRequest } from "@/lib/api/client";
-import {
-  formatExerciseEquipmentLabel,
-  titleCaseWorkoutValue,
-} from "@/lib/workouts/constants";
+import { titleCaseWorkoutValue } from "@/lib/workouts/constants";
 import {
   filterExercises,
   getExerciseEquipmentLabel,
@@ -33,9 +31,6 @@ const DEFAULT_COMBINATION: WorkoutCombination = {
   active: true,
 };
 
-const NATIVE_SELECT_CLASS =
-  "border-input bg-background text-foreground focus:ring-primary/40 h-10 w-full appearance-none rounded-xl border px-2 pr-9 text-xs transition outline-none focus:ring-1 disabled:cursor-not-allowed disabled:opacity-60";
-
 export default function NewCombinationPage() {
   const { user } = useRequireAuth();
   const router = useRouter();
@@ -47,8 +42,8 @@ export default function NewCombinationPage() {
   const [saving, setSaving] = useState(false);
   const [exerciseQuery, setExerciseQuery] = useState("");
   const [exerciseCategoryFilter, setExerciseCategoryFilter] = useState("");
-  const [exerciseMuscleFilter, setExerciseMuscleFilter] = useState("");
-  const [exerciseEquipmentFilter, setExerciseEquipmentFilter] = useState("");
+  const [exerciseMuscleFilter] = useState("");
+  const [exerciseEquipmentFilter] = useState("");
 
   useEffect(() => {
     async function loadExercises() {
@@ -127,6 +122,19 @@ export default function NewCombinationPage() {
     }
   }
 
+  function moveExercise(index: number, direction: -1 | 1) {
+    setCombination((prev) => {
+      const ids = [...prev.exerciseIds];
+      const target = index + direction;
+
+      if (target < 0 || target >= ids.length) return prev;
+
+      [ids[index], ids[target]] = [ids[target], ids[index]];
+
+      return { ...prev, exerciseIds: ids };
+    });
+  }
+
   function toggleExercise(exerciseId: string) {
     setCombination((prev) => {
       const has = prev.exerciseIds.includes(exerciseId);
@@ -146,21 +154,21 @@ export default function NewCombinationPage() {
   }
 
   return (
-    <div className="pb-17">
+    <div>
       <button
         onClick={() => router.back()}
-        className="text-muted-foreground hover:text-foreground mb-6 inline-flex items-center gap-1 text-sm transition-colors"
+        className="text-muted-foreground hover:text-foreground mb-3 inline-flex items-center gap-1 text-sm transition-colors"
       >
         <ChevronLeft size={18} />
         Back
       </button>
 
-      <h1 className="mb-8 text-3xl font-bold tracking-tight">
+      <h1 className="mb-4 text-2xl font-bold tracking-tight">
         Add Combination
       </h1>
 
-      <div className="space-y-4">
-        <div className="space-y-2">
+      <div className="space-y-6">
+        <div className="space-y-3">
           <Label>Name</Label>
           <Input
             value={combination.name}
@@ -171,7 +179,7 @@ export default function NewCombinationPage() {
           />
         </div>
 
-        <div className="space-y-2">
+        <div className="space-y-3">
           <Label>Description</Label>
           <Textarea
             value={combination.description ?? ""}
@@ -185,7 +193,7 @@ export default function NewCombinationPage() {
           />
         </div>
 
-        <div className="space-y-2">
+        <div className="space-y-3">
           <Label>Coaching Notes</Label>
           <Textarea
             value={combination.coachingNotes ?? ""}
@@ -199,7 +207,7 @@ export default function NewCombinationPage() {
           />
         </div>
 
-        <div className="space-y-2">
+        <div className="space-y-3">
           <Label>Warm-up Guidance</Label>
           <Textarea
             value={combination.warmupGuidance ?? ""}
@@ -213,71 +221,77 @@ export default function NewCombinationPage() {
           />
         </div>
 
-        <div className="space-y-2">
+        <div className="space-y-3">
           <Label>Exercises ({selectedCount} selected)</Label>
 
-          <div className="grid gap-2 sm:grid-cols-2">
-            <Input
-              value={exerciseQuery}
-              onChange={(event) => setExerciseQuery(event.target.value)}
-              placeholder="Search exercises by name"
-            />
-
-            <div className="grid grid-cols-3 gap-2">
-              <div className="relative">
-                <select
-                  value={exerciseCategoryFilter}
-                  onChange={(event) =>
-                    setExerciseCategoryFilter(event.target.value)
-                  }
-                  className={NATIVE_SELECT_CLASS}
+          {combination.exerciseIds.length > 0 ? (
+            <div className="bg-card divide-y overflow-hidden rounded-2xl border">
+              {combination.exerciseIds.map((id, index) => (
+                <div
+                  key={id}
+                  className="flex items-center gap-1 py-1 pr-1 pl-4"
                 >
-                  <option value="">All categories</option>
-                  {exerciseFilterOptions.categories.map((value) => (
-                    <option key={value} value={value}>
-                      {titleCaseWorkoutValue(value)}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown className="text-muted-foreground pointer-events-none absolute top-1/2 right-3 h-4 w-4 -translate-y-1/2" />
-              </div>
+                  <span className="min-w-0 flex-1 truncate text-sm font-medium">
+                    {index + 1}.{" "}
+                    {exercises.find((item) => item.id === id)?.name ?? id}
+                  </span>
 
-              <div className="relative">
-                <select
-                  value={exerciseMuscleFilter}
-                  onChange={(event) =>
-                    setExerciseMuscleFilter(event.target.value)
-                  }
-                  className={NATIVE_SELECT_CLASS}
-                >
-                  <option value="">All muscles</option>
-                  {exerciseFilterOptions.muscleGroups.map((value) => (
-                    <option key={value} value={value}>
-                      {titleCaseWorkoutValue(value)}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown className="text-muted-foreground pointer-events-none absolute top-1/2 right-3 h-4 w-4 -translate-y-1/2" />
-              </div>
+                  <button
+                    type="button"
+                    aria-label="Move up"
+                    disabled={index === 0}
+                    onClick={() => moveExercise(index, -1)}
+                    className="text-muted-foreground active:bg-accent flex h-10 w-10 items-center justify-center rounded-lg disabled:opacity-30"
+                  >
+                    <ArrowUp className="h-4 w-4" />
+                  </button>
 
-              <div className="relative">
-                <select
-                  value={exerciseEquipmentFilter}
-                  onChange={(event) =>
-                    setExerciseEquipmentFilter(event.target.value)
-                  }
-                  className={NATIVE_SELECT_CLASS}
-                >
-                  <option value="">All equipment</option>
-                  {exerciseFilterOptions.equipments.map((value) => (
-                    <option key={value} value={value}>
-                      {formatExerciseEquipmentLabel(value)}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown className="text-muted-foreground pointer-events-none absolute top-1/2 right-3 h-4 w-4 -translate-y-1/2" />
-              </div>
+                  <button
+                    type="button"
+                    aria-label="Move down"
+                    disabled={index === combination.exerciseIds.length - 1}
+                    onClick={() => moveExercise(index, 1)}
+                    className="text-muted-foreground active:bg-accent flex h-10 w-10 items-center justify-center rounded-lg disabled:opacity-30"
+                  >
+                    <ArrowDown className="h-4 w-4" />
+                  </button>
+
+                  <button
+                    type="button"
+                    aria-label="Remove"
+                    onClick={() => toggleExercise(id)}
+                    className="text-muted-foreground active:text-destructive flex h-10 w-10 items-center justify-center rounded-lg"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+              ))}
             </div>
+          ) : null}
+
+          <Input
+            value={exerciseQuery}
+            onChange={(event) => setExerciseQuery(event.target.value)}
+            placeholder="Search exercises to add"
+            className="h-11"
+          />
+
+          <div className="-mx-4 flex [scrollbar-width:none] gap-2 overflow-x-auto px-4">
+            {["", ...exerciseFilterOptions.categories].map((value) => (
+              <button
+                key={value || "all"}
+                type="button"
+                aria-pressed={exerciseCategoryFilter === value}
+                onClick={() => setExerciseCategoryFilter(value)}
+                className={`h-8 shrink-0 rounded-full border px-3.5 text-xs font-medium ${
+                  exerciseCategoryFilter === value
+                    ? "bg-primary text-primary-foreground border-transparent"
+                    : "active:bg-accent"
+                }`}
+              >
+                {value ? titleCaseWorkoutValue(value) : "All"}
+              </button>
+            ))}
           </div>
 
           {loading ? (
@@ -289,7 +303,7 @@ export default function NewCombinationPage() {
               No active exercises available.
             </div>
           ) : (
-            <div className="max-h-72 space-y-2 overflow-auto rounded-xl border p-3">
+            <div className="max-h-[45dvh] space-y-1 overflow-auto rounded-xl border p-2">
               {filteredExercises.length === 0 ? (
                 <p className="text-muted-foreground text-sm">
                   No exercises match current filters.
@@ -301,13 +315,13 @@ export default function NewCombinationPage() {
                   return (
                     <label
                       key={exercise.id}
-                      className="hover:bg-accent flex cursor-pointer items-start gap-3 rounded-lg px-2 py-2"
+                      className="hover:bg-accent flex min-h-11 cursor-pointer items-start gap-3 rounded-lg px-2 py-2"
                     >
                       <input
                         type="checkbox"
                         checked={checked}
                         onChange={() => toggleExercise(exercise.id)}
-                        className="mt-1"
+                        className="mt-1 h-4 w-4"
                       />
 
                       <div>
@@ -329,11 +343,15 @@ export default function NewCombinationPage() {
           )}
         </div>
 
-        <div className="pt-2">
-          <Button onClick={handleSave} disabled={saving}>
-            {saving ? "Saving..." : "Create Combination"}
+        <ActionBar>
+          <Button
+            className="h-12 flex-1"
+            onClick={handleSave}
+            disabled={saving || !combination.name.trim()}
+          >
+            {saving ? "Saving..." : "Create combination"}
           </Button>
-        </div>
+        </ActionBar>
       </div>
     </div>
   );

@@ -1,6 +1,7 @@
 "use client";
 
 import { Input } from "@/components/ui/input";
+import { toInputNumber, toNumericOrZero } from "@/lib/today/numeric";
 
 import MetricCard from "../MetricCard";
 
@@ -13,7 +14,7 @@ interface Props {
 }
 
 export default function MultiplierInput({ metric, value, onChange }: Props) {
-  const numericValue = value === "" ? 0 : Number(value);
+  const numericValue = toNumericOrZero(value);
   const multiplier = metric.scoring.multiplier ?? 1;
 
   const maxScore = metric.scoring.maxScore;
@@ -37,7 +38,7 @@ export default function MultiplierInput({ metric, value, onChange }: Props) {
           type="number"
           inputMode="decimal"
           placeholder="0"
-          value={value === "" ? "" : Number(value)}
+          value={toInputNumber(value)}
           min={0}
           onChange={(e) =>
             onChange(e.target.value === "" ? "" : Number(e.target.value))

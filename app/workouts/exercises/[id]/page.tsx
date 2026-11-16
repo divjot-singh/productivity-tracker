@@ -12,8 +12,10 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 
+import ActionBar from "@/components/common/ActionBar";
 import { Button } from "@/components/ui/button";
 import ExerciseEditorFields from "@/components/workouts/ExerciseEditorFields";
+import ExerciseRecords from "@/components/workouts/ExerciseRecords";
 import {
   Dialog,
   DialogContent,
@@ -372,7 +374,7 @@ export default function ExerciseDetailPage() {
             Edit
           </Button>
         ) : (
-          <div className="flex items-center gap-2">
+          <div className="hidden items-center gap-2 sm:flex">
             {hasUnsavedChanges ? (
               <span className="text-muted-foreground hidden text-xs sm:block">
                 Unsaved changes
@@ -426,7 +428,7 @@ export default function ExerciseDetailPage() {
           </div>
 
           {/* Editor */}
-          <div className="bg-card rounded-2xl border p-4 shadow-sm sm:p-6">
+          <div>
             <ExerciseEditorFields
               exercise={exercise}
               equipmentOptions={equipmentOptions}
@@ -463,12 +465,12 @@ export default function ExerciseDetailPage() {
             </Button>
           </div>
 
-          {/* Mobile sticky actions */}
-          <div className="bg-background/95 supports-[backdrop-filter]:bg-background/80 fixed right-0 bottom-0 left-0 z-50 border-t p-3 backdrop-blur sm:hidden">
-            <div className="mx-auto flex max-w-3xl gap-2">
+          {/* Mobile actions */}
+          <div className="sm:hidden">
+            <ActionBar>
               <Button
                 variant="outline"
-                className="flex-1"
+                className="h-12 flex-1"
                 onClick={handleCancelEdit}
                 disabled={saving}
               >
@@ -476,13 +478,13 @@ export default function ExerciseDetailPage() {
               </Button>
 
               <Button
-                className="flex-1"
+                className="h-12 flex-1"
                 onClick={handleSave}
                 disabled={!hasUnsavedChanges || saving || hasFormErrors}
               >
                 {saving ? "Saving..." : "Save changes"}
               </Button>
-            </div>
+            </ActionBar>
           </div>
         </>
       ) : (
@@ -525,6 +527,12 @@ export default function ExerciseDetailPage() {
               ))}
             </div>
           </section>
+
+          <ExerciseRecords
+            exerciseId={exercise.id}
+            workouts={referencingWorkouts}
+            unit={exercise.weightTracking.unit}
+          />
 
           {/* Overview */}
           <section className="mb-8">

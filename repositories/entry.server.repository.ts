@@ -1,4 +1,6 @@
 import { adminDb } from "@/lib/firebase-admin";
+import { removeUndefinedDeep } from "@/lib/firestore/sanitize";
+import { mapEntry } from "@/lib/mappers/entry.mapper";
 
 import { DailyEntry } from "@/models/entry";
 
@@ -12,6 +14,10 @@ interface CreateEntryPayload {
   xp: number;
 
   breakdown: unknown[];
+
+  maxScore?: number;
+
+  scorePercent?: number;
 }
 
 function getEntryRef(uid: string, date: string) {
@@ -22,13 +28,13 @@ export async function createEntry(uid: string, entry: CreateEntryPayload) {
   const ref = getEntryRef(uid, entry.date);
 
   await ref.set(
-    {
+    removeUndefinedDeep({
       ...entry,
 
       createdAt: new Date(),
 
       updatedAt: new Date(),
-    },
+    }),
     {
       merge: true,
     },
@@ -52,10 +58,11 @@ export async function getEntry(
     return null;
   }
 
-  return {
-    id: snapshot.id,
-    ...(snapshot.data() as DailyEntry),
-  };
+  return mapEntry(snapshot.data() as Record<string, unknown>, snapshot.id);
+}
+
+export async function deleteEntry(uid: string, date: string) {
+  await getEntryRef(uid, date).delete();
 }
 
 export async function entryExists(uid: string, date: string) {
@@ -87,11 +94,9 @@ export async function getEntries(
 
   const snapshot = await query.get();
 
-  return snapshot.docs.map((doc) => ({
-    id: doc.id,
-
-    ...(doc.data() as DailyEntry),
-  }));
+  return snapshot.docs.map((doc) =>
+    mapEntry(doc.data() as Record<string, unknown>, doc.id),
+  );
 }
 
 export async function goalHasHistory(

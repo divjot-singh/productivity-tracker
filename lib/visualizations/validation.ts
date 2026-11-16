@@ -33,25 +33,25 @@ export const VISUALIZATION_COMBINATIONS: Partial<
   entry: {
     stat: {
       widgets: ["stat-card"],
-      keys: ["score", "xp"],
+      keys: ["score", "scorePercent", "maxScore", "xp"],
       aggregations: ["latest", "max", "sum", "average", "count"],
       options: { comparison: true },
     },
     trend: {
       widgets: ["line-chart", "bar-chart", "area-chart"],
-      keys: ["score", "xp"],
+      keys: ["score", "scorePercent", "maxScore", "xp"],
       aggregations: ["daily"],
       options: {},
     },
     heatmap: {
       widgets: ["heatmap"],
-      keys: ["score", "xp"],
+      keys: ["score", "scorePercent", "maxScore", "xp"],
       aggregations: ["daily"],
       options: {},
     },
     timeline: {
       widgets: ["timeline"],
-      keys: ["score", "xp"],
+      keys: ["score", "scorePercent", "maxScore", "xp"],
       aggregations: ["daily"],
       options: { greenIfDeltaPositive: true },
     },

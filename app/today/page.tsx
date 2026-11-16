@@ -5,19 +5,28 @@ import Link from "next/link";
 import { format, parseISO, startOfMonth, endOfMonth } from "date-fns";
 
 import AppShell from "@/components/layout/AppShell";
+import PageSkeleton from "@/components/common/PageSkeleton";
 import MetricInput, { EntryFormValue } from "@/components/today/MetricInput";
-import { Button } from "@/components/ui/button";
+import { Eraser, MoreHorizontal } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
 
 import { useRequireAuth } from "@/lib/hooks/useRequireAuth";
 
 import { MetricDefinition, MetricValue } from "@/models/metric";
 
+import { resolveGoalsForDate } from "@/lib/mappers/goal.mapper";
 import { calculateScore } from "@/lib/scoring/scoring-engine";
 import { apiRequest } from "@/lib/api/client";
 import TodayStatusBar from "@/components/today/TodayStatusBar";
 import DateSelector from "@/components/today/DateSelector";
-import ReviewEntrySheet from "@/components/today/ReviewEntrySheet";
+import WorkoutSummaryCard from "@/components/today/WorkoutSummaryCard";
+import GettingStarted from "@/components/today/GettingStarted";
 import { buttonVariants } from "@/components/ui/button";
 import {
   getEmptyFormValues,
@@ -25,19 +34,13 @@ import {
   normalizeEntryValues,
 } from "@/lib/today/utils";
 import { cn } from "@/lib/utils";
-
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+import { localDate } from "@/lib/dates";
 
 type EntryValues = Record<string, EntryFormValue>;
+
+type SaveState = "idle" | "saving" | "saved" | "error";
+
+const AUTOSAVE_DELAY_MS = 900;
 
 interface ExistingEntry {
   date: string;
@@ -49,23 +52,30 @@ interface ExistingEntry {
 export default function TodayPage() {
   const { user } = useRequireAuth();
 
-  const [metrics, setMetrics] = useState<MetricDefinition[]>([]);
+  const [allGoals, setAllGoals] = useState<MetricDefinition[]>([]);
+
+  const [hasAnyWorkout, setHasAnyWorkout] = useState<boolean | null>(null);
 
   const [values, setValues] = useState<EntryValues>({});
 
   const [loading, setLoading] = useState(true);
 
-  const [previewOpen, setPreviewOpen] = useState(false);
-
-  const [saving, setSaving] = useState(false);
+  const [saveState, setSaveState] = useState<SaveState>("idle");
 
   const [error, setError] = useState<string | null>(null);
 
-  const [resetDialogOpen, setResetDialogOpen] = useState(false);
+  const [selectedDate, setSelectedDate] = useState(() => {
+    const requested =
+      typeof window === "undefined"
+        ? null
+        : new URLSearchParams(window.location.search).get("date");
 
-  const [selectedDate, setSelectedDate] = useState(
-    new Date().toISOString().split("T")[0],
-  );
+    return requested &&
+      /^\d{4}-\d{2}-\d{2}$/.test(requested) &&
+      requested <= localDate()
+      ? requested
+      : localDate();
+  });
 
   const [entryDates, setEntryDates] = useState<Set<string>>(new Set());
 
@@ -74,6 +84,14 @@ export default function TodayPage() {
 
   const selectedDateRef = useRef(selectedDate);
   const requestIdRef = useRef(0);
+  const dirtyRef = useRef(false);
+  const valuesRef = useRef<EntryValues>({});
+  const metricsRef = useRef<MetricDefinition[]>([]);
+
+  const metrics = useMemo(
+    () => resolveGoalsForDate(allGoals, selectedDate),
+    [allGoals, selectedDate],
+  );
 
   useEffect(() => {
     selectedDateRef.current = selectedDate;
@@ -172,6 +190,16 @@ export default function TodayPage() {
   }, [user, metrics, selectedDate, loadEntryForDate, loadEntryDates]);
 
   useEffect(() => {
+    if (!user) {
+      return;
+    }
+
+    apiRequest<unknown[]>(user, "/api/workouts?limit=1")
+      .then((workouts) => setHasAnyWorkout(workouts.length > 0))
+      .catch(() => setHasAnyWorkout(true));
+  }, [user]);
+
+  useEffect(() => {
     async function loadMetrics() {
       if (!user) {
         return;
@@ -181,9 +209,12 @@ export default function TodayPage() {
         setLoading(true);
         setError(null);
 
-        const goals = await apiRequest<MetricDefinition[]>(user, "/api/goals");
+        const goals = await apiRequest<MetricDefinition[]>(
+          user,
+          "/api/goals?status=all",
+        );
 
-        setMetrics(goals.filter((goal) => !goal.archived));
+        setAllGoals(goals);
       } catch (err) {
         console.error(err);
         setError("Unable to load today's configuration.");
@@ -229,59 +260,117 @@ export default function TodayPage() {
   }, [metrics, normalizedValues]);
 
   function updateValue(metricId: string, value: EntryFormValue) {
+    dirtyRef.current = true;
+    setSaveState("idle");
+
     setValues((previous) => ({
       ...previous,
       [metricId]: value,
     }));
   }
 
-  function handleReset() {
-    setValues(getEmptyFormValues(metrics));
-    setResetDialogOpen(false);
+  const persist = useCallback(async () => {
+    if (!user || !dirtyRef.current) {
+      return;
+    }
+
+    const date = selectedDateRef.current;
+    const payload = normalizeEntryValues(metricsRef.current, valuesRef.current);
+
+    dirtyRef.current = false;
+    setSaveState("saving");
+
+    try {
+      await apiRequest(user, "/api/entries", {
+        method: "POST",
+        body: { date, values: payload },
+      });
+
+      setCurrentEntryExists(true);
+      setEntryDates((previous) => new Set(previous).add(date));
+      setSaveState(date === selectedDateRef.current ? "saved" : "idle");
+    } catch (err) {
+      console.error(err);
+      dirtyRef.current = true;
+      setSaveState("error");
+      toast.error("Could not save. Will retry on your next change.");
+    }
+  }, [user]);
+
+  useEffect(() => {
+    valuesRef.current = values;
+    metricsRef.current = metrics;
+  }, [values, metrics]);
+
+  useEffect(() => {
+    if (!dirtyRef.current) {
+      return;
+    }
+
+    const timer = setTimeout(persist, AUTOSAVE_DELAY_MS);
+
+    return () => clearTimeout(timer);
+  }, [values, persist]);
+
+  async function handleDateChange(next: string) {
+    await persist();
+    setSaveState("idle");
+    setSelectedDate(next);
   }
 
-  async function handleSave() {
+  async function handleReset() {
     if (!user) {
       return;
     }
 
-    try {
-      setSaving(true);
+    const previous = values;
+    const date = selectedDate;
 
-      const data = await apiRequest<{
-        score: number;
-        xp: number;
-      }>(user, "/api/entries", {
-        method: "POST",
-        body: {
-          date: selectedDate,
-          values: normalizedValues,
-        },
-      });
+    dirtyRef.current = false;
+    setValues(getEmptyFormValues(metrics));
 
-      toast.success(
-        `Saved successfully.\nScore: ${data.score}\nXP: ${data.xp}`,
-      );
+    if (currentEntryExists) {
+      try {
+        await apiRequest(user, `/api/entries?date=${date}`, {
+          method: "DELETE",
+        });
 
-      setPreviewOpen(false);
-      //setValues(getEmptyFormValues(metrics));
-      setCurrentEntryExists(true);
-      setEntryDates((previous) => new Set(previous).add(selectedDate));
-    } catch (err) {
-      console.error(err);
-      toast.error("Failed to save entry");
-    } finally {
-      setSaving(false);
+        setCurrentEntryExists(false);
+        setEntryDates((existing) => {
+          const next = new Set(existing);
+          next.delete(date);
+          return next;
+        });
+      } catch (err) {
+        console.error(err);
+        setValues(previous);
+        toast.error("Could not clear the entry");
+        return;
+      }
     }
+
+    setSaveState("idle");
+
+    toast("Entry cleared", {
+      action: {
+        label: "Undo",
+        onClick: () => {
+          if (selectedDateRef.current !== date) {
+            return;
+          }
+
+          dirtyRef.current = true;
+          setValues(previous);
+        },
+      },
+    });
   }
   const dateLabel = format(parseISO(selectedDate), "d MMM yyyy");
 
   if (loading) {
     return (
       <AppShell>
-        <div className="text-muted-foreground p-6 text-sm">
-          Loading {dateLabel}&apos;s entry...
-        </div>
+        <PageSkeleton rows={6} />
       </AppShell>
     );
   }
@@ -321,14 +410,56 @@ export default function TodayPage() {
     <AppShell>
       <div className="mx-auto flex h-[calc(100dvh-5rem-4rem-env(safe-area-inset-bottom))] min-h-0 w-full max-w-screen-sm flex-col overflow-hidden lg:h-[calc(100dvh-4rem)]">
         <div className="min-h-0 flex-1 overflow-y-auto">
-          <div className="mb-2 px-4 pt-3 pb-2">
-            <h1 className="mb-1 text-xl font-bold tracking-tight">
-              {dateLabel}&apos;s Entry
-            </h1>
+          <div className="mb-2 flex items-start justify-between gap-3 px-4 pt-3 pb-2">
+            <div className="min-w-0">
+              <h1 className="mb-1 text-xl font-bold tracking-tight">
+                {dateLabel}&apos;s Entry
+              </h1>
 
-            <p className="text-muted-foreground text-xs">
-              Record your daily habits
-            </p>
+              <p className="text-muted-foreground text-xs">
+                Record your daily habits
+              </p>
+            </div>
+
+            <div className="flex shrink-0 items-center gap-1">
+              <span
+                aria-live="polite"
+                className={cn(
+                  "text-xs",
+                  saveState === "error"
+                    ? "text-destructive"
+                    : "text-muted-foreground",
+                )}
+              >
+                {saveState === "saving"
+                  ? "Saving..."
+                  : saveState === "saved"
+                    ? "Saved"
+                    : saveState === "error"
+                      ? "Not saved"
+                      : ""}
+              </span>
+
+              <DropdownMenu>
+                <DropdownMenuTrigger
+                  aria-label="Day options"
+                  className="text-muted-foreground hover:text-foreground hover:bg-accent flex h-9 w-9 items-center justify-center rounded-full transition-colors"
+                >
+                  <MoreHorizontal className="h-5 w-5" />
+                </DropdownMenuTrigger>
+
+                <DropdownMenuContent align="end" className="w-48">
+                  <DropdownMenuItem
+                    variant="destructive"
+                    disabled={!hasEntryValues(metrics, values)}
+                    onClick={handleReset}
+                  >
+                    <Eraser className="mr-2 h-4 w-4" />
+                    Clear this day
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
           </div>
 
           <div className="px-4 pb-3">
@@ -336,8 +467,18 @@ export default function TodayPage() {
               selectedDate={selectedDate}
               hasEntry={currentEntryExists}
               entryDates={entryDates}
-              onChange={setSelectedDate}
+              onChange={handleDateChange}
             />
+          </div>
+
+          <div className="space-y-3 px-4 pb-3">
+            <GettingStarted
+              hasGoals={allGoals.length > 0}
+              hasEntry={entryDates.size > 0 || currentEntryExists}
+              hasWorkout={hasAnyWorkout}
+            />
+
+            <WorkoutSummaryCard date={selectedDate} />
           </div>
 
           {/* Status bar - ONLY sticky element */}
@@ -371,63 +512,7 @@ export default function TodayPage() {
             ))}
           </div>
         </div>
-
-        {/* Buttons - always visible */}
-        <div className="bg-background shrink-0 border-t p-4 pb-[calc(1rem+env(safe-area-inset-bottom))]">
-          <div className="flex gap-3">
-            <AlertDialog
-              open={resetDialogOpen}
-              onOpenChange={setResetDialogOpen}
-            >
-              <Button
-                variant="outline"
-                className="h-12 flex-1"
-                disabled={!hasEntryValues(metrics, values)}
-                onClick={() => setResetDialogOpen(true)}
-              >
-                Reset
-              </Button>
-
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Reset entry?</AlertDialogTitle>
-
-                  <AlertDialogDescription>
-                    All currently entered values will be cleared. This will not
-                    delete any previously saved entry.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-
-                  <AlertDialogAction onClick={handleReset}>
-                    Reset
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-
-            <Button
-              className="h-12 flex-[2]"
-              onClick={() => setPreviewOpen(true)}
-            >
-              Review & Save
-            </Button>
-          </div>
-        </div>
       </div>
-
-      <ReviewEntrySheet
-        open={previewOpen}
-        onOpenChange={setPreviewOpen}
-        selectedDate={selectedDate}
-        metrics={metrics}
-        values={values}
-        scoreResult={scoreResult}
-        saving={saving}
-        onSave={handleSave}
-      />
     </AppShell>
   );
 }

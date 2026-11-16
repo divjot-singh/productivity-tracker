@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { ChevronDown, ChevronLeft, Pencil, Trash2 } from "lucide-react";
 
+import ActionBar from "@/components/common/ActionBar";
 import AppShell from "@/components/layout/AppShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -40,6 +41,7 @@ import {
 import { MetricDefinition } from "@/models/metric";
 import { ExerciseDefinition, WorkoutCombination } from "@/models/workout";
 import { getExerciseVisualizationKeyOptions } from "@/lib/visualizations/exercise-keys";
+import { providerLabel, scopeLabel } from "@/lib/visualizations/labels";
 import { toast } from "sonner";
 import VisualizationFieldLabel from "@/components/settings/VisualizationFieldLabel";
 
@@ -109,7 +111,7 @@ export default function VisualizationDetailPage() {
         setExercisesLoading(true);
         setCombinationsLoading(true);
         const [goalData, exerciseData, combinationData] = await Promise.all([
-          apiRequest<MetricDefinition[]>(user, "/api/goals"),
+          apiRequest<MetricDefinition[]>(user, "/api/goals?status=all"),
           apiRequest<ExerciseDefinition[]>(
             user,
             "/api/exercises?includeInactive=true",
@@ -354,75 +356,53 @@ export default function VisualizationDetailPage() {
     hasValidDisplayOrder;
 
   return (
-    <div className="relative mx-auto w-full max-w-screen-sm px-4 pt-4 pb-28">
-      <div className="absolute top-10 left-0 z-10 flex w-full items-center justify-between px-6">
+    <div className="relative mx-auto w-full max-w-screen-sm px-4 pt-[calc(1rem+env(safe-area-inset-top))] pb-4">
+      <div className="mb-4 flex items-center justify-between">
         <button
           onClick={handleCancel}
-          className="text-muted-foreground hover:text-foreground inline-flex items-center gap-1 text-sm transition-colors"
+          className="text-muted-foreground hover:text-foreground inline-flex h-10 items-center gap-1 text-sm transition-colors"
         >
           <ChevronLeft size={18} />
           Back
         </button>
 
         {!isEditing && (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setIsEditing(true)}
-          >
+          <Button variant="outline" onClick={() => setIsEditing(true)}>
             <Pencil className="mr-1.5 h-3.5 w-3.5" />
             Edit
           </Button>
         )}
       </div>
 
-      <div className="bg-card relative mb-6 overflow-hidden rounded-3xl border">
-        <div className="from-primary/15 via-primary/5 to-background h-28 bg-linear-to-r" />
+      <div className="bg-card mb-4 rounded-2xl border p-4">
+        <h1 className="text-xl leading-tight font-bold">
+          {visualization.title}
+        </h1>
 
-        <div className="-mt-10 px-6 pb-6 sm:px-8">
-          <div className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
-            <div className="flex items-center gap-5">
-              <div className="bg-background ring-background flex h-20 w-20 items-center justify-center rounded-3xl border shadow-sm ring-4">
-                <span className="text-primary text-center text-xs leading-4 font-semibold uppercase">
-                  {widgetLabel}
-                </span>
-              </div>
+        <p className="text-muted-foreground mt-1 text-sm">
+          {visualization.description || "No description provided."}
+        </p>
 
-              <div>
-                <h1 className="text-3xl font-bold tracking-tight">
-                  {visualization.title}
-                </h1>
-
-                <p className="text-muted-foreground mt-2 max-w-2xl text-sm leading-6">
-                  {visualization.description || "No description provided."}
-                </p>
-              </div>
-            </div>
-
-            <div className="flex flex-wrap gap-2">
-              <div className="bg-muted rounded-full px-4 py-2 text-sm font-medium">
-                {toTitleCase(visualization.scope)}
-              </div>
-
-              <div className="bg-primary/10 text-primary rounded-full px-4 py-2 text-sm font-medium">
-                {toTitleCase(visualization.provider)} /{" "}
-                {toTitleCase(visualization.executor)}
-              </div>
-
-              <div className="bg-secondary rounded-full px-4 py-2 text-sm font-medium">
-                {widgetLabel}
-              </div>
-            </div>
-          </div>
+        <div className="mt-2 flex flex-wrap gap-1.5 text-xs">
+          <span className="bg-muted rounded-full px-2.5 py-1">
+            {scopeLabel(visualization.scope)}
+          </span>
+          <span className="bg-primary/10 text-primary rounded-full px-2.5 py-1">
+            {providerLabel(visualization.provider)} /{" "}
+            {toTitleCase(visualization.executor)}
+          </span>
+          <span className="bg-secondary rounded-full px-2.5 py-1">
+            {widgetLabel}
+          </span>
         </div>
       </div>
 
-      <div className="bg-card mb-6 rounded-3xl border p-6">
+      <div className="bg-card mb-4 rounded-2xl border p-4">
         <h2 className="mb-4 text-lg font-semibold">Configuration</h2>
 
         {isEditing ? (
           <div className="space-y-6">
-            <div className="space-y-2">
+            <div className="space-y-3">
               <VisualizationFieldLabel topic="title" htmlFor="title">
                 Title
               </VisualizationFieldLabel>
@@ -433,7 +413,7 @@ export default function VisualizationDetailPage() {
               />
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-3">
               <VisualizationFieldLabel
                 topic="description"
                 htmlFor="description"
@@ -454,7 +434,7 @@ export default function VisualizationDetailPage() {
             </div>
 
             <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
+              <div className="space-y-3">
                 <VisualizationFieldLabel topic="scope" htmlFor="scope">
                   Scope
                 </VisualizationFieldLabel>
@@ -471,7 +451,7 @@ export default function VisualizationDetailPage() {
                   >
                     {SCOPE_OPTIONS.map((scope) => (
                       <option key={scope} value={scope}>
-                        {toTitleCase(scope)}
+                        {scopeLabel(scope)}
                       </option>
                     ))}
                   </select>
@@ -479,7 +459,7 @@ export default function VisualizationDetailPage() {
                 </div>
               </div>
 
-              <div className="space-y-2">
+              <div className="space-y-3">
                 <VisualizationFieldLabel topic="widget" htmlFor="widget">
                   Widget
                 </VisualizationFieldLabel>
@@ -505,7 +485,7 @@ export default function VisualizationDetailPage() {
               </div>
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-3">
               <VisualizationFieldLabel
                 topic="source"
                 htmlFor="provider-executor"
@@ -516,13 +496,13 @@ export default function VisualizationDetailPage() {
                 id="provider-executor"
                 className="bg-muted rounded-xl border px-3 py-2 text-sm font-medium"
               >
-                {toTitleCase(visualization.provider)} /{" "}
+                {providerLabel(visualization.provider)} /{" "}
                 {toTitleCase(visualization.executor)}
               </div>
             </div>
 
             {!isCompositeStreak && (
-              <div className="space-y-2">
+              <div className="space-y-3">
                 <VisualizationFieldLabel topic="data" htmlFor="key">
                   Data Key
                 </VisualizationFieldLabel>
@@ -547,7 +527,7 @@ export default function VisualizationDetailPage() {
             )}
 
             {combination && (
-              <div className="space-y-2">
+              <div className="space-y-3">
                 <VisualizationFieldLabel
                   topic="aggregation"
                   htmlFor="aggregation"
@@ -582,7 +562,7 @@ export default function VisualizationDetailPage() {
             />
 
             {combination?.options.comparison && (
-              <div className="space-y-2">
+              <div className="space-y-3">
                 <VisualizationFieldLabel
                   topic="comparison"
                   htmlFor="comparison"
@@ -653,7 +633,7 @@ export default function VisualizationDetailPage() {
               />
             )}
 
-            <div className="space-y-2">
+            <div className="space-y-3">
               <VisualizationFieldLabel
                 topic="displayOrder"
                 htmlFor="display-order"
@@ -673,7 +653,7 @@ export default function VisualizationDetailPage() {
               />
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-3">
               <p className="text-muted-foreground text-xs">
                 Provider and executor are derived from your scope/widget/key
                 selections and validated on save.
@@ -685,7 +665,7 @@ export default function VisualizationDetailPage() {
         )}
       </div>
 
-      <div className="bg-card mb-6 rounded-3xl border p-6">
+      <div className="bg-card mb-4 rounded-2xl border p-4">
         <h2 className="mb-4 text-lg font-semibold">Visibility</h2>
 
         <div className="flex items-center justify-between">
@@ -705,8 +685,8 @@ export default function VisualizationDetailPage() {
 
             <p className="text-muted-foreground text-sm">
               {visualization.visible
-                ? "This visualization appears on the dashboard."
-                : "This visualization is hidden from the dashboard."}
+                ? "This visualization appears on Insights."
+                : "This visualization is hidden from Insights."}
             </p>
           </div>
 
@@ -729,7 +709,7 @@ export default function VisualizationDetailPage() {
       </div>
 
       {!isEditing && (
-        <div className="bg-card border-destructive/20 rounded-3xl border p-6">
+        <div className="bg-card border-destructive/20 rounded-2xl border p-4">
           <h2 className="text-destructive mb-4 text-lg font-semibold">
             Danger Zone
           </h2>
@@ -739,7 +719,7 @@ export default function VisualizationDetailPage() {
               <p className="text-sm font-medium">Delete this visualization</p>
 
               <p className="text-muted-foreground mt-1 text-sm">
-                Permanently remove this visualization from your dashboard.
+                Permanently remove this visualization from your Insights.
               </p>
             </div>
 
@@ -761,7 +741,7 @@ export default function VisualizationDetailPage() {
 
             <DialogDescription>
               &ldquo;{visualization.title}&rdquo; will be permanently removed
-              from your dashboard. This action cannot be undone.
+              from your Insights. This action cannot be undone.
             </DialogDescription>
           </DialogHeader>
 
@@ -786,26 +766,24 @@ export default function VisualizationDetailPage() {
       </Dialog>
 
       {isEditing && (
-        <div className="bg-background fixed inset-x-0 bottom-0 z-20 border-t p-4 lg:left-64">
-          <div className="mx-auto flex max-w-screen-sm gap-3">
-            <Button
-              variant="outline"
-              className="flex-1"
-              onClick={handleCancel}
-              disabled={saving}
-            >
-              Cancel
-            </Button>
+        <ActionBar withNav={false}>
+          <Button
+            variant="outline"
+            className="h-12 flex-1"
+            onClick={handleCancel}
+            disabled={saving}
+          >
+            Cancel
+          </Button>
 
-            <Button
-              className="flex-2"
-              onClick={handleSave}
-              disabled={saving || !hasChanges || !canSave}
-            >
-              {saving ? "Saving..." : "Save Changes"}
-            </Button>
-          </div>
-        </div>
+          <Button
+            className="h-12 flex-[2]"
+            onClick={handleSave}
+            disabled={saving || !hasChanges || !canSave}
+          >
+            {saving ? "Saving..." : "Save Changes"}
+          </Button>
+        </ActionBar>
       )}
     </div>
   );
@@ -819,10 +797,10 @@ function ReadOnlyConfig({
   return (
     <div className="space-y-4">
       <ReadOnlyRow label="Widget" value={toTitleCase(visualization.widget)} />
-      <ReadOnlyRow label="Scope" value={toTitleCase(visualization.scope)} />
+      <ReadOnlyRow label="Scope" value={scopeLabel(visualization.scope)} />
       <ReadOnlyRow
         label="Provider"
-        value={toTitleCase(visualization.provider)}
+        value={providerLabel(visualization.provider)}
       />
       <ReadOnlyRow
         label="Executor"
@@ -853,7 +831,7 @@ function PeriodEditor({
   const isAll = period.type === "all";
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-3">
       <VisualizationFieldLabel topic="period" htmlFor="period">
         Period
       </VisualizationFieldLabel>
@@ -1177,7 +1155,7 @@ function ReadOnlyStreakRule({
   }
 
   return (
-    <div className="space-y-2 rounded-2xl border p-4">
+    <div className="space-y-3 rounded-2xl border p-4">
       <div className="flex items-center justify-between">
         <span className="text-muted-foreground text-sm">Streak rule</span>
         <span className="font-medium">
@@ -1185,7 +1163,7 @@ function ReadOnlyStreakRule({
         </span>
       </div>
 
-      <div className="space-y-2">
+      <div className="space-y-3">
         {value.conditions.map((condition, index) => (
           <div key={`${condition.goalLabel}-${index}`} className="text-sm">
             {condition.goalLabel} {formatComparator(condition.comparator)}{" "}

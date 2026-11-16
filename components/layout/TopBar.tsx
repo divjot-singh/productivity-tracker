@@ -1,7 +1,9 @@
 "use client";
 
-import { Dumbbell, LogOut, Settings } from "lucide-react";
+import { LogOut, Palette, Settings } from "lucide-react";
 import { useRouter } from "next/navigation";
+
+import QuickChatButton from "@/components/layout/QuickChatButton";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
@@ -35,46 +37,50 @@ export default function TopBar() {
       .toUpperCase() ?? "U";
 
   return (
-    <header className="bg-background fixed top-0 right-0 left-0 z-50 flex h-16 items-center justify-between border-b border-zinc-800 px-4">
+    <header className="bg-background border-border fixed top-0 right-0 left-0 z-50 flex h-[var(--top-bar)] items-center justify-between border-b px-4 pt-[env(safe-area-inset-top)]">
       <BrandLogo size={30} textClassName="text-base font-semibold" />
 
-      <DropdownMenu>
-        <DropdownMenuTrigger>
-          <Avatar className="border-border cursor-pointer border">
-            <AvatarImage src={user?.photoURL ?? ""} />
+      <div className="flex items-center gap-2">
+        <QuickChatButton variant="icon" />
 
-            <AvatarFallback className="bg-emerald-600 text-white">
-              {initials}
-            </AvatarFallback>
-          </Avatar>
-        </DropdownMenuTrigger>
+        <DropdownMenu>
+          <DropdownMenuTrigger>
+            <Avatar className="border-border cursor-pointer border">
+              <AvatarImage src={user?.photoURL ?? ""} />
 
-        <DropdownMenuContent align="end" className="w-64">
-          <div className="px-2 py-2">
-            <p className="font-medium">{user?.displayName}</p>
-            <p className="text-muted-foreground text-xs">{user?.email}</p>
-          </div>
+              <AvatarFallback className="bg-primary text-primary-foreground">
+                {initials}
+              </AvatarFallback>
+            </Avatar>
+          </DropdownMenuTrigger>
 
-          <DropdownMenuSeparator />
+          <DropdownMenuContent align="end" className="w-64">
+            <div className="px-2 py-2">
+              <p className="font-medium">{user?.displayName}</p>
+              <p className="text-muted-foreground text-xs">{user?.email}</p>
+            </div>
 
-          <DropdownMenuItem onClick={() => router.push("/settings")}>
-            <Settings className="mr-2 h-4 w-4" />
-            Settings
-          </DropdownMenuItem>
+            <DropdownMenuSeparator />
 
-          <DropdownMenuItem onClick={() => router.push("/workouts")}>
-            <Dumbbell className="mr-2 h-4 w-4" />
-            Workouts
-          </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => router.push("/settings")}>
+              <Settings className="mr-2 h-4 w-4" />
+              Settings
+            </DropdownMenuItem>
 
-          <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={() => router.push("/themes")}>
+              <Palette className="mr-2 h-4 w-4" />
+              Themes
+            </DropdownMenuItem>
 
-          <DropdownMenuItem variant="destructive" onClick={handleLogout}>
-            <LogOut className="mr-2 h-4 w-4" />
-            Logout
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
+            <DropdownMenuSeparator />
+
+            <DropdownMenuItem variant="destructive" onClick={handleLogout}>
+              <LogOut className="mr-2 h-4 w-4" />
+              Logout
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
     </header>
   );
 }

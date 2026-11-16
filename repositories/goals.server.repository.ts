@@ -1,6 +1,8 @@
 // repositories/goals.server.repository.ts
 
 import { adminDb } from "@/lib/firebase-admin";
+import { GOAL_SCHEMA_VERSION, mapGoal } from "@/lib/mappers/goal.mapper";
+import { FieldValue } from "firebase-admin/firestore";
 
 import { MetricDefinition } from "@/models/metric";
 
@@ -42,10 +44,7 @@ export async function getGoal(
     return null;
   }
 
-  return {
-    ...(snapshot.data() as MetricDefinition),
-    id: snapshot.id,
-  };
+  return mapGoal(snapshot.data() as Record<string, unknown>, snapshot.id);
 }
 
 export async function goalExists(uid: string, goalId: string) {
@@ -64,10 +63,9 @@ export async function getGoals(uid: string): Promise<MetricDefinition[]> {
     .orderBy("displayOrder", "asc")
     .get();
 
-  return snapshot.docs.map((doc) => ({
-    ...(doc.data() as MetricDefinition),
-    id: doc.id,
-  }));
+  return snapshot.docs.map((doc) =>
+    mapGoal(doc.data() as Record<string, unknown>, doc.id),
+  );
 }
 
 export async function updateGoal(
@@ -88,6 +86,43 @@ export async function updateGoal(
   );
 
   return goal;
+}
+
+export async function archiveGoal(
+  uid: string,
+  goal: MetricDefinition,
+  archivedAt: string,
+) {
+  await getGoalRef(uid, goal.id).set(
+    {
+      status: "archived",
+      archivedAt,
+      previousWeight: goal.weight,
+      weight: 0,
+      schemaVersion: GOAL_SCHEMA_VERSION,
+      updatedAt: new Date(),
+    },
+    { merge: true },
+  );
+}
+
+export async function reactivateGoal(
+  uid: string,
+  goalId: string,
+  weight: number,
+) {
+  await getGoalRef(uid, goalId).set(
+    {
+      status: "active",
+      weight,
+      archived: FieldValue.delete(),
+      archivedAt: FieldValue.delete(),
+      previousWeight: FieldValue.delete(),
+      schemaVersion: GOAL_SCHEMA_VERSION,
+      updatedAt: new Date(),
+    },
+    { merge: true },
+  );
 }
 
 export async function deleteGoal(uid: string, goalId: string) {

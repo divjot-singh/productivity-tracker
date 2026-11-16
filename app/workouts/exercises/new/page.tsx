@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { ChevronLeft } from "lucide-react";
 import { toast } from "sonner";
 
+import ActionBar from "@/components/common/ActionBar";
 import { Button } from "@/components/ui/button";
 import ExerciseEditorFields from "@/components/workouts/ExerciseEditorFields";
 import { useRequireAuth } from "@/lib/hooks/useRequireAuth";
@@ -132,16 +133,16 @@ export default function NewExercisePage() {
   }
 
   return (
-    <div className="pb-17">
+    <div>
       <button
         onClick={() => router.back()}
-        className="text-muted-foreground hover:text-foreground mb-6 inline-flex items-center gap-1 text-sm transition-colors"
+        className="text-muted-foreground hover:text-foreground mb-3 inline-flex items-center gap-1 text-sm transition-colors"
       >
         <ChevronLeft size={18} />
         Back
       </button>
 
-      <h1 className="mb-8 text-3xl font-bold tracking-tight">Add Exercise</h1>
+      <h1 className="mb-4 text-2xl font-bold tracking-tight">Add Exercise</h1>
 
       <div className="space-y-4">
         <ExerciseEditorFields
@@ -150,11 +151,15 @@ export default function NewExercisePage() {
           onChange={setExercise}
           onValidationChange={setHasFormErrors}
         />
-        <div className="pt-2">
-          <Button onClick={handleSave} disabled={saving || hasFormErrors}>
-            {saving ? "Saving..." : "Create Exercise"}
+        <ActionBar>
+          <Button
+            className="h-12 flex-1"
+            onClick={handleSave}
+            disabled={saving || hasFormErrors || !exercise.name.trim()}
+          >
+            {saving ? "Saving..." : "Create exercise"}
           </Button>
-        </div>
+        </ActionBar>
       </div>
     </div>
   );
