@@ -42,7 +42,7 @@ export default function OptionsInput({ metric, value, onChange }: Props) {
               type="button"
               onClick={() => onChange(option.value)}
               className={cn(
-                "rounded-xl border p-2.5 text-left text-sm transition-all",
+                "rounded-xl border p-2.5 text-center text-sm transition-all",
                 selected
                   ? "border-primary bg-primary/10 text-primary"
                   : "border-border hover:bg-accent",

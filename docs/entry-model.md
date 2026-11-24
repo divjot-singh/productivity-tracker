@@ -16,8 +16,11 @@ that have not been explicitly answered.
 
 `answeredGoalIds` is an optional array of goal IDs explicitly answered in the
 Today view. It is used for ordering and does not change scoring. Entries created
-before this field existed have no reliable answer history and are treated as
-unanswered until the user answers them again.
+before this field existed have no reliable answer history. The Today view also
+infers answers from saved values that differ from the current untouched value,
+including when answer IDs are present. A default-valued answer cannot be inferred
+and must be explicitly answered again. Changes to goal defaults can affect this
+inference for older entries.
 
 The named fields below describe the earlier goal-oriented model; they are not
 the current entry storage format.

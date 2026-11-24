@@ -14,7 +14,7 @@ function Input({
   const safeValue =
     typeof value === "number" && Number.isNaN(value) ? "" : value;
 
-  return (
+  const input = (
     <InputPrimitive
       type={type}
       value={safeValue}
@@ -31,6 +31,16 @@ function Input({
       {...props}
     />
   );
+
+  if (type === "date" || type === "time" || type === "datetime-local") {
+    return (
+      <div className="grid w-full min-w-0 grid-cols-[minmax(0,1fr)]">
+        {input}
+      </div>
+    );
+  }
+
+  return input;
 }
 
 export { Input };

@@ -35,7 +35,11 @@ import {
 } from "@/lib/today/utils";
 import { cn } from "@/lib/utils";
 import { localDate } from "@/lib/dates";
-import { isMorningGoal, orderTodayGoals } from "@/lib/today/goal-order";
+import {
+  getAnsweredGoalIds,
+  isMorningGoal,
+  orderTodayGoals,
+} from "@/lib/today/goal-order";
 
 type EntryValues = Record<string, EntryFormValue>;
 
@@ -145,7 +149,11 @@ export default function TodayPage() {
         }
 
         if (entry?.values) {
-          const answered = new Set(entry.answeredGoalIds ?? []);
+          const answered = getAnsweredGoalIds(
+            currentMetrics,
+            entry.values,
+            entry.answeredGoalIds,
+          );
           answeredGoalIdsRef.current = answered;
           setAnsweredGoalIds(answered);
           editedMorningRef.current.clear();

@@ -1,4 +1,4 @@
-import type { MetricDefinition } from "../../models/metric";
+import type { MetricDefinition, MetricValue } from "../../models/metric";
 
 const MORNING_LABELS = [
   ["wake time"],
@@ -20,6 +20,24 @@ export function isMorningGoal(goal: MetricDefinition): boolean {
   return MORNING_LABELS.some((labels) =>
     labels.includes(goal.label.trim().toLowerCase()),
   );
+}
+
+export function getAnsweredGoalIds(
+  goals: MetricDefinition[],
+  values: Record<string, MetricValue>,
+  answeredGoalIds: readonly string[] = [],
+): Set<string> {
+  const answered = new Set(answeredGoalIds);
+
+  for (const goal of goals) {
+    const value = values[goal.id];
+    const empty = goal.type === "number" ? 0 : goal.defaultValue;
+    if (value !== undefined && value !== "" && value !== empty) {
+      answered.add(goal.id);
+    }
+  }
+
+  return answered;
 }
 
 export function orderTodayGoals(

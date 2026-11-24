@@ -6,6 +6,10 @@ import MetricCard from "../MetricCard";
 import { Input } from "@/components/ui/input";
 import { toInputNumber, toNumericOrZero } from "@/lib/today/numeric";
 
+const rangeFormatter = new Intl.NumberFormat("en-US", {
+  maximumFractionDigits: 1,
+});
+
 interface Props {
   metric: MetricDefinition;
   value: MetricValue | "";
@@ -34,6 +38,7 @@ export default function RangeInput({ metric, value, onChange }: Props) {
           type="number"
           inputMode="decimal"
           placeholder="0"
+          className="h-12 text-lg"
           value={toInputNumber(value)}
           onChange={(e) =>
             onChange(e.target.value === "" ? "" : Number(e.target.value))
@@ -49,8 +54,9 @@ export default function RangeInput({ metric, value, onChange }: Props) {
             <div className="mt-2 flex items-center justify-between">
               <div>
                 <p className="font-medium">
-                  {matched.min}
-                  {matched.max !== undefined && ` - ${matched.max}`}
+                  {rangeFormatter.format(matched.min)}
+                  {matched.max !== undefined &&
+                    ` - ${rangeFormatter.format(matched.max)}`}
                   {metric.unit && ` ${metric.unit}`}
                 </p>
 

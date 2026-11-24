@@ -52,6 +52,7 @@ export default function DateSelector({
           type="button"
           variant="outline"
           size="icon"
+          className="size-12"
           aria-label="Previous day"
           onClick={() => changeByDays(-1)}
         >
@@ -64,7 +65,7 @@ export default function DateSelector({
               <Button
                 type="button"
                 variant="outline"
-                className="min-w-0 flex-1 justify-center gap-2 font-medium"
+                className="h-12 min-w-0 flex-1 justify-center gap-2 font-medium"
               >
                 <CalendarDays className="h-4 w-4 shrink-0" />
                 <span className="truncate">{displayDate}</span>
@@ -102,6 +103,7 @@ export default function DateSelector({
           type="button"
           variant="outline"
           size="icon"
+          className="size-12"
           aria-label="Next day"
           onClick={() => changeByDays(1)}
           disabled={selectedDate >= todayIso}

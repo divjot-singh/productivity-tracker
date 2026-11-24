@@ -44,6 +44,7 @@ export default function GoalInput({ metric, value, onChange }: Props) {
           placeholder="0"
           value={toInputNumber(value)}
           min={0}
+          className="h-12 text-lg"
           onChange={(e) =>
             onChange(e.target.value === "" ? "" : Number(e.target.value))
           }

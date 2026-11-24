@@ -1,6 +1,6 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
-import { orderTodayGoals } from "./goal-order.ts";
+import { getAnsweredGoalIds, orderTodayGoals } from "./goal-order.ts";
 import type { MetricDefinition } from "../../models/metric";
 
 const goal = (id: string, label: string, type = "number") =>
@@ -49,6 +49,55 @@ describe("orderTodayGoals", () => {
     assert.deepEqual(
       orderTodayGoals(goals, new Set()).map((item) => item.id),
       ["wake", "sleep", "weight"],
+    );
+  });
+});
+
+describe("getAnsweredGoalIds", () => {
+  it("recovers non-default saved values and preserves explicit default answers", () => {
+    const goals = [
+      { ...goal("wake", "Wake time", "time"), defaultValue: "00:00" },
+      { ...goal("sleep", "Sleep"), defaultValue: 0 },
+      {
+        ...goal("alcohol", "Alcohol consumption", "boolean"),
+        defaultValue: true,
+      },
+      { ...goal("stretch", "Stretching", "boolean"), defaultValue: false },
+      { ...goal("weight", "Body weight"), defaultValue: 0 },
+    ];
+    const answered = getAnsweredGoalIds(
+      goals,
+      {
+        wake: "07:30",
+        sleep: 7,
+        alcohol: false,
+        stretch: false,
+        weight: 0,
+      },
+      ["stretch"],
+    );
+    assert.deepEqual([...answered].sort(), [
+      "alcohol",
+      "sleep",
+      "stretch",
+      "wake",
+    ]);
+  });
+
+  it("does not infer answers for untouched or missing defaults", () => {
+    const goals = [
+      { ...goal("wake", "Wake time", "time"), defaultValue: "00:00" },
+      {
+        ...goal("alcohol", "Alcohol consumption", "boolean"),
+        defaultValue: true,
+      },
+      { ...goal("sleep", "Sleep"), defaultValue: 8 },
+      { ...goal("weight", "Body weight"), defaultValue: 0 },
+    ];
+    assert.equal(
+      getAnsweredGoalIds(goals, { wake: "00:00", alcohol: true, sleep: 0 })
+        .size,
+      0,
     );
   });
 });

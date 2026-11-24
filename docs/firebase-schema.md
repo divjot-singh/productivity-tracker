@@ -134,7 +134,8 @@ Benefits
 `date` is a date string, and `values` maps goal IDs to their recorded or default
 values. `answeredGoalIds` is an optional array of explicitly answered goal IDs
 used to order the Today view. Score, XP, breakdown, maximum score, and score
-percentage are stored alongside them. Older entries may not have answer IDs.
+percentage are stored alongside them. Older entries may not have answer IDs;
+the Today view also infers answers from values that differ from current defaults.
 
 ---
 
