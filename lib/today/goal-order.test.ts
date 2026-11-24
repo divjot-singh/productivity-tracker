@@ -39,4 +39,16 @@ describe("orderTodayGoals", () => {
       ["steps", "boolean"],
     );
   });
+
+  it("recognizes alternate morning labels in routine order", () => {
+    const goals = [
+      goal("weight", "Weight tracker"),
+      goal("sleep", "Sleep hours"),
+      goal("wake", "Wake time", "time"),
+    ];
+    assert.deepEqual(
+      orderTodayGoals(goals, new Set()).map((item) => item.id),
+      ["wake", "sleep", "weight"],
+    );
+  });
 });

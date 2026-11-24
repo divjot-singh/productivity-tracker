@@ -1,6 +1,10 @@
 import type { MetricDefinition } from "../../models/metric";
 
-const MORNING_LABELS = ["wake time", "sleep", "weight", "body weight"];
+const MORNING_LABELS = [
+  ["wake time"],
+  ["sleep", "sleep hours"],
+  ["weight", "body weight", "weight tracker"],
+];
 const ONGOING_LABELS = [
   "oral hygeine",
   "oral hygiene",
@@ -13,7 +17,9 @@ const ONGOING_LABELS = [
 ];
 
 export function isMorningGoal(goal: MetricDefinition): boolean {
-  return MORNING_LABELS.includes(goal.label.trim().toLowerCase());
+  return MORNING_LABELS.some((labels) =>
+    labels.includes(goal.label.trim().toLowerCase()),
+  );
 }
 
 export function orderTodayGoals(
@@ -36,7 +42,9 @@ function goalOrder(
   answeredGoalIds: ReadonlySet<string>,
 ): [number, number] {
   const label = goal.label.trim().toLowerCase();
-  const morningIndex = MORNING_LABELS.indexOf(label);
+  const morningIndex = MORNING_LABELS.findIndex((labels) =>
+    labels.includes(label),
+  );
   const isMorning = morningIndex >= 0;
   const isBoolean = goal.type === "boolean";
 
