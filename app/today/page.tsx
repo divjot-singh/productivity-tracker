@@ -35,6 +35,7 @@ import {
 } from "@/lib/today/utils";
 import { cn } from "@/lib/utils";
 import { localDate } from "@/lib/dates";
+import { isMorningGoal, orderTodayGoals } from "@/lib/today/goal-order";
 
 type EntryValues = Record<string, EntryFormValue>;
 
@@ -47,6 +48,7 @@ interface ExistingEntry {
   values: Record<string, MetricValue>;
   score: number;
   xp: number;
+  answeredGoalIds?: string[];
 }
 
 export default function TodayPage() {
@@ -57,6 +59,9 @@ export default function TodayPage() {
   const [hasAnyWorkout, setHasAnyWorkout] = useState<boolean | null>(null);
 
   const [values, setValues] = useState<EntryValues>({});
+  const [answeredGoalIds, setAnsweredGoalIds] = useState<Set<string>>(
+    new Set(),
+  );
 
   const [loading, setLoading] = useState(true);
 
@@ -86,6 +91,9 @@ export default function TodayPage() {
   const requestIdRef = useRef(0);
   const dirtyRef = useRef(false);
   const valuesRef = useRef<EntryValues>({});
+  const answeredGoalIdsRef = useRef<Set<string>>(new Set());
+  const editedMorningRef = useRef<Set<string>>(new Set());
+  const saveQueueRef = useRef<Promise<void>>(Promise.resolve());
   const metricsRef = useRef<MetricDefinition[]>([]);
 
   const metrics = useMemo(
@@ -137,6 +145,10 @@ export default function TodayPage() {
         }
 
         if (entry?.values) {
+          const answered = new Set(entry.answeredGoalIds ?? []);
+          answeredGoalIdsRef.current = answered;
+          setAnsweredGoalIds(answered);
+          editedMorningRef.current.clear();
           const nextValues: EntryValues = getEmptyFormValues(currentMetrics);
 
           currentMetrics.forEach((metric) => {
@@ -149,6 +161,9 @@ export default function TodayPage() {
           setValues(nextValues);
           setCurrentEntryExists(true);
         } else {
+          answeredGoalIdsRef.current = new Set();
+          setAnsweredGoalIds(new Set());
+          editedMorningRef.current.clear();
           setValues(getEmptyFormValues(currentMetrics));
           setCurrentEntryExists(false);
         }
@@ -159,6 +174,9 @@ export default function TodayPage() {
           return;
         }
 
+        answeredGoalIdsRef.current = new Set();
+        setAnsweredGoalIds(new Set());
+        editedMorningRef.current.clear();
         setValues(getEmptyFormValues(currentMetrics));
         setCurrentEntryExists(false);
       }
@@ -226,20 +244,10 @@ export default function TodayPage() {
     loadMetrics();
   }, [user]);
 
-  const groupedMetrics = useMemo(() => {
-    return metrics.reduce(
-      (acc, metric) => {
-        if (!acc[metric.category]) {
-          acc[metric.category] = [];
-        }
-
-        acc[metric.category].push(metric);
-
-        return acc;
-      },
-      {} as Record<string, MetricDefinition[]>,
-    );
-  }, [metrics]);
+  const orderedMetrics = useMemo(
+    () => orderTodayGoals(metrics, answeredGoalIds),
+    [metrics, answeredGoalIds],
+  );
 
   const normalizedValues = useMemo(
     () => normalizeEntryValues(metrics, values),
@@ -259,42 +267,76 @@ export default function TodayPage() {
     return calculateScore(metrics, normalizedValues);
   }, [metrics, normalizedValues]);
 
-  function updateValue(metricId: string, value: EntryFormValue) {
+  function markAnswered(metricId: string) {
+    if (answeredGoalIdsRef.current.has(metricId)) return;
+    const next = new Set(answeredGoalIdsRef.current).add(metricId);
+    answeredGoalIdsRef.current = next;
+    setAnsweredGoalIds(next);
+    dirtyRef.current = true;
+    setSaveState("idle");
+  }
+
+  function unmarkAnswered(metricId: string) {
+    if (!answeredGoalIdsRef.current.has(metricId)) return;
+    const next = new Set(answeredGoalIdsRef.current);
+    next.delete(metricId);
+    answeredGoalIdsRef.current = next;
+    setAnsweredGoalIds(next);
+    dirtyRef.current = true;
+    setSaveState("idle");
+  }
+
+  function updateValue(metric: MetricDefinition, value: EntryFormValue) {
     dirtyRef.current = true;
     setSaveState("idle");
 
-    setValues((previous) => ({
-      ...previous,
-      [metricId]: value,
-    }));
+    const next = { ...valuesRef.current, [metric.id]: value };
+    valuesRef.current = next;
+    setValues(next);
+    if (metric.type === "boolean") markAnswered(metric.id);
+    if (isMorningGoal(metric)) editedMorningRef.current.add(metric.id);
   }
 
   const persist = useCallback(async () => {
-    if (!user || !dirtyRef.current) {
+    if (!user) {
+      return;
+    }
+
+    if (!dirtyRef.current) {
+      await saveQueueRef.current;
       return;
     }
 
     const date = selectedDateRef.current;
     const payload = normalizeEntryValues(metricsRef.current, valuesRef.current);
+    const answered = [...answeredGoalIdsRef.current];
 
     dirtyRef.current = false;
     setSaveState("saving");
 
-    try {
-      await apiRequest(user, "/api/entries", {
-        method: "POST",
-        body: { date, values: payload },
-      });
+    const save = saveQueueRef.current.then(async () => {
+      try {
+        await apiRequest(user, "/api/entries", {
+          method: "POST",
+          body: { date, values: payload, answeredGoalIds: answered },
+        });
 
-      setCurrentEntryExists(true);
-      setEntryDates((previous) => new Set(previous).add(date));
-      setSaveState(date === selectedDateRef.current ? "saved" : "idle");
-    } catch (err) {
-      console.error(err);
-      dirtyRef.current = true;
-      setSaveState("error");
-      toast.error("Could not save. Will retry on your next change.");
-    }
+        setEntryDates((previous) => new Set(previous).add(date));
+        if (date === selectedDateRef.current) {
+          setCurrentEntryExists(true);
+          if (!dirtyRef.current) setSaveState("saved");
+        }
+      } catch (err) {
+        console.error(err);
+        if (date === selectedDateRef.current) {
+          dirtyRef.current = true;
+          setSaveState("error");
+          toast.error("Could not save. Will retry on your next change.");
+        }
+      }
+    });
+    saveQueueRef.current = save;
+    await save;
   }, [user]);
 
   useEffect(() => {
@@ -310,7 +352,7 @@ export default function TodayPage() {
     const timer = setTimeout(persist, AUTOSAVE_DELAY_MS);
 
     return () => clearTimeout(timer);
-  }, [values, persist]);
+  }, [values, answeredGoalIds, persist]);
 
   async function handleDateChange(next: string) {
     await persist();
@@ -324,10 +366,18 @@ export default function TodayPage() {
     }
 
     const previous = values;
+    const previousAnswered = answeredGoalIds;
     const date = selectedDate;
 
     dirtyRef.current = false;
-    setValues(getEmptyFormValues(metrics));
+    await saveQueueRef.current;
+    dirtyRef.current = false;
+    const empty = getEmptyFormValues(metrics);
+    valuesRef.current = empty;
+    setValues(empty);
+    answeredGoalIdsRef.current = new Set();
+    setAnsweredGoalIds(new Set());
+    editedMorningRef.current.clear();
 
     if (currentEntryExists) {
       try {
@@ -343,7 +393,10 @@ export default function TodayPage() {
         });
       } catch (err) {
         console.error(err);
+        valuesRef.current = previous;
         setValues(previous);
+        answeredGoalIdsRef.current = previousAnswered;
+        setAnsweredGoalIds(previousAnswered);
         toast.error("Could not clear the entry");
         return;
       }
@@ -360,7 +413,10 @@ export default function TodayPage() {
           }
 
           dirtyRef.current = true;
+          valuesRef.current = previous;
           setValues(previous);
+          answeredGoalIdsRef.current = previousAnswered;
+          setAnsweredGoalIds(previousAnswered);
         },
       },
     });
@@ -451,7 +507,10 @@ export default function TodayPage() {
                 <DropdownMenuContent align="end" className="w-48">
                   <DropdownMenuItem
                     variant="destructive"
-                    disabled={!hasEntryValues(metrics, values)}
+                    disabled={
+                      !hasEntryValues(metrics, values) &&
+                      answeredGoalIds.size === 0
+                    }
                     onClick={handleReset}
                   >
                     <Eraser className="mr-2 h-4 w-4" />
@@ -492,24 +551,28 @@ export default function TodayPage() {
 
           {/* Metrics - scroll */}
           <div className="px-4 py-4">
-            {Object.entries(groupedMetrics).map(([category, list]) => (
-              <section key={category} className="mb-5 space-y-3">
-                <h2 className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
-                  {category}
-                </h2>
-
-                {list
-                  .toSorted((a, b) => a.displayOrder - b.displayOrder)
-                  .map((metric) => (
-                    <MetricInput
-                      key={metric.id}
-                      metric={metric}
-                      value={values[metric.id]}
-                      onChange={(value) => updateValue(metric.id, value)}
-                    />
-                  ))}
-              </section>
-            ))}
+            <div className="space-y-3">
+              {orderedMetrics.map((metric) => (
+                <div
+                  key={metric.id}
+                  onBlur={(event) => {
+                    if (event.currentTarget.contains(event.relatedTarget))
+                      return;
+                    if (editedMorningRef.current.delete(metric.id)) {
+                      if (valuesRef.current[metric.id] === "")
+                        unmarkAnswered(metric.id);
+                      else markAnswered(metric.id);
+                    }
+                  }}
+                >
+                  <MetricInput
+                    metric={metric}
+                    value={values[metric.id]}
+                    onChange={(value) => updateValue(metric, value)}
+                  />
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </div>

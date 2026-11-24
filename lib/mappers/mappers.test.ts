@@ -16,6 +16,17 @@ const row = (weight: number, weightedScore: number) => ({
 });
 
 describe("mapEntry", () => {
+  it("preserves explicit answers and does not infer them for legacy entries", () => {
+    const saved = mapEntry({
+      values: { goal: false },
+      answeredGoalIds: ["goal"],
+    });
+    const legacy = mapEntry({ values: { goal: false } });
+
+    assert.deepEqual(saved.answeredGoalIds, ["goal"]);
+    assert.equal(legacy.answeredGoalIds, undefined);
+  });
+
   it("derives maxScore and percent for legacy entries from breakdown weights", () => {
     const entry = mapEntry(
       {

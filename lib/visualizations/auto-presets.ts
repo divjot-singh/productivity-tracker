@@ -1,8 +1,6 @@
 import type { MetricDefinition } from "@/models/metric";
 import type { VisualizationDefinition } from "@/models/visualization";
 
-const MAX_GOAL_WIDGETS = 10;
-
 type Draft = Omit<VisualizationDefinition, "visible" | "displayOrder">;
 
 function finish(drafts: Draft[]): VisualizationDefinition[] {
@@ -170,10 +168,22 @@ export function buildAutoVisualizations(
 
   const goalDrafts = [...trackers, ...scored]
     .map(goalWidget)
-    .filter((draft): draft is Draft => draft !== null)
-    .slice(0, MAX_GOAL_WIDGETS);
+    .filter((draft): draft is Draft => draft !== null);
 
   return finish([...drafts, ...goalDrafts]);
+}
+
+export function buildDashboardVisualizations(
+  goals: MetricDefinition[],
+  saved: VisualizationDefinition[],
+): VisualizationDefinition[] {
+  const automatic = buildAutoVisualizations(goals);
+  const automaticIds = new Set(automatic.map((definition) => definition.id));
+
+  return [
+    ...automatic,
+    ...saved.filter((definition) => !automaticIds.has(definition.id)),
+  ];
 }
 
 export type ScoreView = "score" | "percent" | "both";

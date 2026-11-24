@@ -12,6 +12,10 @@ import { MetricDefinition, MetricValue } from "@/models/metric";
 import { cn, formatValue } from "@/lib/utils";
 import { ScoreResult } from "@/lib/scoring/scoring-types";
 
+const numberFormatter = new Intl.NumberFormat("en-US", {
+  maximumFractionDigits: 1,
+});
+
 interface ReviewEntrySheetProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -82,13 +86,14 @@ export default function ReviewEntrySheet({
           <div className="flex items-center justify-between text-sm">
             <span className="font-medium">Life Score</span>
             <span>
-              {scoreResult.totalScore} / {scoreResult.totalWeights}
+              {numberFormatter.format(scoreResult.totalScore)} /{" "}
+              {numberFormatter.format(scoreResult.totalWeights)}
             </span>
           </div>
 
           <div className="flex items-center justify-between text-sm">
             <span className="font-medium">XP</span>
-            <span>{scoreResult.totalXP}</span>
+            <span>{numberFormatter.format(scoreResult.totalXP)}</span>
           </div>
 
           <div className="mt-1">

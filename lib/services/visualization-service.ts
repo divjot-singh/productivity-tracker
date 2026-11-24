@@ -34,35 +34,51 @@ export class VisualizationService {
         .filter((definition) => definition.visible)
         .sort((a, b) => a.displayOrder - b.displayOrder)
         .map(async (definition) => {
-          const provider = providerRegistry[definition.provider];
-          const executor = executorRegistry[definition.executor];
+          try {
+            const provider = providerRegistry[definition.provider];
+            const executor = executorRegistry[definition.executor];
 
-          const requiredPeriod = expandPeriodForComparison(
-            definition.period,
-            definition.options?.comparison,
-          );
+            const requiredPeriod = expandPeriodForComparison(
+              definition.period,
+              definition.options?.comparison,
+            );
 
-          const filteredEntries = filterEntriesByPeriod(
-            entries,
-            requiredPeriod,
-          );
-          const filteredWorkouts = filterWorkoutsByPeriod(
-            workouts,
-            requiredPeriod,
-          );
+            const filteredEntries = filterEntriesByPeriod(
+              entries,
+              requiredPeriod,
+            );
+            const filteredWorkouts = filterWorkoutsByPeriod(
+              workouts,
+              requiredPeriod,
+            );
 
-          const context: ProviderContext = {
-            visualization: definition,
-            goals,
-            entries: filteredEntries,
-            workouts: filteredWorkouts,
-            exercises,
-            combinations,
-          };
+            const context: ProviderContext = {
+              visualization: definition,
+              goals,
+              entries: filteredEntries,
+              workouts: filteredWorkouts,
+              exercises,
+              combinations,
+            };
 
-          const data = await provider.getData(context);
+            const data = await provider.getData(context);
 
-          return executor.execute(definition, data);
+            return executor.execute(definition, data);
+          } catch (error) {
+            console.error(
+              `Failed to generate visualization '${definition.id}'`,
+              error,
+            );
+
+            return {
+              id: definition.id,
+              title: definition.title,
+              widget: "stat-card" as const,
+              subtitle:
+                "Unable to load this visualization. Check its settings.",
+              data: { value: "-" },
+            };
+          }
         }),
     );
 

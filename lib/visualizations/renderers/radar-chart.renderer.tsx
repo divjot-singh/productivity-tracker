@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  Legend,
   PolarGrid,
   PolarAngleAxis,
   PolarRadiusAxis,
@@ -73,17 +72,6 @@ export default function RadarChartRenderer({
               tickFormatter={(value) =>
                 String(formatAxisValue(value, data, { compact: true }))
               }
-            />
-
-            <Legend
-              position="bottom"
-              layout="horizontal"
-              iconType="circle"
-              wrapperStyle={{
-                fontSize: "12px",
-                color: "var(--muted-foreground)",
-                marginTop: "8px",
-              }}
             />
 
             <Tooltip content={<ChartTooltipContent data={data} />} />

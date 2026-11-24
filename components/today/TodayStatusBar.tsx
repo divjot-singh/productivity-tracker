@@ -2,6 +2,10 @@
 
 import { cn } from "@/lib/utils";
 
+const numberFormatter = new Intl.NumberFormat("en-US", {
+  maximumFractionDigits: 1,
+});
+
 interface TodayStatusBarProps {
   dateLabel: string;
   totalScore: number;
@@ -42,7 +46,8 @@ export default function TodayStatusBar({
               <div className="bg-muted h-4 w-20 animate-pulse rounded" />
             ) : (
               <p className="text-sm font-semibold">
-                {totalScore} / {totalWeights}
+                {numberFormatter.format(totalScore)} /{" "}
+                {numberFormatter.format(totalWeights)}
               </p>
             )}
           </div>
@@ -52,7 +57,9 @@ export default function TodayStatusBar({
             {isRefreshing ? (
               <div className="bg-muted h-4 w-10 animate-pulse rounded" />
             ) : (
-              <p className="text-sm font-semibold">{totalXP}</p>
+              <p className="text-sm font-semibold">
+                {numberFormatter.format(totalXP)}
+              </p>
             )}
           </div>
         </div>

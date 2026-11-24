@@ -1,4 +1,5 @@
 import { parseExerciseVisualizationKey } from "@/lib/visualizations/exercise-keys";
+import { summarizeSession } from "@/lib/workouts/exercise-stats";
 import { ExerciseHistoryData, VisualizationProvider } from "./provider-types";
 
 function getWorkoutVolumeValue(workout: {
@@ -104,17 +105,18 @@ export const exerciseProvider: VisualizationProvider<ExerciseHistoryData> = {
           }
 
           if (parsedKey.metric === "topWeight") {
-            const value = workoutExercise.sets.reduce((max, setEntry) => {
-              if (setEntry.weight === null) {
-                return max;
-              }
+            const summary = summarizeSession(
+              workout.date,
+              workoutExercise.sets,
+            );
 
-              return Math.max(max, setEntry.weight);
-            }, 0);
+            if (!summary) {
+              return null;
+            }
 
             return {
               date: workout.date,
-              value,
+              value: summary.topWeight,
             };
           }
 

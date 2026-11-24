@@ -9,6 +9,8 @@ interface CreateEntryPayload {
 
   values: Record<string, unknown>;
 
+  answeredGoalIds?: string[];
+
   score: number;
 
   xp: number;

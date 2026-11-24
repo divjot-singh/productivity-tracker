@@ -1,9 +1,9 @@
-import {
+import type {
   GoalProviderData,
   MetricHistoryData,
   StatProviderData,
 } from "../providers/provider-types";
-import { VisualizationExecutor } from "./executor-types";
+import type { VisualizationExecutor } from "./executor-types";
 
 export const streakExecutor: VisualizationExecutor = {
   execute(visualization, data) {
@@ -20,6 +20,13 @@ export const streakExecutor: VisualizationExecutor = {
 
     values.forEach((item, index) => {
       if (isSuccess(item, providerData)) {
+        if (
+          index > 0 &&
+          !areConsecutiveDays(values[index - 1].date, item.date)
+        ) {
+          active = 0;
+        }
+
         if (active === 0) {
           activeStartIndex = index;
         }
@@ -42,6 +49,13 @@ export const streakExecutor: VisualizationExecutor = {
 
     for (let index = values.length - 1; index >= 0; index -= 1) {
       if (!isSuccess(values[index], providerData)) {
+        break;
+      }
+
+      if (
+        currentEndIndex !== -1 &&
+        !areConsecutiveDays(values[index].date, values[index + 1].date)
+      ) {
         break;
       }
 
@@ -93,6 +107,13 @@ export const streakExecutor: VisualizationExecutor = {
     };
   },
 };
+
+function areConsecutiveDays(first: string, second: string) {
+  return (
+    Date.parse(`${second}T00:00:00Z`) - Date.parse(`${first}T00:00:00Z`) ===
+    86_400_000
+  );
+}
 
 function isSuccess(
   item:

@@ -17,7 +17,7 @@ It is grounded in:
 
 This is the final source of truth for dashboard progress.
 
-The dashboard is currently using mock entry data intentionally, which is the correct setup for refining the visualization engine before enough real historical data exists.
+The dashboard uses real entries and workouts. Its default view combines automatic widgets based on active goals with saved visualization definitions; `?mode=custom` uses only saved definitions.
 
 ---
 
@@ -26,7 +26,7 @@ The dashboard is currently using mock entry data intentionally, which is the cor
 The core dashboard pipeline already exists:
 
 1. Dashboard page fetches `/api/dashboard`.
-2. API route loads goals, visualization definitions, and mock entries.
+2. API route loads goals, visualization definitions, real entries, and workout data.
 3. `VisualizationService` filters entries by period and invokes provider + executor.
 4. The frontend uses a renderer registry to pick a widget component.
 
@@ -40,7 +40,7 @@ What is already implemented:
 What is already visible from the current code:
 
 - The architecture is correct.
-- The mock-data workflow is already wired in the dashboard API.
+- Automatic and saved widgets are available in the default dashboard.
 - The dashboard is rendering-oriented, which matches the intended design.
 
 What is not complete yet:

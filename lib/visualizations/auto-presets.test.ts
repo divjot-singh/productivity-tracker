@@ -1,6 +1,10 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
-import { buildAutoVisualizations, matchesScoreView } from "./auto-presets.ts";
+import {
+  buildAutoVisualizations,
+  buildDashboardVisualizations,
+  matchesScoreView,
+} from "./auto-presets.ts";
 
 const goal = (overrides: Record<string, unknown>) =>
   ({
@@ -80,6 +84,18 @@ describe("buildAutoVisualizations", () => {
 
     assert.deepEqual(goalIds, ["auto-goal-w", "auto-goal-x"]);
   });
+
+  it("includes eligible goals beyond the first ten", () => {
+    const goals = Array.from({ length: 11 }, (_, index) =>
+      goal({ id: `goal-${index}`, label: `Goal ${index}` }),
+    );
+
+    assert.ok(
+      buildAutoVisualizations(goals).some(
+        (visualization) => visualization.id === "auto-goal-goal-10",
+      ),
+    );
+  });
 });
 
 describe("matchesScoreView", () => {
@@ -92,5 +108,19 @@ describe("matchesScoreView", () => {
     );
     assert.equal(matchesScoreView("auto-percent-trend-percent", "both"), true);
     assert.equal(matchesScoreView("auto-goal-x", "percent"), true);
+  });
+});
+
+describe("buildDashboardVisualizations", () => {
+  it("includes saved visualizations without duplicating automatic IDs", () => {
+    const automatic = buildAutoVisualizations([])[0];
+    const saved = { ...automatic, id: "saved-pr", title: "Personal record" };
+    const definitions = buildDashboardVisualizations([], [automatic, saved]);
+
+    assert.equal(
+      definitions.filter((item) => item.id === automatic.id).length,
+      1,
+    );
+    assert.ok(definitions.some((item) => item.id === "saved-pr"));
   });
 });

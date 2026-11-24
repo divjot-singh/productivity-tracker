@@ -306,7 +306,7 @@ function wrapLabelLines(text: string, maxChars: number, maxLines: number) {
 export function formatCompactNumber(value: number | string | undefined) {
   if (typeof value === "number") {
     const formatter = new Intl.NumberFormat("en-US", {
-      maximumFractionDigits: value >= 100 ? 0 : 1,
+      maximumFractionDigits: 1,
     });
 
     return formatter.format(value);

@@ -32,6 +32,8 @@ export interface DailyEntry {
    */
   values: Record<string, EntryValue>;
 
+  answeredGoalIds?: string[];
+
   /**
    * Calculated by backend scoring engine
    */

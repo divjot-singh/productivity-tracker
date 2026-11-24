@@ -32,9 +32,15 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json();
 
-    const { date, values } = body;
+    const { date, values, answeredGoalIds } = body;
 
-    if (!date || !values) {
+    if (
+      !date ||
+      !values ||
+      (answeredGoalIds !== undefined &&
+        (!Array.isArray(answeredGoalIds) ||
+          !answeredGoalIds.every((id: unknown) => typeof id === "string")))
+    ) {
       return NextResponse.json(
         {
           error: "Invalid payload",
@@ -85,6 +91,11 @@ export async function POST(request: NextRequest) {
       date,
 
       values: { ...values, ...archivedValues },
+
+      answeredGoalIds:
+        answeredGoalIds === undefined
+          ? existing?.answeredGoalIds
+          : [...new Set<string>(answeredGoalIds)],
 
       score: result.totalScore,
 
