@@ -33,6 +33,7 @@ import {
   sortCombinations,
   suggestCombinationChanges,
   toWorkoutExercises,
+  updateEditorSet,
   workoutVolume,
   type EditorExercise,
 } from "@/lib/workouts/session";
@@ -370,12 +371,50 @@ export default function WorkoutLogScreen() {
     setIndex: number,
     partial: Partial<WorkoutSetEntry>,
   ) {
-    updateExercise(exerciseIndex, (item) => ({
-      ...item,
-      sets: item.sets.map((set, i) =>
-        i === setIndex ? { ...set, ...partial } : set,
+    const current = editorRef.current;
+    const item = current?.exercises[exerciseIndex];
+    const set = item?.sets[setIndex];
+    if (!current || !item || !set) return;
+
+    const updated = updateEditorSet(set, partial);
+    if (!set.done && updated.done) announceRecords(current, item, updated);
+    const startedAt = new Date().toISOString();
+
+    edit((state) => ({
+      ...state,
+      startedAt: state.startedAt ?? (updated.done ? startedAt : undefined),
+      exercises: state.exercises.map((entry, index) =>
+        index === exerciseIndex
+          ? {
+              ...entry,
+              sets: entry.sets.map((currentSet, setPosition) =>
+                setPosition === setIndex
+                  ? updateEditorSet(currentSet, partial)
+                  : currentSet,
+              ),
+            }
+          : entry,
       ),
     }));
+  }
+
+  function announceRecords(
+    current: Editor,
+    item: EditorExercise,
+    set: WorkoutSetEntry,
+  ) {
+    const unit = exerciseMap.get(item.exerciseId)?.weightTracking.unit ?? "kg";
+    const flags = detectSetRecords(
+      set,
+      recordsExcluding(stats.get(item.exerciseId), current.date),
+      item.sets.filter((other) => other.done),
+    );
+
+    if (flags.weightPr) {
+      toast.success(`New PR: ${nameOf(item.exerciseId)} ${set.weight} ${unit}`);
+    } else if (flags.oneRmPr) {
+      toast.success(`New best estimated 1RM: ${nameOf(item.exerciseId)}`);
+    }
   }
 
   function toggleDone(exerciseIndex: number, setIndex: number) {
@@ -385,23 +424,7 @@ export default function WorkoutLogScreen() {
 
     if (!current || !item || !set) return;
 
-    if (!set.done) {
-      const unit =
-        exerciseMap.get(item.exerciseId)?.weightTracking.unit ?? "kg";
-      const flags = detectSetRecords(
-        set,
-        recordsExcluding(stats.get(item.exerciseId), current.date),
-        item.sets.filter((other) => other.done),
-      );
-
-      if (flags.weightPr) {
-        toast.success(
-          `New PR: ${nameOf(item.exerciseId)} ${set.weight} ${unit}`,
-        );
-      } else if (flags.oneRmPr) {
-        toast.success(`New best estimated 1RM: ${nameOf(item.exerciseId)}`);
-      }
-    }
+    if (!set.done) announceRecords(current, item, set);
 
     edit((state) => ({
       ...state,

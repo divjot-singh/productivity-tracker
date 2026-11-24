@@ -12,6 +12,7 @@ import {
   suggestCombinationChanges,
   toWorkoutExercises,
   createEditorSet,
+  updateEditorSet,
 } from "./session.ts";
 import { applySession, summarizeSession } from "./exercise-stats.ts";
 
@@ -62,6 +63,45 @@ test("only done sets are saved; empty exercises are dropped", () => {
 
   assert.equal(saved.length, 1);
   assert.equal(saved[0].sets.length, 1);
+});
+
+test("performance edits complete valid sets for saving", () => {
+  const exercise = buildExercise("a", undefined, {
+    date: "2026-01-01",
+    sets: [set(60, 8), set(60, 8)],
+  });
+
+  exercise.sets[0] = updateEditorSet(exercise.sets[0], { weight: 65 });
+  assert.equal(exercise.sets[0].done, true);
+  assert.equal(exercise.sets[1].done, false);
+  assert.equal(toWorkoutExercises([exercise])[0].sets.length, 1);
+  assert.equal(toWorkoutExercises([exercise])[0].sets[0].weight, 65);
+});
+
+test("effort and rep edits complete valid sets but warm-up alone does not", () => {
+  const initial = createEditorSet({ reps: 8 });
+  assert.equal(updateEditorSet(initial, { effort: 3 }).done, true);
+  assert.equal(updateEditorSet(initial, { reps: 10 }).done, true);
+  assert.equal(updateEditorSet(initial, { isWarmup: true }).done, false);
+  assert.equal(updateEditorSet(initial, { reps: 0 }).done, false);
+  assert.equal(
+    updateEditorSet({ ...initial, done: true }, { reps: null }).done,
+    false,
+  );
+});
+
+test("a set completes when reps are entered and can be unchecked", () => {
+  const exercise = buildExercise("a", undefined, null);
+  exercise.sets[0] = updateEditorSet(exercise.sets[0], { weight: 20 });
+  assert.equal(exercise.sets[0].done, false);
+
+  exercise.sets[0] = updateEditorSet(exercise.sets[0], { reps: 8 });
+  assert.equal(toWorkoutExercises([exercise])[0].sets[0].reps, 8);
+
+  exercise.sets[0] = { ...exercise.sets[0], done: false };
+  assert.deepEqual(toWorkoutExercises([exercise]), []);
+  exercise.sets[0] = updateEditorSet(exercise.sets[0], { effort: 4 });
+  assert.equal(toWorkoutExercises([exercise])[0].sets[0].effort, 4);
 });
 
 test("PR detection ignores the day being edited and warm-ups", () => {

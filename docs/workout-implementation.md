@@ -39,6 +39,10 @@ Workouts do **not** reuse or extend the daily entry documents.
 Workouts are **fully separate** from the productivity score/XP engine.
 Logging a workout must not affect score, XP, streaks, or metric-based dashboard widgets.
 
+On the workout log, changing a set's weight, reps, or effort marks it complete
+when its reps are greater than zero. Untouched prefilled sets remain incomplete,
+and the checkmark can be used to undo completion. Only completed sets are saved.
+
 ## Workout cadence
 
 **One workout per day**, keyed by date (same shape as a daily entry: one editable

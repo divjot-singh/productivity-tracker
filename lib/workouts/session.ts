@@ -66,6 +66,21 @@ export function createEditorSet(
   };
 }
 
+export function updateEditorSet(
+  set: EditorSet,
+  partial: Partial<WorkoutSetEntry>,
+): EditorSet {
+  const updated = { ...set, ...partial };
+  const editedPerformance =
+    "weight" in partial || "reps" in partial || "effort" in partial;
+
+  if (editedPerformance) {
+    updated.done = (updated.reps ?? 0) > 0;
+  }
+
+  return updated;
+}
+
 export interface LastSession {
   date: string;
   sets: WorkoutSetEntry[];
